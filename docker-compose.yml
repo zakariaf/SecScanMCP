@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # MCP Security Scanner API
+  scanner:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LOG_LEVEL=INFO
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      # Mount Docker socket for dynamic analysis
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Temporary directory for cloned repos
+      - /tmp/mcp-scanner:/tmp/mcp-scanner
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+  # Optional: Standalone container for testing
+  test-runner:
+    build: .
+    command: python -m pytest tests/
+    volumes:
+      - .:/app
+    profiles:
+      - test
