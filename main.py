@@ -67,7 +67,7 @@ async def scan_repository(request: ScanRequest):
             scan_options=request.options
         )
 
-        logger.info(f"Scan completed. Score: {result['security_score']}")
+        logger.info(f"Scan completed. Score: {result.security_score}")
         return result
 
     except Exception as e:
