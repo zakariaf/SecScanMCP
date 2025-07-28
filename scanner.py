@@ -6,6 +6,7 @@ import asyncio
 import subprocess
 import json
 import os
+import re
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import logging
@@ -246,7 +247,7 @@ class SecurityScanner:
             if result:
                 all_findings.extend(result)
 
-        # Deduplicate findings
+        # Deduplicate findings with improved logic
         return self._deduplicate_findings(all_findings)
 
     async def _run_analyzer_safe(
@@ -263,23 +264,94 @@ class SecurityScanner:
             return []
 
     def _deduplicate_findings(self, findings: List[Finding]) -> List[Finding]:
-        """Remove duplicate findings"""
+        """Remove duplicate findings with improved logic"""
         seen = set()
         unique_findings = []
 
         for finding in findings:
-            # Create a unique key for the finding
-            key = (
-                finding.vulnerability_type,
-                finding.location,
-                finding.title
-            )
+            # Normalize location to handle path variations
+            normalized_location = finding.location.lstrip('/').strip()
+
+            # Extract CVE ID if present for better deduplication
+            cve_id = finding.cve_id or self._extract_cve_from_title(finding.title)
+
+            # Create a more robust unique key
+            if cve_id:
+                # For CVE-based findings, use CVE ID + package info
+                package_info = self._extract_package_info(finding.title, finding.evidence)
+                key = (
+                    finding.vulnerability_type,
+                    cve_id,
+                    package_info,
+                    normalized_location
+                )
+            else:
+                # For non-CVE findings, use original logic with normalized location
+                key = (
+                    finding.vulnerability_type,
+                    normalized_location,
+                    finding.title.lower().strip()
+                )
 
             if key not in seen:
                 seen.add(key)
                 unique_findings.append(finding)
+            else:
+                # If duplicate found, try to merge information (take higher confidence)
+                for existing in unique_findings:
+                    existing_key = self._generate_key_for_finding(existing)
+                    if existing_key == key and finding.confidence > existing.confidence:
+                        existing.confidence = finding.confidence
+                        # Merge evidence if useful
+                        if finding.evidence and existing.evidence:
+                            existing.evidence.update(finding.evidence)
+                        break
 
+        logger.info(f"Deduplicated {len(findings)} findings down to {len(unique_findings)}")
         return unique_findings
+
+    def _extract_cve_from_title(self, title: str) -> str:
+        """Extract CVE ID from finding title"""
+        cve_match = re.search(r'CVE-\d{4}-\d+', title, re.IGNORECASE)
+        return cve_match.group(0).upper() if cve_match else ''
+
+    def _extract_package_info(self, title: str, evidence: Dict[str, Any]) -> str:
+        """Extract package name and version for deduplication"""
+        # Try to get from evidence first (more reliable)
+        if evidence.get('package') and evidence.get('version'):
+            return f"{evidence['package']}@{evidence['version']}"
+
+        if evidence.get('package') and evidence.get('installed_version'):
+            return f"{evidence['package']}@{evidence['installed_version']}"
+
+        # Fallback to parsing title
+        # Handle formats like "CVE-2024-6221: flask-cors 4.0.0"
+        match = re.search(r':\s*([a-zA-Z0-9\-_\.]+)\s+([\d\.]+)', title)
+        if match:
+            package, version = match.groups()
+            return f"{package}@{version}"
+
+        return title.split(':')[-1].strip() if ':' in title else title
+
+    def _generate_key_for_finding(self, finding: Finding) -> tuple:
+        """Generate the same key used in deduplication"""
+        normalized_location = finding.location.lstrip('/').strip()
+        cve_id = finding.cve_id or self._extract_cve_from_title(finding.title)
+
+        if cve_id:
+            package_info = self._extract_package_info(finding.title, finding.evidence)
+            return (
+                finding.vulnerability_type,
+                cve_id,
+                package_info,
+                normalized_location
+            )
+        else:
+            return (
+                finding.vulnerability_type,
+                normalized_location,
+                finding.title.lower().strip()
+            )
 
     def _generate_summary(
         self,
