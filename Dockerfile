@@ -56,8 +56,6 @@ COPY --from=builder /usr/local/bin/trufflehog /usr/local/bin/trufflehog
 COPY --from=builder /usr/local/bin/grype /usr/local/bin/grype
 COPY --from=builder /usr/local/bin/syft /usr/local/bin/syft
 COPY --from=builder /usr/bin/trivy /usr/bin/trivy
-
-# Copy Python packages for security tools
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Create non-root user
@@ -72,15 +70,22 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Change ownership
-RUN chown -R scanner:scanner /app
-
-# Create directories for tools
-RUN mkdir -p /home/scanner/.cache && \
-    chown -R scanner:scanner /home/scanner
+# Create cache directories with proper permissions BEFORE switching to scanner user
+RUN mkdir -p /home/scanner/.cache/trivy && \
+    mkdir -p /home/scanner/.cache/grype && \
+    mkdir -p /home/scanner/.cache/syft && \
+    mkdir -p /tmp/mcp-scanner && \
+    chown -R scanner:scanner /home/scanner && \
+    chown -R scanner:scanner /tmp/mcp-scanner && \
+    chown -R scanner:scanner /app
 
 # Switch to non-root user
 USER scanner
+
+# Set environment variables for cache directories
+ENV TRIVY_CACHE_DIR=/home/scanner/.cache/trivy
+ENV GRYPE_DB_CACHE_DIR=/home/scanner/.cache/grype
+ENV SYFT_CACHE_DIR=/home/scanner/.cache/syft
 
 # Expose port
 EXPOSE 8000

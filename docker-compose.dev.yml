@@ -19,6 +19,8 @@ services:
       - ./scanner.py:/app/scanner.py:ro
       - ./models.py:/app/models.py:ro
       - ./scoring.py:/app/scoring.py:ro
+      # Cache volume
+      - scanner-cache:/home/scanner/.cache
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   # Run examples
@@ -39,6 +41,7 @@ services:
     build: .
     volumes:
       - .:/app
+      - scanner-cache:/home/scanner/.cache
     working_dir: /app
     command: /bin/bash
     profiles:
@@ -66,3 +69,6 @@ services:
       "
     profiles:
       - tools
+
+volumes:
+  scanner-cache:

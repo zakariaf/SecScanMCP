@@ -9,19 +9,14 @@ services:
     environment:
       - LOG_LEVEL=INFO
       - DOCKER_HOST=unix:///var/run/docker.sock
-      # Tool-specific environment
-      - TRIVY_CACHE_DIR=/tmp/.trivy_cache
-      - GRYPE_DB_CACHE_DIR=/tmp/.grype_cache
-      - SYFT_CACHE_DIR=/tmp/.syft_cache
+      # Cache directories are now set in the Dockerfile
     volumes:
       # Mount Docker socket for dynamic analysis
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Temporary directory for cloned repos
       - /tmp/mcp-scanner:/tmp/mcp-scanner
-      # Cache directories for tools
-      - scanner-trivy-cache:/tmp/.trivy_cache
-      - scanner-grype-cache:/tmp/.grype_cache
-      - scanner-syft-cache:/tmp/.syft_cache
+      # Cache directories for tools (using named volumes)
+      - scanner-cache:/home/scanner/.cache
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -47,6 +42,4 @@ services:
       - test
 
 volumes:
-  scanner-trivy-cache:
-  scanner-grype-cache:
-  scanner-syft-cache:
+  scanner-cache:
