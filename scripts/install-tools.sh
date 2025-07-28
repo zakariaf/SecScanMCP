@@ -7,15 +7,37 @@ echo "Installing security analysis tools..."
 
 # Python tools
 echo "Installing Python-based tools..."
-pip install bandit safety pip-audit
+pip install bandit semgrep
 
-# Semgrep
-echo "Installing Semgrep..."
+# Trivy
+echo "Installing Trivy..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    brew install semgrep
+    brew install aquasecurity/trivy/trivy
 else
     # Linux
-    python3 -m pip install semgrep
+    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor | sudo tee /usr/share/keyrings/trivy.gpg > /dev/null
+    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+    sudo apt-get update
+    sudo apt-get install -y trivy
+fi
+
+# Grype
+echo "Installing Grype..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew tap anchore/grype
+    brew install grype
+else
+    # Linux
+    curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+fi
+
+# Syft
+echo "Installing Syft..."
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install syft
+else
+    # Linux
+    curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
 fi
 
 # TruffleHog
@@ -27,22 +49,12 @@ else
     curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
 fi
 
-# OSV-Scanner
-echo "Installing OSV-Scanner..."
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    brew install osv-scanner
-else
-    # Linux
-    curl -L https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o /tmp/osv-scanner
-    sudo mv /tmp/osv-scanner /usr/local/bin/osv-scanner
-    sudo chmod +x /usr/local/bin/osv-scanner
-fi
-
 echo "Verifying installations..."
 echo "Bandit version: $(bandit --version)"
-echo "Safety version: $(safety --version)"
 echo "Semgrep version: $(semgrep --version)"
+echo "Trivy version: $(trivy --version)"
+echo "Grype version: $(grype version)"
+echo "Syft version: $(syft version)"
 echo "TruffleHog version: $(trufflehog --version)"
-echo "OSV-Scanner version: $(osv-scanner --version)"
 
 echo "All tools installed successfully!"

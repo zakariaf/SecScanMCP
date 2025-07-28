@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Example of using the MCP Security Scanner API
+Example of using the MCP Security Scanner API with Universal Scanners
 """
 
 import requests
@@ -19,7 +19,7 @@ def scan_repository(repo_url: str, scanner_url: str = "http://localhost:8000"):
     """
 
     print(f"\n{'='*60}")
-    print(f"MCP Security Scanner - Example Usage")
+    print(f"MCP Security Scanner - Universal Scanner Edition")
     print(f"{'='*60}")
     print(f"Repository: {repo_url}")
     print(f"Scanner: {scanner_url}")
@@ -42,7 +42,7 @@ def scan_repository(repo_url: str, scanner_url: str = "http://localhost:8000"):
         "repository_url": repo_url,
         "options": {
             "enable_dynamic_analysis": True,
-            "skip_dependencies": False
+            "comprehensive": True  # Use all scanners
         }
     }
 
@@ -102,48 +102,85 @@ def scan_repository(repo_url: str, scanner_url: str = "http://localhost:8000"):
     for vuln_type, count in summary['vulnerability_types'].items():
         print(f"  • {vuln_type.replace('_', ' ').title()}: {count}")
 
-    # Top Risks
-    if summary['top_risks']:
+    # SBOM Summary (from Syft)
+    if 'sbom_summary' in result.get('scan_metadata', {}):
+        sbom = result['scan_metadata']['sbom_summary']
         print(f"\n{'─'*40}")
-        print("TOP SECURITY RISKS:")
+        print("SOFTWARE COMPOSITION:")
         print(f"{'─'*40}")
-        for i, risk in enumerate(summary['top_risks'], 1):
-            print(f"\n{i}. {risk['title']}")
-            print(f"   Severity: {risk['severity'].upper()}")
-            print(f"   Type: {risk['type'].replace('_', ' ').title()}")
-            print(f"   Location: {risk['location']}")
+        print(f"Total Packages: {sbom['total_packages']}")
+        print("Languages Detected:")
+        for lang, count in sbom.get('languages', {}).items():
+            print(f"  • {lang.title()}: {count} packages")
 
-    # Detailed Findings
-    if result['findings']:
-        print(f"\n{'─'*40}")
-        print("DETAILED FINDINGS:")
-        print(f"{'─'*40}")
+    # High-Risk Vulnerabilities (NEW: with EPSS/KEV data)
+    print(f"\n{'─'*40}")
+    print("HIGH-RISK VULNERABILITIES:")
+    print(f"{'─'*40}")
 
-        # Group by severity
-        findings_by_severity = {}
-        for finding in result['findings']:
-            severity = finding['severity']
-            if severity not in findings_by_severity:
-                findings_by_severity[severity] = []
-            findings_by_severity[severity].append(finding)
+    high_risk_findings = []
+    for finding in result['findings']:
+        evidence = finding.get('evidence', {})
 
-        # Display by severity (critical first)
-        for severity in ['critical', 'high', 'medium', 'low', 'info']:
-            if severity in findings_by_severity:
-                findings = findings_by_severity[severity]
-                print(f"\n{severity.upper()} ({len(findings)} findings):")
-                print("─" * 30)
+        # Prioritize by multiple factors
+        is_high_risk = (
+            finding['severity'] in ['critical', 'high'] or
+            evidence.get('is_known_exploited', False) or
+            evidence.get('epss_score', 0) > 0.7
+        )
 
-                for finding in findings[:3]:  # Show first 3 of each severity
-                    print(f"\n• {finding['title']}")
-                    print(f"  Tool: {finding['tool']}")
-                    print(f"  Location: {finding['location']}")
-                    print(f"  Confidence: {finding['confidence']*100:.0f}%")
-                    print(f"  Description: {finding['description'][:100]}...")
-                    print(f"  Recommendation: {finding['recommendation'][:100]}...")
+        if is_high_risk:
+            high_risk_findings.append(finding)
 
-                if len(findings) > 3:
-                    print(f"\n  ... and {len(findings) - 3} more {severity} findings")
+    # Sort by risk
+    high_risk_findings.sort(
+        key=lambda f: (
+            f['severity'] == 'critical',
+            f.get('evidence', {}).get('is_known_exploited', False),
+            f.get('evidence', {}).get('epss_score', 0)
+        ),
+        reverse=True
+    )
+
+    # Display top high-risk findings
+    for i, finding in enumerate(high_risk_findings[:5], 1):
+        evidence = finding.get('evidence', {})
+        print(f"\n{i}. {finding['title']}")
+        print(f"   Severity: {finding['severity'].upper()}")
+        print(f"   Type: {finding['vulnerability_type'].replace('_', ' ').title()}")
+        print(f"   Location: {finding['location']}")
+
+        # Show risk indicators
+        risk_factors = []
+        if evidence.get('is_known_exploited'):
+            risk_factors.append("🚨 ACTIVELY EXPLOITED")
+        if evidence.get('epss_score', 0) > 0:
+            epss = evidence['epss_score']
+            percentile = evidence.get('epss_percentile', 0)
+            risk_factors.append(f"📊 EPSS: {epss:.2%} (top {(1-percentile)*100:.0f}%)")
+        if evidence.get('cvss_max', 0) > 0:
+            risk_factors.append(f"💯 CVSS: {evidence['cvss_max']}")
+
+        if risk_factors:
+            print(f"   Risk Indicators: {' | '.join(risk_factors)}")
+
+        print(f"   Recommendation: {finding['recommendation'][:100]}...")
+
+    if len(high_risk_findings) > 5:
+        print(f"\n... and {len(high_risk_findings) - 5} more high-risk findings")
+
+    # Tool Performance
+    print(f"\n{'─'*40}")
+    print("SCANNER PERFORMANCE:")
+    print(f"{'─'*40}")
+
+    analyzers_run = result.get('scan_metadata', {}).get('analyzers_run', [])
+    print(f"Tools Used: {', '.join(analyzers_run)}")
+    print(f"Total Scan Time: {scan_time:.1f} seconds")
+
+    # Note about caching
+    if scan_time < 10:
+        print("✓ Fast scan achieved through SBOM caching")
 
     # Recommendations
     print(f"\n{'='*60}")
@@ -152,23 +189,35 @@ def scan_repository(repo_url: str, scanner_url: str = "http://localhost:8000"):
 
     if result['security_score'] >= 90:
         print("✓ Excellent security posture! Only minor improvements needed.")
+        print("  • Continue regular scanning")
+        print("  • Keep dependencies updated")
     elif result['security_score'] >= 75:
         print("⚠️  Good security posture, but address high-severity issues:")
         print("   1. Fix all critical and high severity vulnerabilities")
-        print("   2. Review and update dependencies")
-        print("   3. Remove any hardcoded secrets")
+        print("   2. Prioritize known exploited vulnerabilities (KEV)")
+        print("   3. Address high EPSS score vulnerabilities")
+        print("   4. Review and update dependencies")
     elif result['security_score'] >= 60:
         print("⚠️  Fair security posture. Significant improvements needed:")
         print("   1. Immediately address all critical vulnerabilities")
-        print("   2. Implement proper input validation")
+        print("   2. Fix actively exploited vulnerabilities (KEV) first")
         print("   3. Update all vulnerable dependencies")
-        print("   4. Remove hardcoded secrets and use environment variables")
+        print("   4. Remove hardcoded secrets")
+        print("   5. Implement security scanning in CI/CD")
     else:
         print("❌ Poor security posture! Immediate action required:")
         print("   1. DO NOT deploy this code to production")
-        print("   2. Fix all critical and high severity issues immediately")
-        print("   3. Conduct thorough security review")
-        print("   4. Consider security training for development team")
+        print("   2. Create security task force")
+        print("   3. Fix all critical/high severity issues")
+        print("   4. Prioritize by exploitation risk (EPSS/KEV)")
+        print("   5. Consider security training for team")
+
+    # Universal Scanner Benefits
+    print(f"\n📌 Universal Scanner Benefits:")
+    print("  • Comprehensive coverage for all languages")
+    print("  • Risk-based prioritization with EPSS/KEV")
+    print("  • Faster scanning with SBOM caching")
+    print("  • Unified vulnerability database")
 
     # Save detailed report
     report_filename = f"security_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

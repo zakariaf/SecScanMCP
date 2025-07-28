@@ -1,0 +1,246 @@
+# MCP Security Scanner Configuration
+# This file allows customization of scanner behavior
+
+# Global settings
+scanner:
+  # Maximum time for a complete scan (seconds)
+  timeout: 600
+
+  # Number of parallel analyzers
+  max_concurrent_analyzers: 4
+
+  # Temporary directory for cloning
+  temp_directory: /tmp/mcp-scanner
+
+  # Clean up temp files after scan
+  cleanup_after_scan: true
+
+# Analyzer-specific configurations
+analyzers:
+  # Syft - SBOM Generation
+  syft:
+    enabled: true
+    timeout: 120
+    options:
+      # Output formats to generate
+      formats:
+        - json
+        - cyclonedx
+        - spdx
+      # Catalogers to use (all, or specific list)
+      catalogers: all
+      # Include file metadata
+      include_metadata: true
+
+  # Trivy - Comprehensive Scanner
+  trivy:
+    enabled: true
+    timeout: 300
+    options:
+      # Scanners to enable
+      scanners:
+        - vuln        # Vulnerability scanning
+        - secret      # Secret detection
+        - misconfig   # Misconfiguration detection
+        - license     # License scanning
+      # Severity levels to include
+      severity:
+        - CRITICAL
+        - HIGH
+        - MEDIUM
+        - LOW
+      # Skip database update (for offline mode)
+      skip_update: false
+      # Cache directory
+      cache_dir: /tmp/.trivy_cache
+      # Ignore unfixed vulnerabilities
+      ignore_unfixed: false
+
+  # Grype - Fast Vulnerability Scanner
+  grype:
+    enabled: true
+    timeout: 120
+    options:
+      # Add CPEs if none detected
+      add_cpes_if_none: true
+      # Only show fixed vulnerabilities
+      only_fixed: false
+      # Database settings
+      db:
+        auto_update: true
+        cache_dir: /tmp/.grype_cache
+      # Output verbosity
+      quiet: true
+
+  # Bandit - Python Security Linter
+  bandit:
+    enabled: true
+    timeout: 60
+    # Only run for Python projects
+    language_filter:
+      - python
+    options:
+      # Confidence level threshold
+      confidence_level: medium
+      # Severity level threshold
+      severity_level: low
+      # Skip test IDs
+      skip_tests: []
+
+  # Semgrep - Pattern-based Analysis
+  semgrep:
+    enabled: true
+    timeout: 180
+    options:
+      # Rule sources
+      config:
+        - auto  # Auto-detect rules
+        - r/security-audit
+        - r/generic.secrets
+      # Additional MCP rules
+      use_mcp_rules: true
+      # Maximum target size (MB)
+      max_target_bytes: 100
+
+  # TruffleHog - Secret Scanner
+  trufflehog:
+    enabled: true
+    timeout: 120
+    options:
+      # Verification of secrets (requires API calls)
+      verify: false
+      # Scan entropy
+      entropy: true
+      # Regex rules
+      regex: true
+      # Concurrency
+      concurrency: 4
+
+  # MCP-Specific Analyzer
+  mcp_specific:
+    enabled: true
+    timeout: 60
+    # Only run for MCP projects
+    only_mcp: true
+    options:
+      # Check for prompt injection
+      check_prompt_injection: true
+      # Check for tool poisoning
+      check_tool_poisoning: true
+      # Check for permission abuse
+      check_permissions: true
+      # Check for output poisoning
+      check_output_poisoning: true
+
+  # Dynamic Analyzer
+  dynamic:
+    enabled: true
+    timeout: 300
+    # Only run for MCP projects
+    only_mcp: true
+    options:
+      # Docker settings
+      docker:
+        memory_limit: 512m
+        cpu_limit: 0.5
+        network_mode: none
+      # Behavioral tests
+      tests:
+        - prompt_injection
+        - network_monitoring
+        - resource_usage
+
+# Scoring configuration
+scoring:
+  # Severity weights for score calculation
+  severity_weights:
+    critical: 10
+    high: 7
+    medium: 4
+    low: 1
+    info: 0
+
+  # Vulnerability type multipliers
+  type_multipliers:
+    prompt_injection: 1.5
+    command_injection: 1.5
+    tool_poisoning: 1.3
+    hardcoded_secret: 1.2
+    vulnerable_dependency: 1.1
+    permission_abuse: 1.1
+    generic: 1.0
+
+  # Special deductions
+  deductions:
+    critical_prompt_injection: 0.3  # 30% deduction
+    multiple_secrets: 0.15          # 15% deduction
+    many_high_severity: 0.1         # 10% deduction
+
+# Reporting configuration
+reporting:
+  # Include evidence in findings
+  include_evidence: true
+
+  # Maximum findings per severity
+  max_findings_per_severity: 100
+
+  # Include SBOM in results
+  include_sbom_summary: true
+
+  # Risk indicators to include
+  risk_indicators:
+    - epss_score
+    - kev_data
+    - cvss_score
+    - exploit_available
+
+# Performance optimizations
+performance:
+  # Enable SBOM caching
+  cache_sboms: true
+
+  # SBOM cache TTL (seconds)
+  sbom_cache_ttl: 3600
+
+  # Enable parallel analyzer execution
+  parallel_execution: true
+
+  # Skip analyzers for certain file patterns
+  skip_patterns:
+    - "*.min.js"
+    - "*.test.py"
+    - "*_test.go"
+    - "vendor/*"
+    - "node_modules/*"
+
+# Network configuration
+network:
+  # Proxy settings (if needed)
+  proxy:
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: "localhost,127.0.0.1"
+
+  # Timeout for external requests
+  request_timeout: 30
+
+  # Retry settings
+  retry:
+    max_attempts: 3
+    backoff_factor: 2
+
+# Logging configuration
+logging:
+  # Log level (DEBUG, INFO, WARNING, ERROR)
+  level: INFO
+
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+  # Log file (optional)
+  file: "/var/log/mcp-scanner.log"
+
+  # Log rotation
+  rotation:
+    max_bytes: 10485760  # 10MB
+    backup_count: 5

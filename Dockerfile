@@ -6,24 +6,38 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     git \
     curl \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Install security tools
+# Install Python security tools
 RUN pip install --no-cache-dir \
-    bandit==1.7.5 \
-    safety==2.3.5 \
-    pip-audit==2.6.1
+    bandit==1.7.10 \
+    semgrep==1.97.0
 
-# Install semgrep
-RUN curl -L https://github.com/returntocorp/semgrep/releases/latest/download/semgrep-linux-x64 -o /usr/local/bin/semgrep \
-    && chmod +x /usr/local/bin/semgrep
+# Install Trivy
+RUN wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | tee /usr/share/keyrings/trivy.gpg > /dev/null && \
+    echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | tee -a /etc/apt/sources.list.d/trivy.list && \
+    apt-get update && \
+    apt-get install -y trivy && \
+    rm -rf /var/lib/apt/lists/*
 
-# Install trufflehog
-RUN curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sh -s -- -b /usr/local/bin
+# Install Grype (specific version to avoid GitHub API issues)
+RUN wget https://github.com/anchore/grype/releases/download/v0.84.0/grype_0.84.0_linux_amd64.tar.gz && \
+    tar -xzf grype_0.84.0_linux_amd64.tar.gz && \
+    mv grype /usr/local/bin/ && \
+    rm grype_0.84.0_linux_amd64.tar.gz
 
-# Install osv-scanner
-RUN curl -L https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 -o /usr/local/bin/osv-scanner \
-    && chmod +x /usr/local/bin/osv-scanner
+# Install Syft (specific version)
+RUN wget https://github.com/anchore/syft/releases/download/v1.18.0/syft_1.18.0_linux_amd64.tar.gz && \
+    tar -xzf syft_1.18.0_linux_amd64.tar.gz && \
+    mv syft /usr/local/bin/ && \
+    rm syft_1.18.0_linux_amd64.tar.gz
+
+# Install TruffleHog (specific version)
+RUN wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.0/trufflehog_3.82.0_linux_amd64.tar.gz && \
+    tar -xzf trufflehog_3.82.0_linux_amd64.tar.gz && \
+    mv trufflehog /usr/local/bin/ && \
+    rm trufflehog_3.82.0_linux_amd64.tar.gz
 
 # Production stage
 FROM python:3.11-slim
@@ -32,13 +46,18 @@ FROM python:3.11-slim
 RUN apt-get update && apt-get install -y \
     git \
     docker.io \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
 # Copy security tools from builder
 COPY --from=builder /usr/local/bin/semgrep /usr/local/bin/semgrep
 COPY --from=builder /usr/local/bin/trufflehog /usr/local/bin/trufflehog
-COPY --from=builder /usr/local/bin/osv-scanner /usr/local/bin/osv-scanner
+COPY --from=builder /usr/local/bin/grype /usr/local/bin/grype
+COPY --from=builder /usr/local/bin/syft /usr/local/bin/syft
+COPY --from=builder /usr/bin/trivy /usr/bin/trivy
+
+# Copy Python packages for security tools
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
 # Create non-root user
@@ -55,6 +74,10 @@ COPY . .
 
 # Change ownership
 RUN chown -R scanner:scanner /app
+
+# Create directories for tools
+RUN mkdir -p /home/scanner/.cache && \
+    chown -R scanner:scanner /home/scanner
 
 # Switch to non-root user
 USER scanner

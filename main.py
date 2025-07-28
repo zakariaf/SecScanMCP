@@ -90,46 +90,53 @@ async def list_security_tools():
     return {
         "tools": [
             {
+                "name": "trivy",
+                "version": "0.60.0",
+                "description": "Comprehensive vulnerability scanner by Aqua Security",
+                "type": "universal",
+                "capabilities": ["vulnerabilities", "secrets", "misconfigurations", "licenses"]
+            },
+            {
+                "name": "grype",
+                "version": "0.84.0",
+                "description": "Fast vulnerability scanner by Anchore",
+                "type": "universal",
+                "capabilities": ["vulnerabilities", "sbom-scan"]
+            },
+            {
+                "name": "syft",
+                "version": "1.18.0",
+                "description": "SBOM generator and component analyzer",
+                "type": "universal",
+                "capabilities": ["sbom", "licenses", "components"]
+            },
+            {
                 "name": "bandit",
-                "version": "1.7.5",
+                "version": "1.7.10",
                 "description": "Security linter for Python code",
-                "type": "static"
+                "type": "static",
+                "languages": ["python"]
             },
             {
                 "name": "semgrep",
-                "version": "1.45.0",
+                "version": "1.97.0",
                 "description": "Static analysis with custom rules",
-                "type": "static"
-            },
-            {
-                "name": "safety",
-                "version": "2.3.5",
-                "description": "Checks dependencies for known vulnerabilities",
-                "type": "dependency"
+                "type": "static",
+                "languages": ["python", "javascript", "typescript", "go", "rust", "java", "ruby", "php"]
             },
             {
                 "name": "trufflehog",
-                "version": "3.63.0",
+                "version": "3.82.0",
                 "description": "Searches for secrets in code",
-                "type": "secrets"
-            },
-            {
-                "name": "osv-scanner",
-                "version": "1.4.3",
-                "description": "Google's vulnerability scanner",
-                "type": "dependency"
-            },
-            {
-                "name": "pip-audit",
-                "version": "2.6.1",
-                "description": "Audits Python packages for vulnerabilities",
-                "type": "dependency"
+                "type": "secrets",
+                "capabilities": ["secrets", "api-keys", "credentials"]
             },
             {
                 "name": "mcp-analyzer",
                 "version": "1.0.0",
                 "description": "Custom MCP-specific security checks",
-                "type": "mcp"
+                "type": "mcp",
+                "capabilities": ["prompt-injection", "tool-poisoning", "permission-abuse"]
             }
         ]
     }

@@ -5,20 +5,26 @@ A streamlined security scanner for Model Context Protocol (MCP) servers that foc
 ## Features
 
 - **Comprehensive Security Analysis**
-  - Static code analysis using industry-standard tools
+  - Universal vulnerability scanning for 20+ languages
   - MCP-specific vulnerability detection
   - Dynamic behavioral analysis
-  - Dependency vulnerability scanning
-  - Secret detection
+  - Secret and credential detection
+  - License compliance checking
+  - SBOM generation and analysis
 
-- **Integrated Security Tools**
+- **Universal Security Tools**
+  - **Trivy** - All-in-one scanner (vulnerabilities, secrets, misconfigs, licenses)
+  - **Grype** - Fast vulnerability scanner with EPSS/KEV data
+  - **Syft** - SBOM generator supporting SPDX/CycloneDX
   - **Bandit** - Python AST-based security linter
-  - **Semgrep** - Pattern-based static analysis
-  - **Safety** - Python dependency checker
+  - **Semgrep** - Multi-language pattern-based analysis
   - **TruffleHog** - Secret scanner
-  - **OSV-Scanner** - Google's vulnerability database
-  - **pip-audit** - PyPA's official audit tool
   - **Custom MCP analyzers** - Prompt injection, tool poisoning, etc.
+
+- **Language Support**
+  - Python, JavaScript/TypeScript, Go, Rust, Java, Ruby, PHP, C/C++
+  - Automatic language detection
+  - Package manager support (pip, npm, cargo, go mod, maven, etc.)
 
 - **Simple API**
   - Single endpoint: `POST /scan`

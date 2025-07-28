@@ -121,7 +121,7 @@ class ScanResult(BaseModel):
 
     # Scoring
     security_score: float = Field(ge=0.0, le=100.0)
-    security_grade: str = Field(regex="^[A-F][+-]?$")
+    security_grade: str = Field(pattern="^[A-F][+-]?$")  # Changed from regex to pattern
 
     # Summary
     summary: Dict[str, Any]

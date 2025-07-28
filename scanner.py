@@ -15,10 +15,10 @@ import shutil
 from analyzers import (
     BanditAnalyzer,
     SemgrepAnalyzer,
-    SafetyAnalyzer,
+    TrivyAnalyzer,
+    GrypeAnalyzer,
+    SyftAnalyzer,
     TruffleHogAnalyzer,
-    OSVScannerAnalyzer,
-    PipAuditAnalyzer,
     MCPSpecificAnalyzer,
     DynamicAnalyzer
 )
@@ -34,14 +34,14 @@ class SecurityScanner:
     def __init__(self):
         # Initialize all analyzers
         self.analyzers = {
-            'bandit': BanditAnalyzer(),
-            'semgrep': SemgrepAnalyzer(),
-            'safety': SafetyAnalyzer(),
-            'trufflehog': TruffleHogAnalyzer(),
-            'osv_scanner': OSVScannerAnalyzer(),
-            'pip_audit': PipAuditAnalyzer(),
-            'mcp_specific': MCPSpecificAnalyzer(),
-            'dynamic': DynamicAnalyzer()
+            'syft': SyftAnalyzer(),          # SBOM generation first
+            'trivy': TrivyAnalyzer(),        # Comprehensive scanner
+            'grype': GrypeAnalyzer(),        # Fast vulnerability scanner
+            'bandit': BanditAnalyzer(),      # Python AST analysis
+            'semgrep': SemgrepAnalyzer(),    # Pattern-based analysis
+            'trufflehog': TruffleHogAnalyzer(), # Secret detection
+            'mcp_specific': MCPSpecificAnalyzer(), # MCP vulnerabilities
+            'dynamic': DynamicAnalyzer()     # Behavioral analysis
         }
 
         self.scorer = SecurityScorer()
@@ -170,9 +170,7 @@ class SecurityScanner:
             except:
                 pass
 
-        elif (Path(repo_path) / 'requirements.txt').exists() or
-              (Path(repo_path) / 'pyproject.toml').exists() or
-              (Path(repo_path) / 'setup.py').exists()):
+        elif (Path(repo_path) / 'requirements.txt').exists() or (Path(repo_path) / 'pyproject.toml').exists() or (Path(repo_path) / 'setup.py').exists():
             project_info['type'] = 'python'
             project_info['language'] = 'python'
             # Check for MCP in Python files
@@ -208,12 +206,15 @@ class SecurityScanner:
         # Determine which analyzers to run
         analyzers_to_run = []
 
+        # Always run SBOM generation first
+        analyzers_to_run.append('syft')
+
+        # Universal analyzers that work for all languages
+        analyzers_to_run.extend(['trivy', 'grype', 'semgrep', 'trufflehog'])
+
         # Language-specific analyzers
         if project_info['language'] == 'python':
-            analyzers_to_run.extend(['bandit', 'safety', 'pip_audit'])
-
-        # Universal analyzers
-        analyzers_to_run.extend(['semgrep', 'trufflehog', 'osv_scanner'])
+            analyzers_to_run.append('bandit')
 
         # MCP-specific if applicable
         if project_info['is_mcp']:
