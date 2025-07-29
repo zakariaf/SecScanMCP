@@ -39,31 +39,28 @@ services:
     networks:
       - scanner-network
 
-  # ClamAV malware detection service
   clamav:
     image: clamav/clamav:latest
     container_name: clamav
     platform: linux/amd64
     restart: unless-stopped
     volumes:
-      # Persist virus database
+      # Only persist virus database, let ClamAV handle its own config
       - clamav-db:/var/lib/clamav
-      # Custom configuration
-      - ./config/clamav/clamd.conf:/etc/clamav/clamd.conf:ro
-      - ./config/clamav/freshclam.conf:/etc/clamav/freshclam.conf:ro
-    ports:
-      - "3310:3310"  # Only expose internally
+    expose:
+      - "3310"  # Only expose to internal network
     healthcheck:
-      test: ["CMD", "clamdscan", "--ping"]
+      # Simple TCP ping test
+      test: ["CMD-SHELL", "echo PING | nc localhost 3310 | grep -q PONG"]
       interval: 60s
       timeout: 10s
-      retries: 5
-      start_period: 600s  # ClamAV needs time to download signatures
+      retries: 10
+      start_period: 600s  # Give ClamAV 10 minutes to download signatures
     deploy:
       resources:
         limits:
           cpus: '1'
-          memory: 2G  # ClamAV needs 2GB+ for signature loading
+          memory: 2G
         reservations:
           cpus: '0.5'
           memory: 1.5G
