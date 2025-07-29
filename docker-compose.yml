@@ -43,6 +43,7 @@ services:
   clamav:
     image: clamav/clamav:latest
     container_name: clamav
+    platform: linux/amd64
     restart: unless-stopped
     volumes:
       # Persist virus database
