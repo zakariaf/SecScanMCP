@@ -90,6 +90,13 @@ async def list_security_tools():
     return {
         "tools": [
             {
+                "name": "yara",
+                "version": "4.5.0",
+                "description": "Advanced pattern matching engine for APTs and polymorphic malware",
+                "type": "pattern-matching",
+                "capabilities": ["apt-detection", "polymorphic-malware", "complex-patterns", "threat-hunting"]
+            },
+            {
                 "name": "clamav",
                 "version": "1.4.0",
                 "description": "Enterprise malware detection engine with 8M+ signatures",

@@ -19,6 +19,8 @@ services:
       - /tmp/mcp-scanner:/tmp/mcp-scanner
       # Cache directories for tools (using named volumes)
       - scanner-cache:/home/scanner/.cache
+      # YARA rules directory
+      - ./rules:/app/rules:ro
     restart: unless-stopped
     depends_on:
       clamav:

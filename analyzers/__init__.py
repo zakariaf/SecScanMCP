@@ -13,6 +13,7 @@ from .mcp_analyzer import MCPSpecificAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
 
 from .security_tools.clamav_analyzer import ClamAVAnalyzer
+from .security_tools.yara_analyzer import YARAAnalyzer
 
 __all__ = [
     'BaseAnalyzer',
@@ -24,5 +25,6 @@ __all__ = [
     'TruffleHogAnalyzer',
     'MCPSpecificAnalyzer',
     'DynamicAnalyzer',
-    'ClamAVAnalyzer'
+    'ClamAVAnalyzer',
+    'YARAAnalyzer'
 ]

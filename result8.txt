@@ -1,0 +1,1344 @@
+Scanning https://github.com/MrunmayS/exa-mcp-server...
+{
+    "repository_url": "https://github.com/MrunmayS/exa-mcp-server",
+    "project_type": "node",
+    "is_mcp_server": false,
+    "findings": [
+        {
+            "vulnerability_type": "vulnerable_dependency",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "CVE-2025-27152: axios 1.7.8",
+            "description": "axios: Possible SSRF and Credential Leakage via Absolute URL in axios Requests. axios is a promise based HTTP client for the browser and node.js. The issue occurs when passing absolute URLs rather than protocol-relative URLs to axios. Even if \u2060baseURL is set, axios sends the request to the specified absolute URL, potentially causing SSRF and credential leakage. This issue impacts both server-side and client-side usage of axios. This issue is fixed in 1.8.2.",
+            "location": "package-lock.json",
+            "recommendation": "Update axios to version 1.8.2, 0.30.0 or later",
+            "references": [
+                "https://avd.aquasec.com/nvd/cve-2025-27152",
+                "https://access.redhat.com/security/cve/CVE-2025-27152",
+                "https://github.com/axios/axios",
+                "https://github.com/axios/axios/commit/02c3c69ced0f8fd86407c23203835892313d7fde",
+                "https://github.com/axios/axios/commit/fb8eec214ce7744b5ca787f2c3b8339b2f54b00f",
+                "https://github.com/axios/axios/issues/6463",
+                "https://github.com/axios/axios/pull/6829",
+                "https://github.com/axios/axios/releases/tag/v1.8.2",
+                "https://github.com/axios/axios/security/advisories/GHSA-jr5f-v2jv-69x6",
+                "https://nvd.nist.gov/vuln/detail/CVE-2025-27152",
+                "https://www.cve.org/CVERecord?id=CVE-2025-27152"
+            ],
+            "evidence": {
+                "vulnerability_id": "CVE-2025-27152",
+                "package": "axios",
+                "installed_version": "1.7.8",
+                "fixed_version": "1.8.2, 0.30.0",
+                "data_source": {
+                    "ID": "ghsa",
+                    "Name": "GitHub Security Advisory npm",
+                    "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+                },
+                "cvss_score": 5.3,
+                "exploit_available": false
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": "CVE-2025-27152"
+        },
+        {
+            "vulnerability_type": "vulnerable_dependency",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "CVE-2025-7783: form-data 4.0.1",
+            "description": "form-data: Unsafe random function in form-data. Use of Insufficiently Random Values vulnerability in form-data allows HTTP Parameter Pollution (HPP). This vulnerability is associated with program files lib/form_data.Js.\n\nThis issue affects form-data: < 2.5.4, 3.0.0 - 3.0.3, 4.0.0 - 4.0.3.",
+            "location": "package-lock.json",
+            "recommendation": "Update form-data to version 2.5.4, 3.0.4, 4.0.4 or later",
+            "references": [
+                "https://avd.aquasec.com/nvd/cve-2025-7783",
+                "https://access.redhat.com/security/cve/CVE-2025-7783",
+                "https://github.com/benweissmann/CVE-2025-7783-poc",
+                "https://github.com/form-data/form-data",
+                "https://github.com/form-data/form-data/commit/3d1723080e6577a66f17f163ecd345a21d8d0fd0",
+                "https://github.com/form-data/form-data/security/advisories/GHSA-fjxv-7rqg-78g4",
+                "https://nvd.nist.gov/vuln/detail/CVE-2025-7783",
+                "https://www.cve.org/CVERecord?id=CVE-2025-7783"
+            ],
+            "evidence": {
+                "vulnerability_id": "CVE-2025-7783",
+                "package": "form-data",
+                "installed_version": "4.0.1",
+                "fixed_version": "2.5.4, 3.0.4, 4.0.4",
+                "data_source": {
+                    "ID": "ghsa",
+                    "Name": "GitHub Security Advisory npm",
+                    "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+                },
+                "cvss_score": 5.4,
+                "exploit_available": false
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": "CVE-2025-7783"
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Image user should not be 'root'",
+            "description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+            "location": "Dockerfile",
+            "recommendation": "Add 'USER <non root user name>' line to the Dockerfile",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+                "https://avd.aquasec.com/misconfig/ds002"
+            ],
+            "evidence": {
+                "check_id": "DS002",
+                "type": "Dockerfile Security Check",
+                "message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "low",
+            "confidence": 0.9,
+            "title": "Misconfiguration: No HEALTHCHECK defined",
+            "description": "You should add HEALTHCHECK instruction in your docker container images to perform the health check on running containers.",
+            "location": "Dockerfile",
+            "recommendation": "Add HEALTHCHECK instruction in Dockerfile",
+            "references": [
+                "https://blog.aquasec.com/docker-security-best-practices",
+                "https://avd.aquasec.com/misconfig/ds026"
+            ],
+            "evidence": {
+                "check_id": "DS026",
+                "type": "Dockerfile Security Check",
+                "message": "Add HEALTHCHECK instruction in your Dockerfile",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Secrets passed via `build-args` or envs or copied secret files",
+            "description": "Passing secrets via `build-args` or envs or copying secret files can leak them out",
+            "location": "Dockerfile:33",
+            "recommendation": "Use secret mount if secrets are needed during image build. Use volume mount if secret files are needed during container runtime.",
+            "references": [
+                "https://docs.docker.com/build/building/secrets/",
+                "https://avd.aquasec.com/misconfig/ds031"
+            ],
+            "evidence": {
+                "check_id": "DS031",
+                "type": "Dockerfile Security Check",
+                "message": "Possible exposure of secret env \"EXA_API_KEY\" in ENV",
+                "code_sample": {
+                    "Lines": [
+                        {
+                            "Number": 33,
+                            "Content": "ENV EXA_API_KEY=your-api-key-here",
+                            "IsCause": true,
+                            "Annotation": "",
+                            "Truncated": false,
+                            "Highlighted": "\u001b[38;5;64mENV\u001b[0m \u001b[38;5;33mEXA_API_KEY\u001b[0m\u001b[38;5;245m=\u001b[0myour-api-key-here",
+                            "FirstCause": true,
+                            "LastCause": true
+                        }
+                    ]
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "medium",
+            "confidence": 0.9,
+            "title": "Misconfiguration: ':latest' tag used",
+            "description": "When using a 'FROM' statement you should use a specific tag to avoid uncontrolled behavior when the image is updated.",
+            "location": "Dockerfile",
+            "recommendation": "Add a tag to the image in the 'FROM' statement",
+            "references": [
+                "https://avd.aquasec.com/misconfig/ds001"
+            ],
+            "evidence": {
+                "check_id": "DS001",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "medium",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Port 22 exposed",
+            "description": "Exposing port 22 might allow users to SSH into the container.",
+            "location": "Dockerfile",
+            "recommendation": "Remove 'EXPOSE 22' statement from the Dockerfile",
+            "references": [
+                "https://avd.aquasec.com/misconfig/ds004"
+            ],
+            "evidence": {
+                "check_id": "DS004",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "low",
+            "confidence": 0.9,
+            "title": "Misconfiguration: ADD instead of COPY",
+            "description": "You should use COPY instead of ADD unless you want to extract a tar file. Note that an ADD command will extract a tar file, which adds the risk of Zip-based vulnerabilities. Accordingly, it is advised to use a COPY command, which does not extract tar files.",
+            "location": "Dockerfile",
+            "recommendation": "Use COPY instead of ADD",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#add",
+                "https://avd.aquasec.com/misconfig/ds005"
+            ],
+            "evidence": {
+                "check_id": "DS005",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: COPY '--from' referring to the current image",
+            "description": "COPY '--from' should not mention the current FROM alias, since it is impossible to copy from itself.",
+            "location": "Dockerfile",
+            "recommendation": "Change the '--from' so that it will not refer to itself",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/multistage-build/",
+                "https://avd.aquasec.com/misconfig/ds006"
+            ],
+            "evidence": {
+                "check_id": "DS006",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Multiple ENTRYPOINT instructions listed",
+            "description": "There can only be one ENTRYPOINT instruction in a Dockerfile. Only the last ENTRYPOINT instruction in the Dockerfile will have an effect.",
+            "location": "Dockerfile",
+            "recommendation": "Remove unnecessary ENTRYPOINT instruction.",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#entrypoint",
+                "https://avd.aquasec.com/misconfig/ds007"
+            ],
+            "evidence": {
+                "check_id": "DS007",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Exposed port out of range",
+            "description": "UNIX ports outside the range 0-65535 are exposed.",
+            "location": "Dockerfile",
+            "recommendation": "Use port number within range",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#expose",
+                "https://avd.aquasec.com/misconfig/ds008"
+            ],
+            "evidence": {
+                "check_id": "DS008",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: WORKDIR path not absolute",
+            "description": "For clarity and reliability, you should always use absolute paths for your WORKDIR.",
+            "location": "Dockerfile",
+            "recommendation": "Use absolute paths for your WORKDIR",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#workdir",
+                "https://avd.aquasec.com/misconfig/ds009"
+            ],
+            "evidence": {
+                "check_id": "DS009",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: RUN using 'sudo'",
+            "description": "Avoid using 'RUN' with 'sudo' commands, as it can lead to unpredictable behavior.",
+            "location": "Dockerfile",
+            "recommendation": "Don't use sudo",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#run",
+                "https://avd.aquasec.com/misconfig/ds010"
+            ],
+            "evidence": {
+                "check_id": "DS010",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: COPY with more than two arguments not ending with slash",
+            "description": "When a COPY command has more than two arguments, the last one should end with a slash.",
+            "location": "Dockerfile",
+            "recommendation": "Add slash to last COPY argument",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#copy",
+                "https://avd.aquasec.com/misconfig/ds011"
+            ],
+            "evidence": {
+                "check_id": "DS011",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "critical",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Duplicate aliases defined in different FROMs",
+            "description": "Different FROMs can't have the same alias defined.",
+            "location": "Dockerfile",
+            "recommendation": "Change aliases to make them different",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/multistage-build/",
+                "https://avd.aquasec.com/misconfig/ds012"
+            ],
+            "evidence": {
+                "check_id": "DS012",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "medium",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'RUN cd ...' to change directory",
+            "description": "Use WORKDIR instead of proliferating instructions like 'RUN cd \u2026 && do-something', which are hard to read, troubleshoot, and maintain.",
+            "location": "Dockerfile",
+            "recommendation": "Use WORKDIR to change directory",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#workdir",
+                "https://avd.aquasec.com/misconfig/ds013"
+            ],
+            "evidence": {
+                "check_id": "DS013",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "low",
+            "confidence": 0.9,
+            "title": "Misconfiguration: RUN using 'wget' and 'curl'",
+            "description": "Avoid using both 'wget' and 'curl' since these tools have the same effect.",
+            "location": "Dockerfile",
+            "recommendation": "Pick one util, either 'wget' or 'curl'",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run",
+                "https://avd.aquasec.com/misconfig/ds014"
+            ],
+            "evidence": {
+                "check_id": "DS014",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'yum clean all' missing",
+            "description": "You should use 'yum clean all' after using a 'yum install' command to clean package cached data and reduce image size.",
+            "location": "Dockerfile",
+            "recommendation": "Add 'yum clean all' to Dockerfile",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run",
+                "https://avd.aquasec.com/misconfig/ds015"
+            ],
+            "evidence": {
+                "check_id": "DS015",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Multiple CMD instructions listed",
+            "description": "There can only be one CMD instruction in a Dockerfile. If you list more than one CMD then only the last CMD will take effect.",
+            "location": "Dockerfile",
+            "recommendation": "Dockerfile should only have one CMD instruction. Remove all the other CMD instructions",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#cmd",
+                "https://avd.aquasec.com/misconfig/ds016"
+            ],
+            "evidence": {
+                "check_id": "DS016",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'RUN <package-manager> update' instruction alone",
+            "description": "The instruction 'RUN <package-manager> update' should always be followed by '<package-manager> install' in the same RUN statement.",
+            "location": "Dockerfile",
+            "recommendation": "Combine '<package-manager> update' and '<package-manager> install' instructions to single one",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/instructions/#run",
+                "https://avd.aquasec.com/misconfig/ds017"
+            ],
+            "evidence": {
+                "check_id": "DS017",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'dnf clean all' missing",
+            "description": "Cached package data should be cleaned after installation to reduce image size.",
+            "location": "Dockerfile",
+            "recommendation": "Add 'dnf clean all' to Dockerfile",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+                "https://avd.aquasec.com/misconfig/ds019"
+            ],
+            "evidence": {
+                "check_id": "DS019",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'zypper clean' missing",
+            "description": "The layer and image size should be reduced by deleting unneeded caches after running zypper.",
+            "location": "Dockerfile",
+            "recommendation": "Add 'zypper clean' to Dockerfile",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#run",
+                "https://avd.aquasec.com/misconfig/ds020"
+            ],
+            "evidence": {
+                "check_id": "DS020",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'apt-get' missing '-y' to avoid manual input",
+            "description": "'apt-get' calls should use the flag '-y' to avoid manual user input.",
+            "location": "Dockerfile",
+            "recommendation": "Add '-y' flag to 'apt-get'",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#run",
+                "https://avd.aquasec.com/misconfig/ds021"
+            ],
+            "evidence": {
+                "check_id": "DS021",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Deprecated MAINTAINER used",
+            "description": "MAINTAINER has been deprecated since Docker 1.13.0.",
+            "location": "Dockerfile",
+            "recommendation": "Use LABEL instead of MAINTAINER",
+            "references": [
+                "https://docs.docker.com/engine/deprecated/#maintainer-in-dockerfile",
+                "https://avd.aquasec.com/misconfig/ds022"
+            ],
+            "evidence": {
+                "check_id": "DS022",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "medium",
+            "confidence": 0.9,
+            "title": "Misconfiguration: Multiple HEALTHCHECK defined",
+            "description": "Providing more than one HEALTHCHECK instruction per stage is confusing and error-prone.",
+            "location": "Dockerfile",
+            "recommendation": "One HEALTHCHECK instruction must remain in Dockerfile. Remove all other instructions.",
+            "references": [
+                "https://docs.docker.com/engine/reference/builder/#healthcheck",
+                "https://avd.aquasec.com/misconfig/ds023"
+            ],
+            "evidence": {
+                "check_id": "DS023",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'apk add' is missing '--no-cache'",
+            "description": "You should use 'apk add' with '--no-cache' to clean package cached data and reduce image size.",
+            "location": "Dockerfile",
+            "recommendation": "Add '--no-cache' to 'apk add' in Dockerfile",
+            "references": [
+                "https://github.com/gliderlabs/docker-alpine/blob/master/docs/usage.md#disabling-cache",
+                "https://avd.aquasec.com/misconfig/ds025"
+            ],
+            "evidence": {
+                "check_id": "DS025",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'microdnf clean all' missing",
+            "description": "Cached package data should be cleaned after installation to reduce image size.",
+            "location": "Dockerfile",
+            "recommendation": "Add 'microdnf clean all' to Dockerfile",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+                "https://avd.aquasec.com/misconfig/ds027"
+            ],
+            "evidence": {
+                "check_id": "DS027",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: 'apt-get' missing '--no-install-recommends'",
+            "description": "'apt-get' install should use '--no-install-recommends' to minimize image size.",
+            "location": "Dockerfile",
+            "recommendation": "Add '--no-install-recommends' flag to 'apt-get'",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/",
+                "https://avd.aquasec.com/misconfig/ds029"
+            ],
+            "evidence": {
+                "check_id": "DS029",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "insecure_configuration",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Misconfiguration: WORKDIR should not be mounted on system dirs",
+            "description": "WORKDIR should not be mounted on system directories to avoid container breakouts",
+            "location": "Dockerfile",
+            "recommendation": "Avoid using system directories to mount WORKDIR",
+            "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#workdir",
+                "https://avd.aquasec.com/misconfig/ds030"
+            ],
+            "evidence": {
+                "check_id": "DS030",
+                "type": "Dockerfile Security Check",
+                "message": "No issues found",
+                "code_sample": {
+                    "Lines": null
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        }
+    ],
+    "total_findings": 29,
+    "security_score": 34.2,
+    "security_grade": "F",
+    "summary": {
+        "total_findings": 29,
+        "severity_breakdown": {
+            "critical": 8,
+            "high": 14,
+            "medium": 4,
+            "low": 3,
+            "info": 0
+        },
+        "vulnerability_types": {
+            "vulnerable_dependency": 2,
+            "insecure_configuration": 27
+        },
+        "security_score": 34.2,
+        "security_grade": "F",
+        "risk_level": "critical",
+        "top_risks": [
+            {
+                "title": "CVE-2025-7783: form-data 4.0.1",
+                "severity": "critical",
+                "type": "vulnerable_dependency",
+                "location": "package-lock.json"
+            },
+            {
+                "title": "Misconfiguration: Secrets passed via `build-args` or envs or copied secret files",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile:33"
+            },
+            {
+                "title": "Misconfiguration: COPY '--from' referring to the current image",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile"
+            }
+        ]
+    },
+    "detailed_results": {
+        "trivy": [
+            {
+                "title": "CVE-2025-27152: axios 1.7.8",
+                "severity": "high",
+                "type": "vulnerable_dependency",
+                "location": "package-lock.json",
+                "description": "axios: Possible SSRF and Credential Leakage via Absolute URL in axios Requests. axios is a promise based HTTP client for the browser and node.js. The issue occurs when passing absolute URLs rather than protocol-relative URLs to axios. Even if \u2060baseURL is set, axios sends the request to the specified absolute URL, potentially causing SSRF and credential leakage. This issue impacts both server-side and client-side usage of axios. This issue is fixed in 1.8.2.",
+                "recommendation": "Update axios to version 1.8.2, 0.30.0 or later",
+                "confidence": 0.95,
+                "evidence": {
+                    "vulnerability_id": "CVE-2025-27152",
+                    "package": "axios",
+                    "installed_version": "1.7.8",
+                    "fixed_version": "1.8.2, 0.30.0",
+                    "data_source": {
+                        "ID": "ghsa",
+                        "Name": "GitHub Security Advisory npm",
+                        "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+                    },
+                    "cvss_score": 5.3,
+                    "exploit_available": false
+                }
+            },
+            {
+                "title": "CVE-2025-7783: form-data 4.0.1",
+                "severity": "critical",
+                "type": "vulnerable_dependency",
+                "location": "package-lock.json",
+                "description": "form-data: Unsafe random function in form-data. Use of Insufficiently Random Values vulnerability in form-data allows HTTP Parameter Pollution (HPP). This vulnerability is associated with program files lib/form_data.Js.\n\nThis issue affects form-data: < 2.5.4, 3.0.0 - 3.0.3, 4.0.0 - 4.0.3.",
+                "recommendation": "Update form-data to version 2.5.4, 3.0.4, 4.0.4 or later",
+                "confidence": 0.95,
+                "evidence": {
+                    "vulnerability_id": "CVE-2025-7783",
+                    "package": "form-data",
+                    "installed_version": "4.0.1",
+                    "fixed_version": "2.5.4, 3.0.4, 4.0.4",
+                    "data_source": {
+                        "ID": "ghsa",
+                        "Name": "GitHub Security Advisory npm",
+                        "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anpm"
+                    },
+                    "cvss_score": 5.4,
+                    "exploit_available": false
+                }
+            },
+            {
+                "title": "Misconfiguration: Image user should not be 'root'",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Running containers with 'root' user can lead to a container escape situation. It is a best practice to run containers as non-root users, which can be done by adding a 'USER' statement to the Dockerfile.",
+                "recommendation": "Add 'USER <non root user name>' line to the Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS002",
+                    "type": "Dockerfile Security Check",
+                    "message": "Specify at least 1 USER command in Dockerfile with non-root user as argument",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: No HEALTHCHECK defined",
+                "severity": "low",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "You should add HEALTHCHECK instruction in your docker container images to perform the health check on running containers.",
+                "recommendation": "Add HEALTHCHECK instruction in Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS026",
+                    "type": "Dockerfile Security Check",
+                    "message": "Add HEALTHCHECK instruction in your Dockerfile",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Secrets passed via `build-args` or envs or copied secret files",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile:33",
+                "description": "Passing secrets via `build-args` or envs or copying secret files can leak them out",
+                "recommendation": "Use secret mount if secrets are needed during image build. Use volume mount if secret files are needed during container runtime.",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS031",
+                    "type": "Dockerfile Security Check",
+                    "message": "Possible exposure of secret env \"EXA_API_KEY\" in ENV",
+                    "code_sample": {
+                        "Lines": [
+                            {
+                                "Number": 33,
+                                "Content": "ENV EXA_API_KEY=your-api-key-here",
+                                "IsCause": true,
+                                "Annotation": "",
+                                "Truncated": false,
+                                "Highlighted": "\u001b[38;5;64mENV\u001b[0m \u001b[38;5;33mEXA_API_KEY\u001b[0m\u001b[38;5;245m=\u001b[0myour-api-key-here",
+                                "FirstCause": true,
+                                "LastCause": true
+                            }
+                        ]
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: ':latest' tag used",
+                "severity": "medium",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "When using a 'FROM' statement you should use a specific tag to avoid uncontrolled behavior when the image is updated.",
+                "recommendation": "Add a tag to the image in the 'FROM' statement",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS001",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Port 22 exposed",
+                "severity": "medium",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Exposing port 22 might allow users to SSH into the container.",
+                "recommendation": "Remove 'EXPOSE 22' statement from the Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS004",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: ADD instead of COPY",
+                "severity": "low",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "You should use COPY instead of ADD unless you want to extract a tar file. Note that an ADD command will extract a tar file, which adds the risk of Zip-based vulnerabilities. Accordingly, it is advised to use a COPY command, which does not extract tar files.",
+                "recommendation": "Use COPY instead of ADD",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS005",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: COPY '--from' referring to the current image",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "COPY '--from' should not mention the current FROM alias, since it is impossible to copy from itself.",
+                "recommendation": "Change the '--from' so that it will not refer to itself",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS006",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Multiple ENTRYPOINT instructions listed",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "There can only be one ENTRYPOINT instruction in a Dockerfile. Only the last ENTRYPOINT instruction in the Dockerfile will have an effect.",
+                "recommendation": "Remove unnecessary ENTRYPOINT instruction.",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS007",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Exposed port out of range",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "UNIX ports outside the range 0-65535 are exposed.",
+                "recommendation": "Use port number within range",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS008",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: WORKDIR path not absolute",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "For clarity and reliability, you should always use absolute paths for your WORKDIR.",
+                "recommendation": "Use absolute paths for your WORKDIR",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS009",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: RUN using 'sudo'",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Avoid using 'RUN' with 'sudo' commands, as it can lead to unpredictable behavior.",
+                "recommendation": "Don't use sudo",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS010",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: COPY with more than two arguments not ending with slash",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "When a COPY command has more than two arguments, the last one should end with a slash.",
+                "recommendation": "Add slash to last COPY argument",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS011",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Duplicate aliases defined in different FROMs",
+                "severity": "critical",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Different FROMs can't have the same alias defined.",
+                "recommendation": "Change aliases to make them different",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS012",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'RUN cd ...' to change directory",
+                "severity": "medium",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Use WORKDIR instead of proliferating instructions like 'RUN cd \u2026 && do-something', which are hard to read, troubleshoot, and maintain.",
+                "recommendation": "Use WORKDIR to change directory",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS013",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: RUN using 'wget' and 'curl'",
+                "severity": "low",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Avoid using both 'wget' and 'curl' since these tools have the same effect.",
+                "recommendation": "Pick one util, either 'wget' or 'curl'",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS014",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'yum clean all' missing",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "You should use 'yum clean all' after using a 'yum install' command to clean package cached data and reduce image size.",
+                "recommendation": "Add 'yum clean all' to Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS015",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Multiple CMD instructions listed",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "There can only be one CMD instruction in a Dockerfile. If you list more than one CMD then only the last CMD will take effect.",
+                "recommendation": "Dockerfile should only have one CMD instruction. Remove all the other CMD instructions",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS016",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'RUN <package-manager> update' instruction alone",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "The instruction 'RUN <package-manager> update' should always be followed by '<package-manager> install' in the same RUN statement.",
+                "recommendation": "Combine '<package-manager> update' and '<package-manager> install' instructions to single one",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS017",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'dnf clean all' missing",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Cached package data should be cleaned after installation to reduce image size.",
+                "recommendation": "Add 'dnf clean all' to Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS019",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'zypper clean' missing",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "The layer and image size should be reduced by deleting unneeded caches after running zypper.",
+                "recommendation": "Add 'zypper clean' to Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS020",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'apt-get' missing '-y' to avoid manual input",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "'apt-get' calls should use the flag '-y' to avoid manual user input.",
+                "recommendation": "Add '-y' flag to 'apt-get'",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS021",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Deprecated MAINTAINER used",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "MAINTAINER has been deprecated since Docker 1.13.0.",
+                "recommendation": "Use LABEL instead of MAINTAINER",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS022",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: Multiple HEALTHCHECK defined",
+                "severity": "medium",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Providing more than one HEALTHCHECK instruction per stage is confusing and error-prone.",
+                "recommendation": "One HEALTHCHECK instruction must remain in Dockerfile. Remove all other instructions.",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS023",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'apk add' is missing '--no-cache'",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "You should use 'apk add' with '--no-cache' to clean package cached data and reduce image size.",
+                "recommendation": "Add '--no-cache' to 'apk add' in Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS025",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'microdnf clean all' missing",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "Cached package data should be cleaned after installation to reduce image size.",
+                "recommendation": "Add 'microdnf clean all' to Dockerfile",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS027",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: 'apt-get' missing '--no-install-recommends'",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "'apt-get' install should use '--no-install-recommends' to minimize image size.",
+                "recommendation": "Add '--no-install-recommends' flag to 'apt-get'",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS029",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            },
+            {
+                "title": "Misconfiguration: WORKDIR should not be mounted on system dirs",
+                "severity": "high",
+                "type": "insecure_configuration",
+                "location": "Dockerfile",
+                "description": "WORKDIR should not be mounted on system directories to avoid container breakouts",
+                "recommendation": "Avoid using system directories to mount WORKDIR",
+                "confidence": 0.9,
+                "evidence": {
+                    "check_id": "DS030",
+                    "type": "Dockerfile Security Check",
+                    "message": "No issues found",
+                    "code_sample": {
+                        "Lines": null
+                    }
+                }
+            }
+        ]
+    },
+    "scan_metadata": {
+        "analyzers_run": [
+            "syft",
+            "trivy",
+            "grype",
+            "bandit",
+            "semgrep",
+            "trufflehog",
+            "mcp_specific",
+            "dynamic",
+            "clamav",
+            "yara"
+        ],
+        "project_info": {
+            "type": "node",
+            "language": "javascript",
+            "is_mcp": false,
+            "mcp_config": null,
+            "dependencies": [
+                "@modelcontextprotocol/sdk",
+                "axios",
+                "dotenv",
+                "@types/node",
+                "typescript"
+            ],
+            "sbom_summary": {
+                "total_packages": 26,
+                "package_types": {
+                    "npm": 26
+                },
+                "languages": {
+                    "javascript": 26
+                },
+                "has_binaries": false,
+                "source": {
+                    "id": "1c099e480607b520315beede1592ffc9c04860b321baa4c9f8d17ea9e2177c3c",
+                    "name": "/tmp/mcp_scan_e119ln9y",
+                    "version": "",
+                    "type": "directory",
+                    "metadata": {
+                        "path": "/tmp/mcp_scan_e119ln9y"
+                    }
+                }
+            }
+        },
+        "options": {}
+    },
+    "scan_timestamp": "2025-07-29T19:53:33.280621"
+}

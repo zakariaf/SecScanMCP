@@ -24,3 +24,5 @@ structlog==24.4.0
 
 # Async support
 asyncio-throttle==1.0.2
+
+yara-python==4.5.1

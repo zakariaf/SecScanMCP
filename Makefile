@@ -21,6 +21,9 @@ help:
 	@echo "Development:"
 	@echo "  make dev         - Start with hot reload"
 	@echo "  make install-local - Install tools locally"
+	@echo "  make setup-ClamAV  - Setup ClamAV for local development"
+	@echo "  make setup-yara  - Setup YARA for local development"
+	@echo "  make setup-all   - Setup all security tools"
 
 # Build Docker image
 build:
@@ -81,6 +84,18 @@ dev:
 # Install tools locally (for development)
 install-local:
 	./scripts/install-tools.sh
+
+# Setup ClamAV
+setup-clamav:
+	./scripts/setup_clamav.sh
+
+# Setup YARA
+setup-yara:
+	./scripts/setup_yara.sh
+
+# Setup all security tools
+setup-all: setup-clamav setup-yara
+	@echo "All security tools installed!"
 
 # Quick health check
 health:
