@@ -90,6 +90,13 @@ async def list_security_tools():
     return {
         "tools": [
             {
+                "name": "clamav",
+                "version": "1.4.0",
+                "description": "Enterprise malware detection engine with 8M+ signatures",
+                "type": "malware",
+                "capabilities": ["malware", "virus", "trojan", "backdoor", "rootkit", "ransomware"]
+            },
+            {
                 "name": "trivy",
                 "version": "0.60.0",
                 "description": "Comprehensive vulnerability scanner by Aqua Security",

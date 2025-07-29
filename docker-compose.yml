@@ -9,7 +9,9 @@ services:
     environment:
       - LOG_LEVEL=INFO
       - DOCKER_HOST=unix:///var/run/docker.sock
-      # Cache directories are now set in the Dockerfile
+      # ClamAV configuration
+      - CLAMAV_HOST=clamav
+      - CLAMAV_PORT=3310
     volumes:
       # Mount Docker socket for dynamic analysis
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -18,6 +20,9 @@ services:
       # Cache directories for tools (using named volumes)
       - scanner-cache:/home/scanner/.cache
     restart: unless-stopped
+    depends_on:
+      clamav:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -31,6 +36,36 @@ services:
         reservations:
           cpus: '1'
           memory: 1G
+    networks:
+      - scanner-network
+
+  clamav:
+    image: clamav/clamav:latest
+    container_name: clamav
+    platform: linux/amd64
+    restart: unless-stopped
+    volumes:
+      # Only persist virus database, let ClamAV handle its own config
+      - clamav-db:/var/lib/clamav
+    expose:
+      - "3310"  # Only expose to internal network
+    healthcheck:
+      # Simple TCP ping test
+      test: ["CMD-SHELL", "echo PING | nc localhost 3310 | grep -q PONG"]
+      interval: 60s
+      timeout: 10s
+      retries: 10
+      start_period: 600s  # Give ClamAV 10 minutes to download signatures
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1.5G
+    networks:
+      - scanner-network
 
   # Optional: Standalone container for testing
   test-runner:
@@ -40,6 +75,13 @@ services:
       - .:/app
     profiles:
       - test
+    networks:
+      - scanner-network
 
 volumes:
   scanner-cache:
+  clamav-db:
+
+networks:
+  scanner-network:
+    driver: bridge

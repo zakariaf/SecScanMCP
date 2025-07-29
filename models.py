@@ -44,6 +44,9 @@ class VulnerabilityType(str, Enum):
     INSECURE_CONFIGURATION = "insecure_configuration"
     MISSING_SECURITY_HEADERS = "missing_security_headers"
 
+    # Malware
+    MALWARE = "malware"
+
     # Other
     GENERIC = "generic"
 

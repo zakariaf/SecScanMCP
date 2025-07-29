@@ -12,6 +12,8 @@ from .trufflehog_analyzer import TruffleHogAnalyzer
 from .mcp_analyzer import MCPSpecificAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
 
+from .security_tools.clamav_analyzer import ClamAVAnalyzer
+
 __all__ = [
     'BaseAnalyzer',
     'BanditAnalyzer',
@@ -21,5 +23,6 @@ __all__ = [
     'SyftAnalyzer',
     'TruffleHogAnalyzer',
     'MCPSpecificAnalyzer',
-    'DynamicAnalyzer'
+    'DynamicAnalyzer',
+    'ClamAVAnalyzer'
 ]

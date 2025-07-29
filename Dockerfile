@@ -42,11 +42,12 @@ RUN wget https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.0
 # Production stage
 FROM python:3.11-slim
 
-# Install runtime dependencies
+# Install runtime dependencies including ClamAV client tools
 RUN apt-get update && apt-get install -y \
     git \
     docker.io \
     curl \
+    clamdscan \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
