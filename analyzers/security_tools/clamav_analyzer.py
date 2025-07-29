@@ -7,13 +7,14 @@ import socket
 import struct
 import tempfile
 import logging
+import os
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 from io import BytesIO
 import hashlib
 import re
 
-from .base import BaseAnalyzer
+from ..base import BaseAnalyzer
 from models import Finding, SeverityLevel, VulnerabilityType
 
 logger = logging.getLogger(__name__)
@@ -35,8 +36,8 @@ class ClamAVAnalyzer(BaseAnalyzer):
     """
 
     # ClamAV connection settings
-    CLAMD_HOST = "clamav"  # Docker service name
-    CLAMD_PORT = 3310
+    CLAMD_HOST = os.environ.get('CLAMAV_HOST', 'clamav')  # Docker service name
+    CLAMD_PORT = int(os.environ.get('CLAMAV_PORT', 3310))
     CLAMD_TIMEOUT = 300  # 5 minutes for large files
 
     # Chunk size for stream scanning
