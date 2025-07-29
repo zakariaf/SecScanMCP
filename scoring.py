@@ -23,6 +23,7 @@ class SecurityScorer:
 
     # Multipliers for specific vulnerability types
     VULNERABILITY_MULTIPLIERS = {
+        'malware': 2.0,               # Malware is extremely serious
         'prompt_injection': 1.5,      # Very serious for MCP
         'command_injection': 1.5,     # Can compromise system
         'tool_poisoning': 1.3,        # MCP-specific high risk
@@ -126,6 +127,14 @@ class SecurityScorer:
 
     def _apply_special_deductions(self, score: float, findings: List[Finding]) -> float:
         """Apply special deductions for critical issues"""
+
+        # Major deduction for any malware detection
+        malware_findings = [
+            f for f in findings
+            if f.vulnerability_type.value == 'malware'
+        ]
+        if malware_findings:
+            score *= 0.5  # 50% deduction for any malware
 
         # Major deduction for any critical prompt injection
         critical_prompt_injections = [
