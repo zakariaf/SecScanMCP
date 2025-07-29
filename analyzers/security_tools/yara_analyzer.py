@@ -1,5 +1,4 @@
 """
-analyzers/security_tools/yara_analyzer.py
 YARA analyzer - Advanced pattern matching for APTs and polymorphic malware
 """
 
@@ -52,15 +51,15 @@ class YARAAnalyzer(BaseAnalyzer):
             'severity': SeverityLevel.CRITICAL,
             'type': VulnerabilityType.MALWARE
         },
+        'webshell': {
+            'severity': SeverityLevel.CRITICAL,
+            'type': VulnerabilityType.MALWARE
+        },
         'cryptominer': {
             'severity': SeverityLevel.HIGH,
             'type': VulnerabilityType.MALWARE
         },
         'ransomware': {
-            'severity': SeverityLevel.CRITICAL,
-            'type': VulnerabilityType.MALWARE
-        },
-        'webshell': {
             'severity': SeverityLevel.CRITICAL,
             'type': VulnerabilityType.MALWARE
         },
@@ -418,6 +417,18 @@ rule Polymorphic_Self_Modifying
             'type': VulnerabilityType.GENERIC
         })
 
+        # Special handling for specific categories
+        if category == 'apt':
+            vuln_type = VulnerabilityType.APT
+        elif category == 'backdoor':
+            vuln_type = VulnerabilityType.BACKDOOR
+        elif category == 'webshell':
+            vuln_type = VulnerabilityType.WEBSHELL
+        elif category == 'cryptominer':
+            vuln_type = VulnerabilityType.CRYPTOMINER
+        else:
+            vuln_type = category_info['type']
+
         # Override with rule-specific severity if available
         if 'severity' in meta:
             severity_map = {
@@ -429,8 +440,6 @@ rule Polymorphic_Self_Modifying
             severity = severity_map.get(meta['severity'], category_info['severity'])
         else:
             severity = category_info['severity']
-
-        vuln_type = category_info['type']
 
         # Build description
         description = meta.get('description', f'YARA rule {rule_name} matched')
@@ -489,9 +498,9 @@ rule Polymorphic_Self_Modifying
             'mcp_threats': "Remove or quarantine the file immediately. This appears to be an MCP-specific attack.",
             'apt': "Investigate for signs of advanced persistent threat activity. Check for additional indicators of compromise.",
             'backdoor': "Remove the backdoor code immediately and audit for unauthorized access.",
+            'webshell': "Remove the web shell and audit web server logs for unauthorized access.",
             'cryptominer': "Remove cryptocurrency mining code and check system resource usage.",
             'ransomware': "Isolate the system immediately. Do not pay ransom. Restore from clean backups.",
-            'webshell': "Remove the web shell and audit web server logs for unauthorized access.",
             'exploit': "Patch the vulnerability being exploited and review security controls.",
             'suspicious': "Review the code for potential malicious behavior."
         }
@@ -514,6 +523,10 @@ rule Polymorphic_Self_Modifying
             ],
             'backdoor': [
                 "https://attack.mitre.org/techniques/T1505/003/"  # Web Shell
+            ],
+            'webshell': [
+                "https://attack.mitre.org/techniques/T1505/003/",  # Web Shell
+                "https://owasp.org/www-community/attacks/Web_Shell"
             ],
             'cryptominer': [
                 "https://attack.mitre.org/techniques/T1496/"  # Resource Hijacking
