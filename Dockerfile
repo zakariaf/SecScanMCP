@@ -61,7 +61,7 @@ RUN wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-ke
     rm -rf /var/lib/apt/lists/*
 
 # Install CodeQL - with architecture detection
-ENV CODEQL_VERSION=2.15.5
+ENV CODEQL_VERSION=2.16.1
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
         echo "Warning: CodeQL may have limited support on ARM architecture" && \

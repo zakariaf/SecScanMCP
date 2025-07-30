@@ -211,8 +211,7 @@ class CodeQLAnalyzer(BaseAnalyzer):
                 str(db_path),
                 '--format=sarif-latest',
                 f'--output={results_file}',
-                '--sarif-add-query-help',
-                '--no-print-metrics'
+                '--sarif-add-query-help'
             ]
 
             # Add queries
