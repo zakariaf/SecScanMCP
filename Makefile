@@ -1,5 +1,6 @@
 # MCP Security Scanner Makefile
 # Simplifies common operations
+DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 
 .PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all
 
@@ -28,11 +29,11 @@ help:
 
 # Build Docker image
 build:
-	docker-compose build
+	DOCKER_DEFAULT_PLATFORM=$(DOCKER_DEFAULT_PLATFORM) docker-compose build
 
 # Start scanner
 up:
-	docker-compose up -d
+	DOCKER_DEFAULT_PLATFORM=$(DOCKER_DEFAULT_PLATFORM) docker-compose up -d
 	@echo "Scanner running at http://localhost:8000"
 	@echo "Health check: http://localhost:8000/health"
 
