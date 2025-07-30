@@ -96,6 +96,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Node.js for CodeQL JavaScript autobuild
+# (Use Node 20 LTS; includes corepack so yarn/pnpm can be enabled)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get update && apt-get install -y --no-install-recommends nodejs \
+    && corepack enable \
+    && corepack prepare yarn@stable --activate \
+    && corepack prepare pnpm@latest --activate \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy YARA libraries and binaries from builder
 COPY --from=builder /usr/local/lib/libyara* /usr/local/lib/
 COPY --from=builder /usr/local/include/yara* /usr/local/include/
