@@ -1,270 +1,473 @@
 /*
-rules/yara/backdoor_detection.yar
-YARA rules for detecting backdoors and remote access tools
+YARA rules for detecting backdoors and remote access tools in MCP environments
 */
 
-rule Backdoor_Python_Reverse_Shell
+import "hash"
+import "math"
+
+rule Backdoor_MCP_Network_Beacon_Advanced
 {
     meta:
-        description = "Detects Python reverse shell backdoors"
+        description = "Advanced backdoor network beaconing in MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $import1 = "import socket" nocase
-        $import2 = "import subprocess" nocase
-        $import3 = "import os" nocase
+        // MCP-specific beaconing
+        $mcp1 = "mcp_beacon_interval"
+        $mcp2 = /heartbeat.*mcp.*server/
+        $mcp3 = "mcp_keepalive"
 
-        $shell1 = "socket.socket(socket.AF_INET" nocase
-        $shell2 = ".connect((" nocase
-        $shell3 = "subprocess.call([" nocase
-        $shell4 = "os.dup2(" nocase
+        // Beacon patterns
+        $beacon1 = /sleep\s*\(\s*[0-9]+\s*\).*connect/ nocase
+        $beacon2 = /sleep\s*\(\s*[0-9]+\s*\).*socket/ nocase
+        $beacon3 = /while.*true.*sleep.*connect/ nocase
+        $beacon4 = "heartbeat" nocase
+        $beacon5 = "beacon_interval" nocase
+        $beacon6 = /setInterval.*fetch.*[0-9]{4,}/
 
-        $cmd1 = "/bin/sh" nocase
-        $cmd2 = "cmd.exe" nocase
-        $cmd3 = "/bin/bash" nocase
+        // Network operations
+        $net1 = "socket.socket"
+        $net2 = "requests.post"
+        $net3 = "urllib.request"
+        $net4 = "http.client"
+        $net5 = "websocket"
 
-    condition:
-        (#import1 + #import2 + #import3 >= 2) and
-        (#shell1 + #shell2 >= 2) and
-        any of ($cmd*)
-}
+        // Jitter implementation
+        $jitter1 = /random.*sleep/
+        $jitter2 = /jitter.*percent/
+        $jitter3 = "Math.random() * interval"
 
-rule Backdoor_Web_Shell
-{
-    meta:
-        description = "Detects web shell backdoors"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        category = "webshell"
-
-    strings:
-        $php1 = "<?php @eval($_POST[" nocase
-        $php2 = "<?php @system($_GET[" nocase
-        $php3 = "<?php @assert($_REQUEST[" nocase
-
-        $jsp1 = "Runtime.getRuntime().exec(request.getParameter" nocase
-        $jsp2 = "<%@page import=\"java.io.*\"%>" nocase
-
-        $aspx1 = "eval(Request.Item[" nocase
-        $aspx2 = "ProcessStartInfo" nocase
-
-        $func1 = "shell_exec" nocase
-        $func2 = "passthru" nocase
-        $func3 = "exec(" nocase
-        $func4 = "system(" nocase
-
-        $obf1 = /[a-zA-Z0-9+\/]{100,}/ // Long base64 string
+        // Encryption
+        $enc1 = "AES.new("
+        $enc2 = "RSA.encrypt"
+        $enc3 = "TLS_"
 
     condition:
-        any of ($php*) or
-        all of ($jsp*) or
-        all of ($aspx*) or
-        (2 of ($func*) and $obf1)
+        (any of ($mcp*) and any of ($beacon*)) or
+        (any of ($beacon*) and any of ($net*) and any of ($jitter*, $enc*)) or
+        (2 of ($beacon*) and any of ($net*))
 }
 
-rule Backdoor_SSH_Key_Injection
+rule Backdoor_MCP_Shell_Spawning_Advanced
 {
     meta:
-        description = "Detects SSH key injection for backdoor access"
+        description = "Advanced shell spawning backdoor detection for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $ssh1 = "~/.ssh/authorized_keys" nocase
-        $ssh2 = "/home/*/.ssh/authorized_keys" nocase
-        $ssh3 = "StrictHostKeyChecking=no" nocase
+        // MCP shell integration
+        $mcp1 = "mcp_shell_tool"
+        $mcp2 = /execute.*shell.*mcp/
+        $mcp3 = "mcp_reverse_shell"
 
-        $key1 = /ssh-rsa [A-Za-z0-9+\/]{200,}/
-        $key2 = /ssh-ed25519 [A-Za-z0-9+\/]{50,}/
+        // Shell spawning patterns
+        $shell1 = /subprocess\.Popen.*sh/ nocase
+        $shell2 = /subprocess\.call.*sh/ nocase
+        $shell3 = /subprocess\.run.*sh/ nocase
+        $shell4 = /os\.system.*bash/ nocase
+        $shell5 = /os\.system.*sh/ nocase
+        $shell6 = /os\.system.*cmd/ nocase
+        $shell7 = /os\.popen.*bash/ nocase
+        $shell8 = /exec\s*\(.*sh\s*-/
 
-        $inject1 = "echo" nocase
-        $inject2 = "printf" nocase
-        $inject3 = ">>"
+        // Reverse shell patterns
+        $rev1 = "reverse_tcp"
+        $rev2 = "bind_shell"
+        $rev3 = "/dev/tcp/"
+        $rev4 = "nc -e"
+        $rev5 = "bash -i >&"
+        $rev6 = "0<&196"
+
+        // PowerShell reverse
+        $ps1 = "New-Object System.Net.Sockets.TCPClient"
+        $ps2 = "$stream.Write("
+        $ps3 = "IEX(New-Object"
+
+        // Python reverse
+        $py1 = "socket.socket(socket.AF_INET"
+        $py2 = "os.dup2(s.fileno()"
+        $py3 = "pty.spawn"
 
     condition:
-        any of ($ssh*) and
-        any of ($key*) and
-        any of ($inject*)
+        (any of ($mcp*) and any of ($shell*, $rev*)) or
+        (any of ($shell*) and any of ($rev*)) or
+        (any of ($ps*) and /$ps1 and $ps2/) or
+        (all of ($py*))
 }
 
-rule Backdoor_Bind_Shell
+rule Backdoor_MCP_Persistence_Advanced
 {
     meta:
-        description = "Detects bind shell backdoors"
+        description = "Advanced backdoor persistence mechanisms for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $bind1 = "bind(" nocase
-        $bind2 = "listen(" nocase
-        $bind3 = "accept(" nocase
+        // MCP persistence
+        $mcp1 = "mcp_backdoor_persist"
+        $mcp2 = /install.*mcp.*startup/
+        $mcp3 = "mcp_autorun"
 
-        $port1 = ":4444" nocase
-        $port2 = ":1337" nocase
-        $port3 = ":31337" nocase
-        $port4 = ":8888" nocase
+        // Linux persistence
+        $linux1 = "crontab -e" nocase
+        $linux2 = "@reboot"
+        $linux3 = "systemctl enable" nocase
+        $linux4 = "/etc/rc.local"
+        $linux5 = "~/.bashrc" nocase
+        $linux6 = "/etc/profile.d/"
 
-        $shell1 = "sh -i" nocase
-        $shell2 = "/bin/bash" nocase
-        $shell3 = "cmd.exe /c" nocase
+        // Windows persistence
+        $win1 = "HKEY_LOCAL_MACHINE" nocase
+        $win2 = "schtasks /create"
+        $win3 = "sc create"
+        $win4 = "New-Service"
+        $win5 = "WMI Event"
+
+        // macOS persistence
+        $mac1 = "launchctl"
+        $mac2 = "~/Library/LaunchAgents"
+        $mac3 = "loginwindow"
+
+        // Hidden execution
+        $hide1 = "nohup"
+        $hide2 = "disown"
+        $hide3 = "setsid"
+        $hide4 = "START /B"
+        $hide5 = "-WindowStyle Hidden"
 
     condition:
-        all of ($bind*) and
-        (any of ($port*) or any of ($shell*))
+        (any of ($mcp*) and any of ($linux*, $win*, $mac*)) or
+        (any of ($linux*) and any of ($hide*)) or
+        (any of ($win*) and any of ($hide*)) or
+        (2 of ($linux*) or 2 of ($win*) or 2 of ($mac*))
 }
 
-rule Backdoor_Hidden_Service
+rule Backdoor_MCP_Data_Exfiltration_Advanced
 {
     meta:
-        description = "Detects hidden service backdoors"
+        description = "Advanced data exfiltration backdoor for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $service1 = "sc create" nocase
-        $service2 = "New-Service" nocase
-        $service3 = "systemctl enable" nocase
+        // MCP data theft
+        $mcp1 = "exfiltrate_mcp_data"
+        $mcp2 = /steal.*mcp.*conversation/
+        $mcp3 = "mcp_data_leak"
 
-        $hide1 = "Hidden" nocase
-        $hide2 = "SYSTEM" nocase
-        $hide3 = "svchost.exe -k" nocase
+        // Compression
+        $compress1 = "tar -czf" nocase
+        $compress2 = "tar czf" nocase
+        $compress3 = "| gzip"
+        $compress4 = "zip -r" nocase
+        $compress5 = "7z a"
+        $compress6 = "rar a"
 
-        $persist1 = "auto_start" nocase
-        $persist2 = "StartupType Automatic" nocase
-        $persist3 = "enabled" nocase
+        // Encoding
+        $encode1 = "| base64" nocase
+        $encode2 = "b64encode"
+        $encode3 = ".encode('base64')"
+        $encode4 = "Convert]::ToBase64String"
+
+        // Chunking
+        $chunk1 = "split -b"
+        $chunk2 = "dd bs="
+        $chunk3 = /chunk.*size.*[0-9]+/
+
+        // Upload methods
+        $upload1 = "curl -X POST" nocase
+        $upload2 = "curl -F" nocase
+        $upload3 = "wget --post-file" nocase
+        $upload4 = "requests.post("
+        $upload5 = "multipart/form-data"
+
+        // Exfil destinations
+        $dest1 = /https?:\/\/[a-z0-9]{16,}/
+        $dest2 = "pastebin"
+        $dest3 = "transfer.sh"
+        $dest4 = "file.io"
 
     condition:
-        any of ($service*) and
-        any of ($hide*) and
-        any of ($persist*)
+        (any of ($mcp*) and any of ($compress*, $encode*)) or
+        (any of ($compress*) and any of ($upload*)) or
+        (any of ($encode*) and any of ($upload*)) or
+        (any of ($chunk*) and any of ($dest*))
 }
 
-rule Backdoor_RAT_Generic
+rule Backdoor_MCP_Command_Control_Advanced
 {
     meta:
-        description = "Detects generic Remote Access Tool patterns"
+        description = "Advanced command and control backdoor for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $rat1 = "keylogger" nocase
-        $rat2 = "screenshot" nocase
-        $rat3 = "webcam" nocase
-        $rat4 = "microphone" nocase
+        // MCP C2
+        $mcp1 = "mcp_c2_handler"
+        $mcp2 = /command.*mcp.*backdoor/
+        $mcp3 = "mcp_bot_controller"
 
-        $comm1 = "command_handler" nocase
-        $comm2 = "execute_command" nocase
-        $comm3 = "recv_command" nocase
+        // C2 patterns
+        $c2_1 = "while True:" nocase
+        $c2_2 = "recv(1024)" nocase
+        $c2_3 = "recv(4096)" nocase
+        $c2_4 = "execute_command"
+        $c2_5 = "run_command"
+        $c2_6 = "eval(base64" nocase
+        $c2_7 = "exec(decode" nocase
+        $c2_8 = "__import__('os').system"
 
-        $exfil1 = "upload_file" nocase
-        $exfil2 = "download_file" nocase
-        $exfil3 = "send_data" nocase
+        // Communication channels
+        $comm1 = "IRC" nocase
+        $comm2 = "telegram" nocase
+        $comm3 = "discord" nocase
+        $comm4 = "pastebin" nocase
+        $comm5 = "twitter"
+        $comm6 = "dns"
+
+        // Protocol obfuscation
+        $obf1 = "XOR"
+        $obf2 = "RC4"
+        $obf3 = "custom_encrypt"
+        $obf4 = /[a-zA-Z]+\s*=\s*[a-zA-Z]+\s*\^\s*0x[0-9a-f]+/
+
+        // Anti-analysis
+        $anti1 = "IsDebuggerPresent"
+        $anti2 = "checkRemoteDebugger"
+        $anti3 = "detect_sandbox"
 
     condition:
-        2 of ($rat*) or
-        (any of ($comm*) and any of ($exfil*))
+        (any of ($mcp*) and 2 of ($c2_*)) or
+        (3 of ($c2_*) and any of ($comm*)) or
+        (2 of ($c2_*) and any of ($obf*)) or
+        (2 of ($c2_*) and any of ($comm*) and any of ($anti*))
 }
 
-rule Backdoor_Cryptocurrency_Stealer
+rule Backdoor_MCP_Fileless_Advanced
 {
     meta:
-        description = "Detects cryptocurrency wallet stealers"
+        description = "Advanced fileless backdoor detection for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $wallet1 = "wallet.dat" nocase
-        $wallet2 = "Electrum" nocase
-        $wallet3 = "Bitcoin" nocase
-        $wallet4 = "Ethereum" nocase
+        // MCP fileless
+        $mcp1 = "mcp_memory_backdoor"
+        $mcp2 = /fileless.*mcp.*inject/
+        $mcp3 = "mcp_reflective_dll"
 
-        $path1 = "\\AppData\\Roaming\\Bitcoin" nocase
-        $path2 = "\\AppData\\Roaming\\Ethereum" nocase
+        // Memory execution
+        $mem1 = "VirtualAlloc"
+        $mem2 = "RtlMoveMemory"
+        $mem3 = "CreateThread"
+        $mem4 = "QueueUserAPC"
 
-        $steal1 = "copy" nocase
-        $steal2 = "upload" nocase
-        $steal3 = "exfiltrate" nocase
+        // .NET fileless
+        $net1 = "Assembly.Load"
+        $net2 = "Reflection.Assembly"
+        $net3 = "CompileAssemblyFromSource"
+        $net4 = "[Reflection.Assembly]::Load"
+
+        // PowerShell fileless
+        $ps1 = "IEX"
+        $ps2 = "Invoke-Expression"
+        $ps3 = "-EncodedCommand"
+        $ps4 = "DownloadString"
+
+        // Process hollowing
+        $hollow1 = "PROCESS_INFORMATION"
+        $hollow2 = "CREATE_SUSPENDED"
+        $hollow3 = "SetThreadContext"
+
+        // Reflective DLL
+        $rdll1 = "ReflectiveLoader"
+        $rdll2 = "_ReflectiveDllMain"
 
     condition:
-        any of ($wallet*) and
-        (any of ($path*) or any of ($steal*))
+        (any of ($mcp*) and any of ($mem*, $net*, $ps*)) or
+        (all of ($mem1, $mem2, $mem3)) or
+        (any of ($net*) and any of ($ps*)) or
+        (all of ($hollow*)) or
+        (any of ($rdll*) and any of ($mem*))
 }
 
-rule Backdoor_Fileless_Malware
+rule Backdoor_MCP_Rootkit_Behavior
 {
     meta:
-        description = "Detects fileless malware techniques"
+        description = "Rootkit behavior detection in MCP environments"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $mem1 = "VirtualAlloc" nocase
-        $mem2 = "RtlMoveMemory" nocase
-        $mem3 = "CreateThread" nocase
+        // MCP rootkit
+        $mcp1 = "mcp_rootkit"
+        $mcp2 = /hide.*mcp.*process/
+        $mcp3 = "mcp_stealth_mode"
 
-        $ps1 = "IEX" nocase
-        $ps2 = "Invoke-Expression" nocase
-        $ps3 = "[System.Reflection.Assembly]::Load" nocase
+        // Kernel operations
+        $kernel1 = "ZwQuerySystemInformation"
+        $kernel2 = "NtQueryDirectoryFile"
+        $kernel3 = "SeLoadDriverPrivilege"
+        $kernel4 = "/dev/kmem"
 
-        $wmi1 = "Win32_Process" nocase
-        $wmi2 = "Create(" nocase
+        // Hooking
+        $hook1 = "SetWindowsHookEx"
+        $hook2 = "inline hook"
+        $hook3 = "IAT hook"
+        $hook4 = "SSDT"
+
+        // Process hiding
+        $hide1 = "EPROCESS"
+        $hide2 = "ActiveProcessLinks"
+        $hide3 = "Flink"
+        $hide4 = "PsActiveProcessHead"
+
+        // Network hiding
+        $net1 = "TCPIP_CONN_OFFSETS"
+        $net2 = "netstat -an"
+        $net3 = "hide_port"
 
     condition:
-        all of ($mem*) or
-        (2 of ($ps*) and any of ($wmi*))
+        (any of ($mcp*) and any of ($kernel*, $hook*)) or
+        (any of ($kernel*) and any of ($hide*)) or
+        (any of ($hook*) and any of ($net*)) or
+        (2 of ($kernel*) and any of ($hide*, $net*))
 }
 
-rule Backdoor_DNS_Tunnel
+rule Backdoor_MCP_Keylogger_Advanced
 {
     meta:
-        description = "Detects DNS tunneling backdoors"
+        description = "Advanced keylogger detection for MCP"
         author = "MCP Security Scanner"
         severity = "high"
         category = "backdoor"
 
     strings:
-        $dns1 = "dnslib" nocase
-        $dns2 = "scapy" nocase
-        $dns3 = "dig" nocase
-        $dns4 = "nslookup" nocase
+        // MCP keylogging
+        $mcp1 = "mcp_keylogger"
+        $mcp2 = /log.*mcp.*keystrokes/
+        $mcp3 = "mcp_input_capture"
 
-        $tunnel1 = /[a-f0-9]{32,}\.evil\.com/
-        $tunnel2 = "TXT record" nocase
-        $tunnel3 = "base32" nocase
-        $tunnel4 = "base64" nocase
+        // Keylogging APIs
+        $api1 = "GetAsyncKeyState"
+        $api2 = "GetKeyState"
+        $api3 = "SetWindowsHookEx"
+        $api4 = "GetRawInputData"
+        $api5 = "RegisterRawInputDevices"
+
+        // Linux keylogging
+        $linux1 = "/dev/input/event"
+        $linux2 = "EVIOCGRAB"
+        $linux3 = "xinput"
+
+        // JavaScript keylogging
+        $js1 = "keydown"
+        $js2 = "keypress"
+        $js3 = "addEventListener('key"
+
+        // Log patterns
+        $log1 = "[SHIFT]"
+        $log2 = "[CTRL]"
+        $log3 = "[ENTER]"
+        $log4 = "[BACKSPACE]"
 
     condition:
-        any of ($dns*) and 2 of ($tunnel*)
+        (any of ($mcp*) and any of ($api*, $linux*, $js*)) or
+        (any of ($api*) and any of ($log*)) or
+        (any of ($linux*) and /keylog|keystroke/) or
+        (2 of ($js*) and /password|credential/)
 }
 
-rule Backdoor_Container_Escape
+rule Backdoor_MCP_Cryptocurrency_Miner
 {
     meta:
-        description = "Detects container escape attempts"
+        description = "Cryptocurrency miner backdoor in MCP"
+        author = "MCP Security Scanner"
+        severity = "high"
+        category = "backdoor"
+
+    strings:
+        // MCP mining
+        $mcp1 = "mcp_crypto_miner"
+        $mcp2 = /mine.*using.*mcp/
+        $mcp3 = "mcp_resource_hijack"
+
+        // Mining pools
+        $pool1 = "stratum+tcp://"
+        $pool2 = "pool.minexmr"
+        $pool3 = "xmrpool"
+        $pool4 = "dwarfpool"
+
+        // Miner software
+        $miner1 = "xmrig"
+        $miner2 = "cgminer"
+        $miner3 = "cpuminer"
+        $miner4 = "coinhive"
+
+        // Mining config
+        $config1 = "\"algo\":"
+        $config2 = "\"cpu-affinity\":"
+        $config3 = "\"max-cpu-usage\":"
+        $config4 = "\"donate-level\":"
+
+        // Wallet addresses
+        $wallet1 = /4[0-9AB][0-9a-zA-Z]{93}/  // Monero
+        $wallet2 = /[13][a-km-zA-HJ-NP-Z1-9]{25,34}/  // Bitcoin
+
+    condition:
+        (any of ($mcp*) and any of ($pool*, $miner*)) or
+        (any of ($pool*) and any of ($config*)) or
+        (any of ($miner*) and any of ($wallet*)) or
+        (2 of ($config*) and any of ($pool*, $wallet*))
+}
+
+rule Backdoor_MCP_Advanced_RAT
+{
+    meta:
+        description = "Advanced Remote Access Trojan for MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "backdoor"
 
     strings:
-        $docker1 = "/var/run/docker.sock" nocase
-        $docker2 = "docker.sock" nocase
+        // MCP RAT
+        $mcp1 = "mcp_rat_controller"
+        $mcp2 = /remote.*access.*mcp/
+        $mcp3 = "mcp_full_control"
 
-        $escape1 = "nsenter" nocase
-        $escape2 = "--privileged" nocase
-        $escape3 = "CAP_SYS_ADMIN" nocase
+        // RAT capabilities
+        $cap1 = "screenshot"
+        $cap2 = "keylogger"
+        $cap3 = "webcam"
+        $cap4 = "microphone"
+        $cap5 = "file_manager"
+        $cap6 = "process_list"
+        $cap7 = "remote_desktop"
 
-        $mount1 = "mount" nocase
-        $mount2 = "/proc/self/exe" nocase
+        // Command structure
+        $cmd1 = /switch.*case.*screenshot/
+        $cmd2 = /if.*command.*==/
+        $cmd3 = "parse_command"
+        $cmd4 = "execute_action"
+
+        // Persistence + stealth
+        $stealth1 = "inject_process"
+        $stealth2 = "hide_window"
+        $stealth3 = "bypass_uac"
+        $stealth4 = "disable_defender"
 
     condition:
-        any of ($docker*) and
-        (any of ($escape*) or all of ($mount*))
+        (any of ($mcp*) and 3 of ($cap*)) or
+        (4 of ($cap*) and any of ($cmd*)) or
+        (3 of ($cap*) and any of ($stealth*)) or
+        (any of ($cmd*) and 2 of ($stealth*))
 }

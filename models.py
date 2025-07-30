@@ -23,13 +23,22 @@ class VulnerabilityType(str, Enum):
     PATH_TRAVERSAL = "path_traversal"
     XXE = "xxe"
     SSRF = "ssrf"
+    XSS = "xss"  # support cross-site scripting detections
+
+    # Cryptography
+    WEAK_CRYPTO = "weak_crypto"  # support weak or deprecated crypto detections
 
     # MCP-specific
     PROMPT_INJECTION = "prompt_injection"
     TOOL_POISONING = "tool_poisoning"
+    MCP_SPECIFIC = "mcp_specific"  # support custom MCP-specific detections
+    TOOL_MANIPULATION = "tool_manipulation"  # support manipulation of analyzer tools
     PERMISSION_ABUSE = "permission_abuse"
     SCHEMA_INJECTION = "schema_injection"
     OUTPUT_POISONING = "output_poisoning"
+
+    # Privilege issues
+    PRIVILEGE_ESCALATION = "privilege_escalation"  # support privilege escalation detections
 
     # Secrets and credentials
     HARDCODED_SECRET = "hardcoded_secret"
@@ -46,6 +55,20 @@ class VulnerabilityType(str, Enum):
 
     # Malware
     MALWARE = "malware"
+    BACKDOOR = "backdoor"
+
+    # APT detections
+    APT_COBALT_STRIKE_BEACON = "apt_cobalt_strike_beacon"
+    APT_LAZARUS_MALWARE = "apt_lazarus_malware"
+    APT_EMPIRE_POWERSHELL = "apt_empire_powershell"
+    APT_METASPLOIT_PAYLOAD = "apt_metasploit_payload"
+    APT_MIMIKATZ_CREDENTIAL_THEFT = "apt_mimikatz_credential_theft"
+    APT_LIVING_OFF_THE_LAND = "apt_living_off_the_land"
+    APT_PROCESS_INJECTION = "apt_process_injection"
+    APT_PERSISTENCE_REGISTRY = "apt_persistence_registry"
+    APT_DATA_STAGING = "apt_data_staging"
+    APT_NETWORK_RECONNAISSANCE = "apt_network_reconnaissance"
+    APT_DEFENSE_EVASION = "apt_defense_evasion"
 
     # Other
     GENERIC = "generic"
@@ -124,7 +147,7 @@ class ScanResult(BaseModel):
 
     # Scoring
     security_score: float = Field(ge=0.0, le=100.0)
-    security_grade: str = Field(pattern="^[A-F][+-]?$")  # Changed from regex to pattern
+    security_grade: str = Field(pattern="^[A-F][+-]?$")
 
     # Summary
     summary: Dict[str, Any]
