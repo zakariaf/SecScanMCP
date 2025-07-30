@@ -58,3 +58,11 @@ docker-compose.override.yml
 /tmp/
 /temp/
 *.tmp
+
+# Security tool artifacts
+*.sarif
+*.json
+results/
+/tmp/
+codeql-db/        # Add this line
+*.yarc            # Add this line (compiled YARA rules)

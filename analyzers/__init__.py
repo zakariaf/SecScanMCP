@@ -14,6 +14,7 @@ from .dynamic_analyzer import DynamicAnalyzer
 
 from .security_tools.clamav_analyzer import ClamAVAnalyzer
 from .security_tools.yara_analyzer import YARAAnalyzer
+from .security_tools.codeql_analyzer import CodeQLAnalyzer
 
 __all__ = [
     'BaseAnalyzer',
@@ -26,5 +27,6 @@ __all__ = [
     'MCPSpecificAnalyzer',
     'DynamicAnalyzer',
     'ClamAVAnalyzer',
-    'YARAAnalyzer'
+    'YARAAnalyzer',
+    'CodeQLAnalyzer'
 ]

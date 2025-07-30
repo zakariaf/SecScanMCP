@@ -7,12 +7,43 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     wget \
+    unzip \
+    automake \
+    libtool \
+    make \
+    gcc \
+    autoconf \
+    pkg-config \
+    libssl-dev \
+    libjansson-dev \
+    libmagic-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python security tools
 RUN pip install --no-cache-dir \
     bandit==1.7.10 \
-    semgrep==1.97.0
+    semgrep==1.97.0 \
+    yara-python==4.5.1
+
+# Build and install YARA
+RUN wget https://github.com/VirusTotal/yara/archive/v4.5.0.tar.gz && \
+    tar -xzf v4.5.0.tar.gz && \
+    cd yara-4.5.0 && \
+    ./bootstrap.sh && \
+    ./configure --enable-cuckoo --enable-magic --enable-dotnet && \
+    make && \
+    make install && \
+    ldconfig && \
+    cd .. && \
+    rm -rf yara-4.5.0 v4.5.0.tar.gz
+
+# Download and install CodeQL CLI
+ENV CODEQL_VERSION=2.16.1
+RUN mkdir -p /opt/codeql && \
+    wget -q https://github.com/github/codeql-cli-binaries/releases/download/v${CODEQL_VERSION}/codeql-linux64.zip && \
+    unzip -q codeql-linux64.zip -d /opt && \
+    rm codeql-linux64.zip && \
+    chmod +x /opt/codeql/codeql
 
 # Install Trivy
 RUN wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | tee /usr/share/keyrings/trivy.gpg > /dev/null && \
@@ -48,8 +79,33 @@ RUN apt-get update && apt-get install -y \
     docker.io \
     curl \
     clamdscan \
+    libssl3 \
+    libjansson4 \
+    libmagic1 \
+    # For CodeQL (Java runtime needed)
+    default-jre-headless \
+    # Build tools for compiled language analysis
+    build-essential \
+    maven \
+    gradle \
+    golang \
+    dotnet-sdk-9.0 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# Copy YARA from builder
+COPY --from=builder /usr/local/bin/yara* /usr/local/bin/
+COPY --from=builder /usr/local/lib/libyara* /usr/local/lib/
+COPY --from=builder /usr/local/include/yara* /usr/local/include/
+
+# Copy CodeQL from builder
+COPY --from=builder /opt/codeql /opt/codeql
+
+# Update library cache
+RUN ldconfig
+
+# Set CodeQL in PATH
+ENV PATH="/opt/codeql:${PATH}"
 
 # Copy security tools from builder
 COPY --from=builder /usr/local/bin/semgrep /usr/local/bin/semgrep
