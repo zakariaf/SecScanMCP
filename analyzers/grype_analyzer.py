@@ -171,10 +171,21 @@ class GrypeAnalyzer(BaseAnalyzer):
             SeverityLevel.MEDIUM
         )
 
-        # Get fix information
+        # Get fix information (handle both dict and list formats)
         fix_versions = []
-        for fix in vulnerability.get('fix', {}).get('versions', []):
-            fix_versions.append(fix)
+        fix_field = vulnerability.get('fix', {})
+
+        if isinstance(fix_field, dict):
+            # old format: { "versions": [ ... ] }
+            fix_versions = fix_field.get('versions', [])
+        elif isinstance(fix_field, list):
+            # new format: [ { "versions": [...] }, ... ] or just a list of version strings
+            for entry in fix_field:
+                if isinstance(entry, dict) and 'versions' in entry:
+                    fix_versions.extend(entry.get('versions', []))
+                elif isinstance(entry, str):
+                    fix_versions.append(entry)
+        # else: nothing to do if it's some other type
 
         # Build description
         description = vulnerability.get('description', f'Vulnerability in {pkg_name}')
@@ -220,13 +231,24 @@ class GrypeAnalyzer(BaseAnalyzer):
         for version, data in cvss_scores.items():
             max_cvss = max(max_cvss, data['score'])
 
-        # Check for EPSS and KEV data (enhanced risk info)
+        # Check for EPSS data
         epss_score = None
+        epss_percentile = None
+
+        epss_field = vulnerability.get('epss')
+        if isinstance(epss_field, dict):
+            # older (hypothetical) single-object format
+            epss_score      = epss_field.get('score') or epss_field.get('epss')
+            epss_percentile = epss_field.get('percentile')
+        elif isinstance(epss_field, list) and epss_field:
+            # new array format: pick the first entry
+            first = epss_field[0]
+            if isinstance(first, dict):
+                epss_score      = first.get('epss', first.get('score'))
+                epss_percentile = first.get('percentile')
+
+        # Check for KEV data
         is_kev = False
-
-        if 'epss' in vulnerability:
-            epss_score = vulnerability['epss'].get('score')
-
         if 'kev' in vulnerability:
             is_kev = True
 
@@ -256,7 +278,8 @@ class GrypeAnalyzer(BaseAnalyzer):
         # Add risk scoring data if available
         if epss_score is not None:
             evidence['epss_score'] = epss_score
-            evidence['epss_percentile'] = vulnerability.get('epss', {}).get('percentile')
+            if epss_percentile is not None:
+                evidence['epss_percentile'] = epss_percentile
 
         if is_kev:
             evidence['is_known_exploited'] = True

@@ -257,45 +257,46 @@ class ClamAVAnalyzer(BaseAnalyzer):
     async def _scan_stream(self, stream, filename: str) -> Optional[Tuple[str, str]]:
         """Scan a file stream using INSTREAM protocol"""
         try:
-            # Send INSTREAM command
-            self._socket.sendall(b"zINSTREAM\0")
+            # open a fresh connection per file
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.CLAMD_TIMEOUT)
+            sock.connect((self.CLAMD_HOST, self.CLAMD_PORT))
 
-            # Send file data in chunks
-            while True:
-                chunk = stream.read(self.CHUNK_SIZE)
-                if not chunk:
-                    break
+            try:
+                sock.sendall(b"zINSTREAM\0")
+                while True:
+                    chunk = stream.read(self.CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    size = struct.pack('!L', len(chunk))
+                    sock.sendall(size + chunk)
+                sock.sendall(struct.pack('!L', 0))
 
-                # Send chunk size (network byte order) + chunk data
-                size = struct.pack('!L', len(chunk))
-                self._socket.sendall(size + chunk)
+                response = b""
+                while True:
+                    chunk = sock.recv(4096)
+                    if not chunk:
+                        break
+                    response += chunk
+                    if b'\0' in response:
+                        break
 
-            # Send termination sequence (zero-length chunk)
-            self._socket.sendall(struct.pack('!L', 0))
+                result = response.rstrip(b'\0').decode('utf-8', errors='ignore')
+                # Parse result
+                if "FOUND" in result:
+                    # Format: "stream: Malware.Name FOUND"
+                    parts = result.split(':', 1)
+                    if len(parts) > 1:
+                        malware_info = parts[1].strip()
+                        if ' FOUND' in malware_info:
+                            malware_name = malware_info.replace(' FOUND', '')
+                            return ('FOUND', malware_name)
 
-            # Read response
-            response = b""
-            while True:
-                chunk = self._socket.recv(4096)
-                if not chunk:
-                    break
-                response += chunk
-                if b'\0' in response:
-                    break
+                return None
 
-            result = response.rstrip(b'\0').decode('utf-8', errors='ignore')
 
-            # Parse result
-            if "FOUND" in result:
-                # Format: "stream: Malware.Name FOUND"
-                parts = result.split(':', 1)
-                if len(parts) > 1:
-                    malware_info = parts[1].strip()
-                    if ' FOUND' in malware_info:
-                        malware_name = malware_info.replace(' FOUND', '')
-                        return ('FOUND', malware_name)
-
-            return None
+            finally:
+                sock.close()
 
         except Exception as e:
             logger.error(f"Stream scan failed for {filename}: {e}")

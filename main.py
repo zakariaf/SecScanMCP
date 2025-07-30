@@ -90,6 +90,21 @@ async def list_security_tools():
     return {
         "tools": [
             {
+                "name": "codeql",
+                "version": "2.16.1",
+                "description": "GitHub's semantic code analysis engine for complex vulnerabilities",
+                "type": "semantic-analysis",
+                "capabilities": ["data-flow", "taint-tracking", "control-flow", "semantic-queries"],
+                "languages": ["python", "javascript", "typescript", "java", "go", "cpp", "csharp", "ruby"]
+            },
+            {
+                "name": "yara",
+                "version": "4.5.0",
+                "description": "Advanced pattern matching engine for APTs and polymorphic malware",
+                "type": "pattern-matching",
+                "capabilities": ["apt-detection", "polymorphic-malware", "complex-patterns", "threat-hunting"]
+            },
+            {
                 "name": "clamav",
                 "version": "1.4.0",
                 "description": "Enterprise malware detection engine with 8M+ signatures",

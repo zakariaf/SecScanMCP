@@ -7,7 +7,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - LOG_LEVEL=INFO
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      # - PYTHONPATH=/app
       - DOCKER_HOST=unix:///var/run/docker.sock
       # ClamAV configuration
       - CLAMAV_HOST=clamav
@@ -19,6 +20,8 @@ services:
       - /tmp/mcp-scanner:/tmp/mcp-scanner
       # Cache directories for tools (using named volumes)
       - scanner-cache:/home/scanner/.cache
+      # Rules directories
+      - ./rules:/app/rules:ro
     restart: unless-stopped
     depends_on:
       clamav:
@@ -31,14 +34,15 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
+          cpus: '4'
+          memory: 6G
         reservations:
-          cpus: '1'
-          memory: 1G
+          cpus: '2'
+          memory: 3G
     networks:
       - scanner-network
 
+  # ClamAV malware detection service
   clamav:
     image: clamav/clamav:latest
     container_name: clamav
@@ -47,6 +51,9 @@ services:
     volumes:
       # Only persist virus database, let ClamAV handle its own config
       - clamav-db:/var/lib/clamav
+      # Custom configuration
+      # - ./config/clamav/clamd.conf:/etc/clamav/clamd.conf:ro
+      # - ./config/clamav/freshclam.conf:/etc/clamav/freshclam.conf:ro
     expose:
       - "3310"  # Only expose to internal network
     healthcheck:

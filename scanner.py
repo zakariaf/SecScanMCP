@@ -22,7 +22,9 @@ from analyzers import (
     TruffleHogAnalyzer,
     MCPSpecificAnalyzer,
     DynamicAnalyzer,
-    ClamAVAnalyzer  # Military-grade malware detection
+    ClamAVAnalyzer,  # Military-grade malware detection
+    YARAAnalyzer,    # Advanced pattern matching
+    CodeQLAnalyzer   # Semantic code analysis
 )
 from models import Finding, ScanResult
 from scoring import SecurityScorer
@@ -44,7 +46,9 @@ class SecurityScanner:
             'trufflehog': TruffleHogAnalyzer(), # Secret detection
             'mcp_specific': MCPSpecificAnalyzer(), # MCP vulnerabilities
             'dynamic': DynamicAnalyzer(),    # Behavioral analysis
-            'clamav': ClamAVAnalyzer()       # Military-grade malware detection
+            'clamav': ClamAVAnalyzer(),       # Military-grade malware detection
+            'yara': YARAAnalyzer(),          # Advanced pattern matching
+            'codeql': CodeQLAnalyzer()       # Semantic code analysis
         }
 
         self.scorer = SecurityScorer()
@@ -213,7 +217,12 @@ class SecurityScanner:
         analyzers_to_run.append('syft')
 
         # Universal analyzers that work for all languages
-        analyzers_to_run.extend(['trivy', 'grype', 'semgrep', 'trufflehog', 'clamav'])
+        analyzers_to_run.extend(['trivy', 'grype', 'semgrep', 'trufflehog', 'clamav', 'yara'])
+
+        # CodeQL for supported languages
+        codeql_languages = ['python', 'javascript', 'typescript', 'java', 'go', 'cpp', 'csharp', 'ruby']
+        if project_info['language'] in codeql_languages:
+            analyzers_to_run.append('codeql')
 
         # Language-specific analyzers
         if project_info['language'] == 'python':

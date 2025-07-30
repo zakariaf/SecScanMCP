@@ -1,7 +1,8 @@
 # MCP Security Scanner Makefile
 # Simplifies common operations
+DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 
-.PHONY: help build up down test scan example shell clean versions logs
+.PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all
 
 # Default target
 help:
@@ -21,20 +22,27 @@ help:
 	@echo "Development:"
 	@echo "  make dev         - Start with hot reload"
 	@echo "  make install-local - Install tools locally"
+	@echo "  make setup-clamav  - Setup ClamAV for local development"
+	@echo "  make setup-yara  - Setup YARA for local development"
+	@echo "  make setup-codeql - Setup CodeQL for local development"
+	@echo "  make setup-all   - Setup all security tools"
 
 # Build Docker image
 build:
-	docker-compose build
+	DOCKER_DEFAULT_PLATFORM=$(DOCKER_DEFAULT_PLATFORM) docker-compose build
 
 # Start scanner
 up:
-	docker-compose up -d
+	DOCKER_DEFAULT_PLATFORM=$(DOCKER_DEFAULT_PLATFORM) docker-compose up -d
 	@echo "Scanner running at http://localhost:8000"
 	@echo "Health check: http://localhost:8000/health"
 
 # Stop scanner
 down:
 	docker-compose down
+
+restart: down build up
+	@echo "Restarting scanner..."
 
 # Run tests
 test:
@@ -81,6 +89,22 @@ dev:
 # Install tools locally (for development)
 install-local:
 	./scripts/install-tools.sh
+
+# Setup ClamAV
+setup-clamav:
+	./scripts/setup_clamav.sh
+
+# Setup YARA
+setup-yara:
+	./scripts/setup_yara.sh
+
+# Setup CodeQL
+setup-codeql:
+	./scripts/setup_codeql.sh
+
+# Setup all security tools
+setup-all: setup-clamav setup-yara setup-codeql
+	@echo "All security tools installed!"
 
 # Quick health check
 health:

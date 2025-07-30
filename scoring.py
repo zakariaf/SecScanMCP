@@ -24,9 +24,13 @@ class SecurityScorer:
     # Multipliers for specific vulnerability types
     VULNERABILITY_MULTIPLIERS = {
         'malware': 2.0,               # Malware is extremely serious
+        'tool_poisoning': 1.8,        # MCP tool poisoning is very serious
         'prompt_injection': 1.5,      # Very serious for MCP
         'command_injection': 1.5,     # Can compromise system
-        'tool_poisoning': 1.3,        # MCP-specific high risk
+        'apt': 1.4,                   # Advanced Persistent Threats
+        'backdoor': 1.4,              # Backdoors are critical
+        'webshell': 1.3,              # Web shells are serious
+        'cryptominer': 1.2,           # Resource hijacking
         'hardcoded_secret': 1.2,      # Immediate risk
         'vulnerable_dependency': 1.1,  # Depends on specific CVE
         'permission_abuse': 1.1,      # Privilege escalation risk
@@ -136,6 +140,23 @@ class SecurityScorer:
         if malware_findings:
             score *= 0.5  # 50% deduction for any malware
 
+        # Major deduction for APT patterns
+        apt_findings = [
+            f for f in findings
+            if 'APT' in f.title or 'apt' in f.evidence.get('category', '')
+        ]
+        if apt_findings:
+            score *= 0.6  # 40% deduction for APT patterns
+
+        # Deduction for tool poisoning (YARA-detected)
+        tool_poisoning = [
+            f for f in findings
+            if f.vulnerability_type.value == 'tool_poisoning'
+            and f.severity == SeverityLevel.CRITICAL
+        ]
+        if tool_poisoning:
+            score *= 0.65  # 35% deduction
+
         # Major deduction for any critical prompt injection
         critical_prompt_injections = [
             f for f in findings
@@ -144,6 +165,15 @@ class SecurityScorer:
         ]
         if critical_prompt_injections:
             score *= 0.7  # 30% deduction
+
+        # Deduction for backdoors
+        backdoor_findings = [
+            f for f in findings
+            if 'backdoor' in f.title.lower() or
+            f.evidence.get('category', '') == 'backdoor'
+        ]
+        if backdoor_findings:
+            score *= 0.6  # 40% deduction for backdoors
 
         # Deduction for hardcoded secrets
         secrets = [
@@ -161,6 +191,15 @@ class SecurityScorer:
         )
         if high_severity_count >= 5:
             score *= 0.9  # 10% deduction
+
+        # Extra deduction for polymorphic/obfuscated code
+        obfuscation_findings = [
+            f for f in findings
+            if 'polymorphic' in f.title.lower() or
+            'obfuscat' in f.title.lower()
+        ]
+        if obfuscation_findings:
+            score *= 0.8  # 20% deduction
 
         return score
 
