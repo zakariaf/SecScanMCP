@@ -40,6 +40,9 @@ up:
 down:
 	docker-compose down
 
+restart: down build up
+	@echo "Restarting scanner..."
+
 # Run tests
 test:
 	docker-compose run --rm test-runner
