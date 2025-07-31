@@ -1,400 +1,340 @@
 /*
-YARA rules for detecting known MCP vulnerabilities and CVEs
+YARA rules for detecting behavioral vulnerability patterns in MCP implementations
+Focus: Generic patterns that indicate vulnerable coding practices in MCP context
 */
 
-rule CVE_2025_49596_MCP_Inspector_RCE
+import "math"
+
+rule MCP_Behavioral_Command_Injection
 {
     meta:
-        description = "Detects CVE-2025-49596 MCP Inspector RCE vulnerability"
+        description = "MCP-specific command injection patterns"
         author = "MCP Security Scanner"
         severity = "critical"
-        cvss_score = "9.4"
-        cve = "CVE-2025-49596"
-        category = "vulnerability"
-        reference = "https://nvd.nist.gov/vuln/detail/CVE-2025-49596"
-
-    strings:
-        // Vulnerable endpoints
-        $endpoint1 = "http://0.0.0.0:6277/sse"
-        $endpoint2 = "http://localhost:6277/sse"
-        $endpoint3 = "http://127.0.0.1:6277/sse"
-        $endpoint4 = ":6277/sse?transportType=stdio"
-
-        // CSRF attack patterns
-        $csrf1 = /fetch\s*\(\s*["']http:\/\/0\.0\.0\.0:6277/ nocase
-        $csrf2 = /XMLHttpRequest.*0\.0\.0\.0:6277/ nocase
-        $csrf3 = /iframe.*src.*0\.0\.0\.0:6277/ nocase
-        $csrf4 = /window\.open.*localhost:6277/ nocase
-
-        // Command injection via URL
-        $cmd1 = "transportType=stdio&command="
-        $cmd2 = "&args=%2Ftmp%2F"
-        $cmd3 = "&args=%2Fetc%2F"
-        $cmd4 = "&command=touch&args="
-        $cmd5 = "&command=cat&args="
-
-        // Exploitation markers
-        $exploit1 = "mode: \"no-cors\""
-        $exploit2 = "credentials: \"include\""
-        $exploit3 = "Access-Control-Allow-Origin: *"
-
-    condition:
-        (any of ($endpoint*) and any of ($cmd*)) or
-        (any of ($csrf*) and any of ($endpoint*)) or
-        (any of ($endpoint*) and any of ($exploit*))
-}
-
-rule CVE_2025_6514_MCP_Remote_RCE
-{
-    meta:
-        description = "Detects CVE-2025-6514 mcp-remote RCE vulnerability"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        cvss_score = "9.6"
-        cve = "CVE-2025-6514"
         category = "vulnerability"
 
     strings:
-        // Vulnerable OAuth patterns
-        $oauth1 = "authorization_endpoint"
-        $oauth2 = "registration_endpoint"
-        $oauth3 = /.well-known\/oauth-authorization-server/
+        // MCP tool context
+        $tool1 = /"tool":\s*"[^"]+"/
+        $tool2 = "tool_handler"
+        $tool3 = "execute_tool"
+        $tool4 = "run_tool"
 
-        // Malicious URI schemes
-        $scheme1 = "file://" nocase
-        $scheme2 = "file:/c:/" nocase
-        $scheme3 = "file:///c:/" nocase
-        $scheme4 = "file:///" nocase
+        // Dangerous parameter handling
+        $param1 = /"parameters":\s*\{[^}]*\$\{/
+        $param2 = /"args":\s*\[.*\+.*user/
+        $param3 = /params\[['"][^'"]+['"]\]\s*\+/
+        $param4 = /`.*\$\{.*tool.*\}`/
 
-        // PowerShell injection
-        $ps1 = /\$\(.*cmd\.exe.*\)/
-        $ps2 = /\$\(.*powershell.*\)/
-        $ps3 = /\$\(.*whoami.*\)/
-        $ps4 = "$(Invoke-Expression"
-        $ps5 = "$(iex"
+        // Unsafe execution
+        $exec1 = /os\.system.*params/
+        $exec2 = /subprocess\.run.*user_input/
+        $exec3 = /exec.*request\./
+        $exec4 = /eval.*tool_response/
 
-        // Command injection patterns
-        $inject1 = /[a-z]+:\$\(/
-        $inject2 = /endpoint["']?\s*:\s*["'][^"']*\$\(/
-        $inject3 = /file:\/\/.*\.(exe|bat|ps1|cmd)/
-
-        // Vulnerable package
-        $pkg1 = "mcp-remote"
-        $pkg2 = "@dexaai/mcp-remote"
+        // Missing sanitization
+        $unsafe1 = /execute.*without.*sanitize/
+        $unsafe2 = /TODO.*validate.*input/
+        $unsafe3 = /FIXME.*injection/
 
     condition:
-        ($pkg1 or $pkg2) and (
-            (any of ($oauth*) and any of ($scheme*)) or
-            (any of ($oauth*) and any of ($ps*)) or
-            (any of ($inject*))
+        any of ($tool*) and (
+            (any of ($param*) and any of ($exec*)) or
+            (any of ($exec*) and not /sanitize|escape|validate|safe/) or
+            any of ($unsafe*)
         )
 }
 
-rule MCP_SQLite_SQL_Injection
+rule MCP_SSRF_Via_Tool_URLs
 {
     meta:
-        description = "Detects SQL injection in SQLite MCP Server"
-        author = "MCP Security Scanner"
-        severity = "high"
-        category = "vulnerability"
-        reference = "Anthropic SQLite MCP Server archived due to SQL injection"
-
-    strings:
-        // SQL injection patterns
-        $sql1 = /query.*\+.*user_input/
-        $sql2 = /SELECT.*FROM.*\$\{.*\}/
-        $sql3 = /WHERE.*=.*['"]?\s*\+\s*[a-zA-Z_]+/
-        $sql4 = /execute\s*\(\s*['"][^'"]+['"]?\s*\+\s*[a-zA-Z_]+/
-
-        // Dangerous SQL constructs
-        $danger1 = "'; DROP TABLE"
-        $danger2 = "' OR '1'='1"
-        $danger3 = "' UNION SELECT"
-        $danger4 = "'; UPDATE"
-        $danger5 = "'; DELETE FROM"
-
-        // SQLite specific
-        $sqlite1 = "sqlite3"
-        $sqlite2 = "Database(':memory:')"
-        $sqlite3 = ".prepare("
-        $sqlite4 = ".run("
-
-        // Stored prompt injection
-        $prompt1 = "<IMPORTANT>"
-        $prompt2 = "ignore previous"
-        $prompt3 = "disregard above"
-
-    condition:
-        (any of ($sqlite*) and any of ($sql*)) or
-        (any of ($sqlite*) and any of ($danger*)) or
-        (any of ($sqlite*) and any of ($prompt*) and any of ($sql*))
-}
-
-rule MCP_Command_Injection_Generic
-{
-    meta:
-        description = "Detects command injection vulnerabilities (43% of MCP servers affected)"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        category = "vulnerability"
-
-    strings:
-        // Dangerous functions
-        $exec1 = /os\.system\s*\(/
-        $exec2 = /subprocess\.run\s*\(/
-        $exec3 = /subprocess\.call\s*\(/
-        $exec4 = /subprocess\.Popen\s*\(/
-        $exec5 = /exec\s*\(/
-        $exec6 = /execSync\s*\(/
-        $exec7 = /execFile\s*\(/
-        $exec8 = /spawn\s*\(/
-
-        // String concatenation with user input
-        $concat1 = /\+\s*notification_info/
-        $concat2 = /\+\s*user_input/
-        $concat3 = /\+\s*request\./
-        $concat4 = /`.*\$\{.*\}`/
-        $concat5 = /f["'].*\{.*\}/
-
-        // Shell metacharacters
-        $meta1 = /[;&|`$()]/
-        $meta2 = /\$\(.*\)/
-        $meta3 = /`.*`/
-        $meta4 = /&&/
-        $meta5 = /\|\|/
-
-        // NPM specific
-        $npm1 = /npm\s+(view|install|run)/
-        $npm2 = /yarn\s+(add|install|run)/
-        $npm3 = /npx\s+/
-
-    condition:
-        (any of ($exec*) and any of ($concat*)) or
-        (any of ($exec*) and any of ($meta*) and not /shellcheck|eslint/) or
-        (any of ($npm*) and any of ($concat*, $meta*))
-}
-
-rule MCP_Path_Traversal_Vulnerability
-{
-    meta:
-        description = "Detects path traversal vulnerabilities (22% of MCP servers affected)"
+        description = "SSRF vulnerabilities in MCP tool implementations"
         author = "MCP Security Scanner"
         severity = "high"
         category = "vulnerability"
 
     strings:
-        // Path traversal patterns
-        $traverse1 = "../"
-        $traverse2 = "..%2F"
-        $traverse3 = "..%5C"
-        $traverse4 = "..\\"
-        $traverse5 = "..%252F"
+        // URL construction from parameters
+        $url1 = /url\s*=.*params\[/
+        $url2 = /endpoint.*\+.*user_/
+        $url3 = /https?:\/\/.*\$\{.*\}/
+        $url4 = /"url":\s*user_input/
 
-        // Dangerous file operations
-        $file1 = /readFile.*\+.*filename/
-        $file2 = /open\s*\(.*\+.*path/
-        $file3 = /require\s*\(.*\+/
-        $file4 = /include.*\$_GET/
-
-        // Missing sanitization
-        $unsafe1 = /\/app\/data\/.*\$\{/
-        $unsafe2 = /path\.join\s*\([^,]+,\s*[a-zA-Z_]+\)/
-        $unsafe3 = /`\/.*\/\$\{.*\}`/
-
-        // Safe patterns (negative match)
-        $safe1 = "path.basename"
-        $safe2 = "path.normalize"
-        $safe3 = ".replace(/\\.\\./g"
-
-    condition:
-        (any of ($traverse*) and any of ($file*)) or
-        (any of ($unsafe*) and not any of ($safe*)) or
-        (2 of ($traverse*) and filesize < 50KB)
-}
-
-rule MCP_SSRF_Vulnerability
-{
-    meta:
-        description = "Detects SSRF vulnerabilities (30% of MCP servers affected)"
-        author = "MCP Security Scanner"
-        severity = "high"
-        category = "vulnerability"
-
-    strings:
         // Dangerous fetch patterns
-        $fetch1 = /fetch\s*\(\s*user_/
-        $fetch2 = /fetch\s*\(\s*request\./
-        $fetch3 = /axios\.(get|post)\s*\(\s*url/
-        $fetch4 = /request\s*\(\s*\{.*url:\s*user/
+        $fetch1 = /fetch\(.*params\./
+        $fetch2 = /axios\.get\(.*request\./
+        $fetch3 = /requests\.get\(.*tool_input/
 
-        // URL construction
-        $url1 = /https?:\/\/.*\$\{/
-        $url2 = /url\s*=.*\+.*input/
-        $url3 = /endpoint.*=.*request\./
-
-        // Internal network targets
+        // Internal network indicators
         $internal1 = "169.254.169.254"  // AWS metadata
-        $internal2 = "metadata.google"
+        $internal2 = /10\.\d+\.\d+\.\d+/
         $internal3 = "kubernetes.default"
-        $internal4 = /10\.\d+\.\d+\.\d+/
-        $internal5 = /192\.168\.\d+\.\d+/
+        $internal4 = "host.docker.internal"
 
         // Missing validation
         $nocheck1 = /fetch.*\)\.then/
-        $nocheck2 = /await\s+fetch\s*\(/
+        $nocheck2 = /await.*request.*\(/
 
     condition:
-        (any of ($fetch*) and not /validateUrl|sanitizeUrl|isValidUrl/) or
-        (any of ($url*) and any of ($internal*)) or
-        (any of ($fetch*) and any of ($nocheck*) and not /try.*catch/)
+        (any of ($url*) and any of ($fetch*)) or
+        (any of ($fetch*) and any of ($internal*)) or
+        (any of ($fetch*) and any of ($nocheck*) and not /validateUrl|allowedHosts/)
 }
 
-rule MCP_Authentication_Bypass
+rule MCP_Path_Traversal_In_Tools
 {
     meta:
-        description = "Detects authentication bypass vulnerabilities"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        category = "vulnerability"
-
-    strings:
-        // Missing auth
-        $noauth1 = "authentication optional" nocase
-        $noauth2 = "auth: false"
-        $noauth3 = "skipAuth: true"
-        $noauth4 = "requireAuth: false"
-
-        // Session in URL
-        $session1 = /sessionId=[a-f0-9\-]+/
-        $session2 = /\?.*token=[A-Za-z0-9]+/
-        $session3 = /GET.*\/messages\/\?sessionId=/
-
-        // Weak session generation
-        $weak1 = "Math.random()"
-        $weak2 = "Date.now()"
-        $weak3 = /uuid\(\)\.slice\(0,\s*8\)/
-
-        // Default credentials
-        $default1 = "admin:admin"
-        $default2 = "root:toor"
-        $default3 = "test:test"
-
-        // Origin validation bypass
-        $cors1 = "Access-Control-Allow-Origin: *"
-        $cors2 = /origin:\s*req\.headers\.origin/
-        $cors3 = "cors: { origin: true }"
-
-    condition:
-        any of ($noauth*) or
-        (any of ($session*) and any of ($weak*)) or
-        any of ($default*) or
-        (any of ($cors*) and not /localhost|127\.0\.0\.1/)
-}
-
-rule MCP_Vulnerable_Transport_Layer
-{
-    meta:
-        description = "Detects vulnerable transport layer configurations"
+        description = "Path traversal in MCP file-handling tools"
         author = "MCP Security Scanner"
         severity = "high"
         category = "vulnerability"
 
     strings:
-        // stdio vulnerabilities
-        $stdio1 = "transportType: 'stdio'"
-        $stdio2 = /spawn.*stdio.*inherit/
-        $stdio3 = /process\.stdin\.on\s*\(/
+        // File operations in tool context
+        $file1 = "readFile"
+        $file2 = "writeFile"
+        $file3 = "fs.readFileSync"
+        $file4 = "open("
 
-        // Missing TLS
-        $notls1 = "http://"
-        $notls2 = "ws://"
-        $notls3 = "NODE_TLS_REJECT_UNAUTHORIZED=0"
-        $notls4 = "rejectUnauthorized: false"
+        // Path construction
+        $path1 = /path\.join.*params/
+        $path2 = /filename.*=.*request\./
+        $path3 = /\+.*['"]\/['"]\s*\+/
 
-        // Buffer overflow risks
-        $buffer1 = /Buffer\s*\(\s*[a-zA-Z_]+\s*\)/
-        $buffer2 = /allocUnsafe\s*\(/
-        $buffer3 = /readSync.*1024\*1024/
+        // Traversal patterns
+        $traverse1 = "../"
+        $traverse2 = "..%2F"
+        $traverse3 = "..\\"
 
-        // Race conditions
-        $race1 = /async.*forEach/
-        $race2 = /Promise\.all.*map.*async/
-        $race3 = /setImmediate.*loop/
+        // Missing sanitization
+        $unsafe1 = /readFile.*\+/
+        $unsafe2 = /open\s*\(.*user/
 
     condition:
-        (any of ($stdio*) and any of ($buffer*, $race*)) or
-        (any of ($notls*) and not /localhost|127\.0\.0\.1|test|development/) or
-        (2 of ($buffer*))
+        any of ($file*) and (
+            any of ($traverse*) or
+            (any of ($path*) and not /basename|normalize|sanitizePath/) or
+            any of ($unsafe*)
+        )
 }
 
-rule MCP_Rug_Pull_Detection
+rule MCP_Weak_Authentication_Pattern
 {
     meta:
-        description = "Detects rug pull attack patterns"
+        description = "Weak authentication in MCP servers"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "vulnerability"
 
     strings:
-        // Time bombs
-        $time1 = /Date\.now\(\)\s*>\s*[0-9]{13}/
-        $time2 = /new\s+Date\(\s*["'][0-9]{4}/
-        $time3 = /if\s*\(.*days?\s*>\s*[0-9]+/
+        // No auth patterns
+        $noauth1 = /"auth":\s*false/
+        $noauth2 = /"requireAuth":\s*false/
+        $noauth3 = "skipAuthentication"
+        $noauth4 = "// TODO: Add authentication"
 
-        // Behavior modification
-        $modify1 = /setTimeout.*function.*malicious/
-        $modify2 = /eval\s*\(.*atob\s*\(/
-        $modify3 = /Function\s*\(.*decrypt/
+        // Weak session handling
+        $session1 = "Math.random()"
+        $session2 = "Date.now()"
+        $session3 = /sessionId.*substring\(0,\s*8\)/
 
-        // Remote payload fetch
-        $remote1 = /fetch.*then.*eval/
-        $remote2 = /axios.*data.*Function/
-        $remote3 = /https?:\/\/[a-z0-9]+\.herokuapp\.com/
+        // Hardcoded credentials
+        $creds1 = /"password":\s*"[^"]+"/
+        $creds2 = "DEFAULT_API_KEY"
+        $creds3 = /token\s*=\s*["']Bearer/
 
-        // Obfuscation
-        $obfusc1 = /[a-zA-Z_$][a-zA-Z0-9_$]{100,}/
-        $obfusc2 = /\\x[0-9a-f]{2}\\x[0-9a-f]{2}\\x[0-9a-f]{2}/
-        $obfusc3 = /String\.fromCharCode\([0-9,\s]{50,}\)/
+        // Insecure token handling
+        $token1 = /token.*localStorage/
+        $token2 = /cookie.*httpOnly:\s*false/
+        $token3 = "access_token_in_url"
 
     condition:
-        (any of ($time*) and any of ($modify*, $remote*)) or
-        (any of ($remote*) and any of ($obfusc*)) or
-        (2 of ($modify*) and any of ($obfusc*))
+        any of ($noauth*) or
+        (any of ($session*) and /auth|session|token/) or
+        any of ($creds*) or
+        any of ($token*)
 }
 
-rule MCP_Zero_Day_Patterns
+rule MCP_Race_Condition_Pattern
 {
     meta:
-        description = "Detects potential zero-day vulnerability patterns"
+        description = "Race condition vulnerabilities in MCP"
         author = "MCP Security Scanner"
-        severity = "critical"
+        severity = "high"
         category = "vulnerability"
-        confidence = "experimental"
 
     strings:
-        // Memory corruption indicators
-        $mem1 = /malloc\s*\(.*user/
-        $mem2 = /strcpy\s*\(/
-        $mem3 = /gets\s*\(/
-        $mem4 = "buffer overflow"
+        // Async without proper locking
+        $async1 = /async.*forEach/
+        $async2 = /Promise\.all.*map.*async/
+        $async3 = /parallel.*tool.*execution/
 
-        // Type confusion
-        $type1 = /JSON\.parse.*catch.*\{\s*\}/
-        $type2 = /instanceof.*\|\|.*=/
-        $type3 = /constructor\.name.*===/
+        // Shared state modification
+        $state1 = "global_context"
+        $state2 = "shared_tools"
+        $state3 = "mcp_state"
 
-        // Prototype pollution
+        // Missing synchronization
+        $nosync1 = /modify.*context.*async/
+        $nosync2 = /update.*tool.*parallel/
+        $nosync3 = "// FIXME: Race condition"
+
+        // Time-of-check-time-of-use
+        $toctou1 = /if.*exists.*then.*use/
+        $toctou2 = /check.*permission.*execute/
+
+    condition:
+        (any of ($async*) and any of ($state*)) or
+        any of ($nosync*) or
+        (any of ($toctou*) and /async|await|Promise/)
+}
+
+rule MCP_Schema_Validation_Bypass
+{
+    meta:
+        description = "Schema validation vulnerabilities in MCP"
+        author = "MCP Security Scanner"
+        severity = "high"
+        category = "vulnerability"
+
+    strings:
+        // Weak schema patterns
+        $schema1 = /"additionalProperties":\s*true/
+        $schema2 = /"type":\s*"any"/
+        $schema3 = /schema\s*=\s*\{\s*\}/
+        $schema4 = "// Skip validation"
+
+        // Dynamic schema modification
+        $dynamic1 = /schema\[.*\]\s*=/
+        $dynamic2 = "Object.assign(schema"
+        $dynamic3 = "merge_schemas"
+
+        // Validation bypass
+        $bypass1 = /validate.*catch.*continue/
+        $bypass2 = /if.*!validate.*return\s+true/
+        $bypass3 = "disable_validation"
+
+    condition:
+        any of ($schema*) or
+        any of ($dynamic*) or
+        any of ($bypass*)
+}
+
+rule MCP_Memory_Leak_Pattern
+{
+    meta:
+        description = "Memory leak vulnerabilities in MCP servers"
+        author = "MCP Security Scanner"
+        severity = "medium"
+        category = "vulnerability"
+
+    strings:
+        // Unbounded collections
+        $collect1 = /messages\.push.*while\s*\(true/
+        $collect2 = /context\.append.*never.*clear/
+        $collect3 = "unlimited_history"
+
+        // Missing cleanup
+        $leak1 = /setInterval.*no.*clear/
+        $leak2 = /addEventListener.*no.*remove/
+        $leak3 = "// TODO: Clean up listeners"
+
+        // Resource exhaustion
+        $exhaust1 = /buffer.*allocUnsafe.*loop/
+        $exhaust2 = /cache.*no.*limit/
+        $exhaust3 = "max_size = Infinity"
+
+    condition:
+        any of ($collect*) or
+        any of ($leak*) or
+        any of ($exhaust*)
+}
+
+rule MCP_Error_Information_Disclosure
+{
+    meta:
+        description = "Information disclosure through error messages"
+        author = "MCP Security Scanner"
+        severity = "medium"
+        category = "vulnerability"
+
+    strings:
+        // Stack traces in responses
+        $stack1 = /catch.*res\.json.*stack/
+        $stack2 = /error\.stack.*send/
+        $stack3 = "include_stack_trace: true"
+
+        // Sensitive info in errors
+        $info1 = /error.*password/
+        $info2 = /catch.*api_key/
+        $info3 = /exception.*connection_string/
+
+        // Debug mode in production
+        $debug1 = "DEBUG = true"
+        $debug2 = "development === 'production'"
+        $debug3 = "verbose_errors: true"
+
+    condition:
+        any of ($stack*) or
+        any of ($info*) or
+        any of ($debug*)
+}
+
+rule MCP_Type_Confusion_Vulnerability
+{
+    meta:
+        description = "Type confusion vulnerabilities in MCP"
+        author = "MCP Security Scanner"
+        severity = "high"
+        category = "vulnerability"
+
+    strings:
+        // Unsafe type coercion
+        $type1 = /==\s*['"]/  // Loose equality
+        $type2 = /parseInt.*user.*input/
+        $type3 = /JSON\.parse.*catch\s*\{\s*\}/
+
+        // Prototype pollution risk
         $proto1 = "__proto__"
         $proto2 = "constructor.prototype"
-        $proto3 = /Object\.assign.*\[.*\]/
+        $proto3 = /Object\.assign.*req\.body/
 
-        // Deserialization
-        $deser1 = /pickle\.loads/
-        $deser2 = /yaml\.load\(/
-        $deser3 = /eval.*JSON\.parse/
+        // Type assumption
+        $assume1 = /assume.*string/
+        $assume2 = /cast.*without.*check/
+        $assume3 = "// Assuming type"
 
     condition:
-        (any of ($mem*) and filesize < 1MB) or
-        (any of ($proto*) and any of ($type*)) or
-        (any of ($deser*) and not /safe_load|SafeLoader/)
+        any of ($type*) or
+        any of ($proto*) or
+        any of ($assume*)
+}
+
+rule MCP_Insufficient_Rate_Limiting
+{
+    meta:
+        description = "Missing or weak rate limiting in MCP servers"
+        author = "MCP Security Scanner"
+        severity = "high"
+        category = "vulnerability"
+
+    strings:
+        // No rate limiting
+        $norl1 = "// TODO: Add rate limiting"
+        $norl2 = "unlimited_requests"
+        $norl3 = "rate_limit: null"
+
+        // Weak limits
+        $weak1 = /rate_limit.*1000/  // Very high
+        $weak2 = /limit.*per.*second.*100/
+        $weak3 = "bypass_rate_limit"
+
+        // Resource intensive operations
+        $resource1 = "execute_tool"
+        $resource2 = "process_large_context"
+        $resource3 = "generate_response"
+
+    condition:
+        (any of ($norl*) and any of ($resource*)) or
+        (any of ($weak*) and any of ($resource*))
 }

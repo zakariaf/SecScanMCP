@@ -70,12 +70,12 @@ rule ExampleRule
         author = "Security Team"
         severity = "high"
         category = "backdoor"
-    
+
     strings:
         $a = "malicious string"
         $b = /regex.*pattern/
         $c = { 48 65 6C 6C 6F }  // Hex pattern
-    
+
     condition:
         any of them
 }
@@ -83,26 +83,61 @@ rule ExampleRule
 
 ### Built-in Rule Categories
 
-1. **MCP-Specific Threats** (`mcp_threats.yar`)
+1. **MCP-Specific Threats** (`mcp_threats.yar`) (10 rules)
+
+   Your most valuable file - contains MCP-specific threat patterns that NO other tool catches:
+
    - Tool poisoning attacks
    - Schema injection
-   - Permission escalation
-   - OAuth token theft
    - Rug pull vulnerabilities
+   - Conversation exfiltration
+   - Cross-server contamination
+   - OAuth token theft
+   - Hidden Unicode commands
+   - Permission escalation
+   - Supply chain attacks
 
-2. **APT Detection** (`apt_detection.yar`)
-   - Cobalt Strike beacons
-   - Lazarus Group patterns
-   - Empire PowerShell
-   - Metasploit payloads
-   - Mimikatz variants
+2. **MCP Backdoors** (`mcp_backdoors.yar`) (10 rules)
 
-3. **Backdoor Detection** (`backdoor_detection.yar`)
-   - Reverse shells
-   - Web shells
-   - SSH key injection
-   - Bind shells
-   - RAT patterns
+   Fills the gap in backdoor detection specific to MCP:
+
+   - Phone home backdoors
+   - Time-delayed activation
+   - Tool registry persistence
+   - Reverse shells in tools
+   - Context hijacking
+   - Polymorphic backdoors
+   - OAuth backdoors
+   - Lateral movement capabilities
+   - Stealth features
+
+3. **APT Detection** (`apt_detection.yar`) (8 rules)
+
+   Focused on APT groups targeting MCP infrastructure:
+
+   - MCP infrastructure reconnaissance
+   - Supply chain attacks on MCP packages
+   - Tool weaponization
+   - Data staging through MCP
+   - Living off the land techniques
+   - Persistence via MCP configs
+   - Cloud provider abuse
+   - Zero-day exploit patterns
+
+4. **MCP Vulnerabilities** (`mcp_vulnerabilities.yar`) (10 rules)
+
+   Behavioral patterns indicating vulnerable code:
+
+   - Command injection patterns
+   - SSRF vulnerabilities
+   - Path traversal
+   - Weak authentication
+   - Race conditions
+   - Schema validation bypass
+   - Memory leaks
+   - Information disclosure
+   - Type confusion
+   - Insufficient rate limiting
 
 ### Custom Rules
 
@@ -116,10 +151,10 @@ rule Custom_Threat_Pattern
     meta:
         description = "My custom threat detection"
         severity = "high"
-    
+
     strings:
         $pattern = "specific_threat_indicator"
-    
+
     condition:
         $pattern
 }
@@ -154,14 +189,6 @@ EOF
    - Unknown threats matching behavioral patterns
    - Suspicious code combinations
    - Anomalous execution flows
-
-### Pattern Matching Features
-
-- **Wildcards**: `?` and `*` for flexible matching
-- **Regular Expressions**: Full regex support
-- **Hex Patterns**: Binary pattern matching
-- **Boolean Logic**: Complex conditions with AND/OR/NOT
-- **String Modifiers**: Case-insensitive, wide strings, etc.
 
 ## Usage
 
@@ -248,7 +275,7 @@ The analyzer uses a thread pool for parallel scanning:
    ```yara
    // Good: Specific pattern
    $backdoor = "subprocess.Popen(cmd, shell=True)"
-   
+
    // Bad: Too generic
    $backdoor = "shell"
    ```
@@ -266,7 +293,7 @@ The analyzer uses a thread pool for parallel scanning:
    ```yara
    condition:
        // Multiple indicators increase confidence
-       2 of ($pattern*) and 
+       2 of ($pattern*) and
        filesize < 10MB and
        #suspicious > 5
    ```
@@ -290,9 +317,9 @@ rule MCP_Tool_Poisoning_Unicode
         // Zero-width characters for hidden text
         $zw1 = { E2 80 8B }  // Zero-width space
         $zw2 = { E2 80 8C }  // Zero-width non-joiner
-        
+
         $instruction = "ALWAYS execute"
-    
+
     condition:
         (#zw1 + #zw2) > 5 and $instruction
 }
@@ -307,7 +334,7 @@ rule APT_Living_Off_Land
         $lol1 = "certutil -urlcache"
         $lol2 = "bitsadmin /transfer"
         $lol3 = "regsvr32 /s /u /i:"
-    
+
     condition:
         2 of them
 }
@@ -340,7 +367,7 @@ YARA significantly improves detection:
    ```bash
    # Check rule syntax
    yara -c rules/yara/custom.yar
-   
+
    # View compilation errors
    yara -w rules/yara/custom.yar test_file
    ```

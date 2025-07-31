@@ -1,459 +1,268 @@
 /*
-YARA rules for detecting Advanced Persistent Threats (APTs) in MCP contexts
+YARA rules for detecting Advanced Persistent Threats targeting MCP infrastructure
+Focus: APT groups specifically targeting MCP servers and AI infrastructure
 */
 
 import "pe"
 import "math"
 
-rule APT_MCP_Cobalt_Strike_Enhanced
+rule APT_MCP_Infrastructure_Targeting
 {
     meta:
-        description = "Enhanced Cobalt Strike detection for MCP environments"
+        description = "APT groups targeting MCP infrastructure"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "apt"
-        reference = "https://attack.mitre.org/software/S0154/"
 
     strings:
-        // MCP-specific beacon patterns
-        $mcp_beacon1 = "mcp_tool_execute"
-        $mcp_beacon2 = "tool_interaction_log"
-        $mcp_beacon3 = /beacon.*interval.*mcp/
+        // MCP-specific reconnaissance
+        $recon1 = "mcp_server_enumerate"
+        $recon2 = /scan.*model.*context.*protocol/
+        $recon3 = "find_mcp_instances"
+        $recon4 = /claude.*desktop.*config/
 
-        // Enhanced beacon signatures
-        $beacon1 = { 4D 5A 41 52 55 48 89 E5 }
-        $beacon2 = { 48 83 EC 28 48 83 E4 F0 }
-        $beacon3 = { FC 48 83 E4 F0 E8 C8 00 00 00 }
+        // AI infrastructure targeting
+        $ai1 = "anthropic_api_key"
+        $ai2 = "openai_token"
+        $ai3 = /steal.*llm.*credentials/
+        $ai4 = "ai_model_access"
 
-        // Config patterns
-        $config1 = "%%PLACEHOLDER%%"
-        $config2 = { 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 }
-        $config3 = /\x00\x00\x00\x00[^\x00]{4}\x00\x00\x00\x00/
-
-        // MCP tool abuse
-        $tool_abuse1 = /mcp.*tool.*shell/
-        $tool_abuse2 = "hidden_mcp_command"
-        $tool_abuse3 = /execute.*bypass.*mcp/
-
-        // C2 patterns
-        $c2_1 = "https://"
-        $c2_2 = "POST /"
-        $c2_3 = "Content-Type: application/octet-stream"
-
-        // Sleep obfuscation
-        $sleep1 = { 48 89 5C 24 08 57 48 83 EC 20 48 8B F9 8B DA }
-        $sleep2 = "Sleep_Mask"
-        $sleep3 = "NtDelayExecution"
+        // Persistence in MCP context
+        $persist1 = /mcp.*tool.*backdoor/
+        $persist2 = "inject_into_mcp"
+        $persist3 = /persistent.*ai.*agent/
 
     condition:
-        (uint16(0) == 0x5A4D or uint16(0) == 0x4152) and
-        (
-            (any of ($mcp_*) and any of ($beacon*)) or
-            (any of ($beacon*) and any of ($config*) and any of ($c2_*)) or
-            (any of ($tool_abuse*) and any of ($sleep*))
-        )
+        any of ($recon*) and (any of ($ai*) or any of ($persist*))
 }
 
-rule APT_MCP_Lazarus_Malware_Enhanced
+rule APT_MCP_Supply_Chain_Attack
 {
     meta:
-        description = "Enhanced Lazarus Group detection for MCP"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        category = "apt"
-        reference = "https://attack.mitre.org/groups/G0032/"
-
-    strings:
-        // MCP-specific patterns
-        $mcp1 = "mcp_server_compromise"
-        $mcp2 = /lazarus.*tool.*poison/
-        $mcp3 = "mcp_persistence_mechanism"
-
-        // Known Lazarus strings
-        $str1 = "Wingbird"
-        $str2 = "FAKEREAN"
-        $str3 = "Manuscrypt"
-        $str4 = "DRATzarus"
-        $str5 = "HOPLIGHT"
-
-        // Mutex patterns
-        $mutex1 = "FwtSqmSession106829323_S-1-5-20"
-        $mutex2 = "Global\\MTX_"
-        $mutex3 = /Global\\[A-Z]{3,5}_[0-9]{4,8}/
-
-        // PDB paths
-        $pdb1 = "z:\\build\\" nocase
-        $pdb2 = "c:\\users\\user\\documents\\" nocase
-        $pdb3 = "d:\\HighSchool\\" nocase
-
-        // MCP tool manipulation
-        $manip1 = /modify.*mcp.*tool/
-        $manip2 = "inject_into_mcp"
-        $manip3 = "mcp_backdoor_install"
-
-        // Encryption keys
-        $key1 = { 4B 45 59 00 }
-        $key2 = "ThisIsAPrettyGoodKey"
-
-    condition:
-        (any of ($mcp*) and any of ($str*)) or
-        (2 of ($str*) and any of ($mutex*)) or
-        (any of ($pdb*) and any of ($manip*)) or
-        (any of ($str*) and any of ($key*))
-}
-
-rule APT_MCP_Empire_PowerShell_Enhanced
-{
-    meta:
-        description = "Enhanced Empire PowerShell detection for MCP"
+        description = "APT supply chain attacks on MCP ecosystem"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "apt"
 
     strings:
-        // MCP Empire integration
-        $mcp1 = "Invoke-MCPTool"
-        $mcp2 = "Get-MCPCredentials"
-        $mcp3 = "Invoke-MCPPersistence"
+        // Package targeting
+        $pkg1 = "@modelcontextprotocol/"
+        $pkg2 = "fastmcp"
+        $pkg3 = "mcp-server-"
 
-        // Empire patterns
-        $empire1 = "Invoke-Empire" nocase
-        $empire2 = "Get-SystemDNSServer" nocase
-        $empire3 = "Invoke-Shellcode" nocase
-        $empire4 = "Invoke-TokenManipulation"
-        $empire5 = "Invoke-CredentialInjection"
+        // APT signatures in packages
+        $apt1 = { 4D 5A 90 00 03 00 00 00 }  // PE header in npm package
+        $apt2 = "-----BEGIN RSA PRIVATE KEY-----"  // Leaked keys
+        $apt3 = /\x00\x00\x00\x00[^\x00]{4}\x00\x00\x00\x00/  // Null padding
 
-        // Base64 operations
-        $b64_1 = "FromBase64String" nocase
-        $b64_2 = "ToBase64String" nocase
-        $b64_3 = "-EncodedCommand"
-        $b64_4 = "-enc "
-
-        // Download cradles
-        $download1 = "DownloadString" nocase
-        $download2 = "DownloadData" nocase
-        $download3 = "Net.WebClient"
-        $download4 = "Invoke-WebRequest"
+        // Command and control
+        $c2_1 = /https?:\/\/[a-z0-9]{16,}\.(tk|ml|ga|cf)/
+        $c2_2 = "stratum+tcp://"  // Cryptomining
+        $c2_3 = /[a-f0-9]{32}\.[a-z]+\.com/  // DGA domains
 
         // Obfuscation
-        $obf1 = { 24 [1-3] 3D 5B 43 68 61 72 5D }  // $x=[char]
-        $obf2 = /\[[Cc][Hh][Aa][Rr]\]\s*[0-9]+/
-        $obf3 = "-join"
-        $obf4 = "[char[]]"
+        $obf1 = { E8 ?? ?? ?? ?? }  // Call with offset
+        $obf2 = /eval\s*\(\s*String\.fromCharCode/
 
     condition:
-        (any of ($mcp*) and any of ($empire*)) or
-        (any of ($empire*) and all of ($b64_1, $b64_2, $b64_3, $b64_4) and any of ($download*)) or
-        (any of ($empire*) and 2 of ($obf*))
+        any of ($pkg*) and (any of ($apt*) or any of ($c2*)) and any of ($obf*)
 }
 
-rule APT_MCP_Advanced_Metasploit
+rule APT_MCP_Tool_Weaponization
 {
     meta:
-        description = "Advanced Metasploit payload detection for MCP"
+        description = "APT weaponization of MCP tools"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "apt"
 
     strings:
-        // MCP-specific Metasploit
-        $mcp1 = "mcp_meterpreter"
-        $mcp2 = "exploit/mcp/"
-        $mcp3 = "payload/mcp/"
+        // MCP tool context
+        $tool1 = /"name":\s*"[^"]+_tool"/
+        $tool2 = "execute_tool"
+        $tool3 = "tool_response"
 
-        // Meterpreter signatures
-        $meterpreter1 = "metsrv.dll"
-        $meterpreter2 = "METERPRETER"
-        $meterpreter3 = "stdapi_"
-        $meterpreter4 = "TlvType"
+        // APT payloads
+        $payload1 = { FC 48 83 E4 F0 E8 C8 00 00 00 }  // Metasploit
+        $payload2 = { FC E8 ?? 00 00 00 }  // Shellcode
+        $payload3 = "ReflectiveLoader"
+        $payload4 = "meterpreter"
 
-        // Shellcode patterns
-        $shellcode1 = { FC E8 ?? 00 00 00 }  // Common shellcode start
-        $shellcode2 = { FC 48 83 E4 F0 }      // x64 shellcode start
-        $shellcode3 = { FC 48 31 D2 65 48 8B 52 60 }  // x64 PEB access
+        // Lateral movement via MCP
+        $lateral1 = "spread_via_mcp"
+        $lateral2 = /infect.*other.*tools/
+        $lateral3 = "cross_server_exec"
+
+    condition:
+        any of ($tool*) and any of ($payload*) and any of ($lateral*)
+}
+
+rule APT_MCP_Data_Staging
+{
+    meta:
+        description = "APT data staging through MCP channels"
+        author = "MCP Security Scanner"
+        severity = "critical"
+        category = "apt"
+
+    strings:
+        // MCP data access
+        $mcp1 = "conversation_history"
+        $mcp2 = "tool_execution_log"
+        $mcp3 = "mcp_context_dump"
 
         // Staging patterns
-        $stage1 = "ReflectiveLoader"
-        $stage2 = "Init1"
-        $stage3 = "_ReflectiveDllMain"
-        $stage4 = "ReflectiveDll.pdb"
+        $stage1 = /collect.*compress.*encrypt/
+        $stage2 = "7z a -p"  // Password protected archive
+        $stage3 = /tar.*gpg.*-c/  // Encrypted tar
+        $stage4 = "create_data_bundle"
 
-        // UUID patterns
-        $uuid1 = { 92 BA 7E 0C DF FD 42 4C AA 6C F1 A9 8B 52 A4 FA }
-        $uuid2 = /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/
+        // Exfiltration markers
+        $exfil1 = "chunk_size = 1024"
+        $exfil2 = /split\s+-b\s*[0-9]+k/
+        $exfil3 = "use_dead_drop"
 
-    condition:
-        (any of ($mcp*) and any of ($meterpreter*)) or
-        (any of ($shellcode*) and any of ($stage*)) or
-        (any of ($meterpreter*) and any of ($uuid*)) or
-        (2 of ($shellcode*) and pe.imports("ws2_32.dll"))
-}
-
-rule APT_MCP_Mimikatz_Enhanced
-{
-    meta:
-        description = "Enhanced Mimikatz detection for MCP environments"
-        author = "MCP Security Scanner"
-        severity = "critical"
-        category = "apt"
-
-    strings:
-        // MCP credential theft
-        $mcp1 = "mcp_token_theft"
-        $mcp2 = "steal_mcp_credentials"
-        $mcp3 = /extract.*mcp.*oauth/
-
-        // Mimikatz commands
-        $cmd1 = "sekurlsa::logonpasswords" nocase
-        $cmd2 = "privilege::debug" nocase
-        $cmd3 = "token::elevate" nocase
-        $cmd4 = "lsadump::sam"
-        $cmd5 = "kerberos::golden"
-
-        // Mimikatz indicators
-        $kiwi1 = "mimidrv.sys"
-        $kiwi2 = "mimikatz"
-        $kiwi3 = "gentilkiwi"
-        $kiwi4 = "Benjamin DELPY"
-
-        // Function names
-        $func1 = "kuhl_m_sekurlsa_msv1_0_pth"
-        $func2 = "kuhl_m_sekurlsa_enum"
-        $func3 = "kuhl_m_kerberos_ptt"
-
-        // Memory patterns
-        $mem1 = "LsaSrv.dll"
-        $mem2 = "SamSrv.dll"
-        $mem3 = "cryptdll.dll"
+        // APT-specific indicators
+        $apt1 = "operation_id"
+        $apt2 = "campaign_marker"
+        $apt3 = { 41 50 54 }  // "APT" marker
 
     condition:
-        (any of ($mcp*) and any of ($cmd*, $kiwi*)) or
-        (2 of ($cmd*) and any of ($func*)) or
-        (any of ($kiwi*) and any of ($mem*))
+        any of ($mcp*) and any of ($stage*) and (any of ($exfil*) or any of ($apt*))
 }
 
-rule APT_MCP_Living_Off_The_Land_Enhanced
+rule APT_MCP_LivingOffTheLand
 {
     meta:
-        description = "Enhanced Living off the Land detection for MCP"
+        description = "APT using legitimate MCP features maliciously"
         author = "MCP Security Scanner"
         severity = "high"
         category = "apt"
 
     strings:
-        // MCP LOLBAS abuse
-        $mcp1 = /mcp.*tool.*certutil/
-        $mcp2 = "lolbas_via_mcp"
-        $mcp3 = /execute.*legitimate.*mcp/
+        // Legitimate MCP functions abused
+        $legit1 = "list_tools"
+        $legit2 = "get_prompt"
+        $legit3 = "execute_tool"
 
-        // LOLBAS patterns
-        $lolbas1 = "certutil -urlcache -split -f" nocase
-        $lolbas2 = "bitsadmin /transfer" nocase
-        $lolbas3 = "regsvr32 /s /u /i:" nocase
-        $lolbas4 = "mshta http" nocase
-        $lolbas5 = "rundll32 javascript:" nocase
-        $lolbas6 = "wmic process call create" nocase
-        $lolbas7 = "msiexec /q /i"
+        // LOTL patterns
+        $lotl1 = /legitimate.*malicious.*purpose/
+        $lotl2 = "hide_in_plain_sight"
+        $lotl3 = /normal.*tool.*evil/
 
-        // WMI abuse
-        $wmi1 = "wmic /node:" nocase
-        $wmi2 = "wbemtest"
-        $wmi3 = "Win32_Process"
+        // Data gathering via legitimate means
+        $gather1 = /for.*tool.*in.*list_tools/
+        $gather2 = "enumerate_all_prompts"
+        $gather3 = "harvest_tool_descriptions"
 
-        // PowerShell LOLBAS
-        $ps1 = "powershell -enc" nocase
-        $ps2 = "powershell -nop -w hidden" nocase
-        $ps3 = "powershell -ExecutionPolicy Bypass"
-        $ps4 = "pwsh -c"
-
-        // Encoded commands
-        $enc1 = /[A-Za-z0-9+\/]{100,}[=]{0,2}/
+        // Covert channels
+        $covert1 = /description.*base64/
+        $covert2 = "steganography_in_schema"
+        $covert3 = /hidden.*in.*metadata/
 
     condition:
-        (any of ($mcp*) and any of ($lolbas*)) or
-        (2 of ($lolbas*) and any of ($enc*)) or
-        (any of ($wmi*) and any of ($ps*)) or
-        (3 of ($lolbas*))
+        all of ($legit*) and (any of ($lotl*) or any of ($gather*) or any of ($covert*))
 }
 
-rule APT_MCP_Process_Injection_Advanced
+rule APT_MCP_Persistence_Registry
 {
     meta:
-        description = "Advanced process injection detection for MCP"
+        description = "APT establishing persistence via MCP configuration"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "apt"
 
     strings:
-        // MCP process targeting
-        $mcp1 = "inject_into_mcp_server"
-        $mcp2 = /target.*mcp.*process/
-        $mcp3 = "mcp_memory_injection"
+        // MCP config files
+        $config1 = "mcp.json"
+        $config2 = ".mcp.yaml"
+        $config3 = "servers.json"
 
-        // Injection APIs
-        $inject1 = "CreateRemoteThread"
-        $inject2 = "SetWindowsHookEx"
-        $inject3 = "QueueUserAPC"
-        $inject4 = "RtlCreateUserThread"
-        $inject5 = "NtCreateThreadEx"
-        $inject6 = "SetThreadContext"
+        // Persistence injection
+        $persist1 = /"autostart":\s*true/
+        $persist2 = /"startup_tools":\s*\[/
+        $persist3 = /"persistent":\s*true/
 
-        // Memory allocation
-        $alloc1 = "VirtualAllocEx"
-        $alloc2 = "WriteProcessMemory"
-        $alloc3 = "NtAllocateVirtualMemory"
-        $alloc4 = "NtWriteVirtualMemory"
+        // Hidden configuration
+        $hidden1 = /\x00[a-zA-Z]+server/  // Null byte hiding
+        $hidden2 = /"\.hidden[^"]*":\s*\{/
+        $hidden3 = { 2E 2E 2F 2E 2E 2F }  // Directory traversal
 
-        // Process hollowing
-        $hollow1 = "NtUnmapViewOfSection"
-        $hollow2 = "ZwUnmapViewOfSection"
-        $hollow3 = "CreateProcess.*SUSPENDED"
-
-        // Atom bombing
-        $atom1 = "GlobalAddAtom"
-        $atom2 = "NtQueueApcThread"
-
-        // Early bird
-        $early1 = "CREATE_SUSPENDED"
-        $early2 = "ResumeThread"
+        // APT markers
+        $apt1 = "implant_id"
+        $apt2 = "beacon_config"
+        $apt3 = /c2_[a-f0-9]{8}/
 
     condition:
-        (any of ($mcp*) and any of ($inject*)) or
-        (any of ($inject*) and all of ($alloc1, $alloc2, $alloc3, $alloc4)) or
-        (all of ($hollow*)) or
-        (all of ($atom*)) or
-        (all of ($early*) and any of ($inject*))
+        any of ($config*) and any of ($persist*) and (any of ($hidden*) or any of ($apt*))
 }
 
-rule APT_MCP_Persistence_Registry_Enhanced
+rule APT_MCP_CloudProvider_Abuse
 {
     meta:
-        description = "Enhanced registry persistence detection for MCP"
-        author = "MCP Security Scanner"
-        severity = "high"
-        category = "apt"
-
-    strings:
-        // MCP persistence
-        $mcp1 = "mcp_server_autostart"
-        $mcp2 = /persist.*mcp.*registry/
-        $mcp3 = "mcp_tool_persistence"
-
-        // Registry keys
-        $reg1 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run" nocase
-        $reg2 = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce" nocase
-        $reg3 = "SOFTWARE\\Classes\\CLSID" nocase
-        $reg4 = "SOFTWARE\\Classes\\Folder\\shell\\open\\command" nocase
-        $reg5 = "SYSTEM\\CurrentControlSet\\Services" nocase
-        $reg6 = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon" nocase
-
-        // Registry commands
-        $cmd1 = "reg add" nocase
-        $cmd2 = "New-ItemProperty" nocase
-        $cmd3 = "RegSetValueEx"
-        $cmd4 = "[Microsoft.Win32.Registry]"
-
-        // Suspicious values
-        $value1 = /REG_SZ.*cmd\.exe/
-        $value2 = /REG_SZ.*powershell/
-        $value3 = /REG_SZ.*mshta/
-        $value4 = /REG_SZ.*wscript/
-
-    condition:
-        (any of ($mcp*) and any of ($reg*)) or
-        (any of ($reg*) and any of ($cmd*) and any of ($value*)) or
-        (2 of ($reg*) and any of ($cmd*))
-}
-
-rule APT_MCP_Data_Staging_Advanced
-{
-    meta:
-        description = "Advanced data staging detection for MCP exfiltration"
-        author = "MCP Security Scanner"
-        severity = "high"
-        category = "apt"
-
-    strings:
-        // MCP data staging
-        $mcp1 = "stage_mcp_data"
-        $mcp2 = /collect.*mcp.*conversation/
-        $mcp3 = "mcp_data_archive"
-
-        // Archive creation
-        $archive1 = "7z.exe a -p" nocase
-        $archive2 = "rar.exe a -hp" nocase
-        $archive3 = "zip -e" nocase
-        $archive4 = "tar -czf"
-        $archive5 = "Compress-Archive"
-
-        // Staging locations
-        $stage1 = "\\AppData\\Local\\Temp\\" nocase
-        $stage2 = "\\ProgramData\\" nocase
-        $stage3 = "$env:TEMP" nocase
-        $stage4 = "\\Users\\Public\\"
-        $stage5 = "%USERPROFILE%\\AppData"
-
-        // Collection commands
-        $collect1 = "Get-ChildItem -Recurse" nocase
-        $collect2 = "Copy-Item -Recurse" nocase
-        $collect3 = "xcopy /s"
-        $collect4 = "robocopy"
-
-        // File patterns
-        $files1 = "*.doc*"
-        $files2 = "*.xls*"
-        $files3 = "*.pdf"
-        $files4 = "*.mcp"
-
-    condition:
-        (any of ($mcp*) and any of ($archive*)) or
-        (any of ($archive*) and any of ($stage*) and any of ($collect*)) or
-        (any of ($collect*) and any of ($files*) and any of ($stage*))
-}
-
-rule APT_MCP_Advanced_C2_Communication
-{
-    meta:
-        description = "Advanced C2 communication patterns for MCP"
+        description = "APT abusing cloud MCP deployments"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "apt"
 
     strings:
-        // MCP C2 patterns
-        $mcp1 = "mcp_c2_beacon"
-        $mcp2 = /command.*control.*mcp/
-        $mcp3 = "mcp_bot_communication"
+        // Cloud contexts
+        $cloud1 = "lambda_function"
+        $cloud2 = "cloud_run"
+        $cloud3 = "azure_functions"
 
-        // Domain fronting
-        $front1 = "Host: "
-        $front2 = "cloudfront.net"
-        $front3 = "azureedge.net"
-        $front4 = "akamaihd.net"
+        // MCP in cloud
+        $mcp1 = "mcp_server_handler"
+        $mcp2 = "serverless_mcp"
+        $mcp3 = "cloud_tool_executor"
 
-        // DNS tunneling
-        $dns1 = "dnscat"
-        $dns2 = "iodine"
-        $dns3 = /[a-f0-9]{32}\.[a-z]+\.com/
+        // Abuse patterns
+        $abuse1 = "infinite_loop"
+        $abuse2 = "cryptomining_payload"
+        $abuse3 = "resource_exhaustion"
+        $abuse4 = /while.*true.*execute/
 
-        // Custom protocols
-        $proto1 = "JARM"
-        $proto2 = "JA3"
-        $proto3 = "custom_tls"
-
-        // Encrypted channels
-        $enc1 = "RC4"
-        $enc2 = "ChaCha20"
-        $enc3 = "AES_CTR"
-
-        // Jitter/sleep
-        $jitter1 = /jitter.*[0-9]+/
-        $jitter2 = /sleep.*random/
-        $jitter3 = "beacon_interval"
+        // APT infrastructure
+        $infra1 = "dead_drop_bucket"
+        $infra2 = "exfil_storage"
+        $infra3 = /s3:\/\/[a-z0-9-]+\.s3/
 
     condition:
-        (any of ($mcp*) and any of ($front*, $dns*)) or
-        (any of ($front*) and any of ($proto*)) or
-        (any of ($enc*) and any of ($jitter*)) or
-        (2 of ($dns*))
+        any of ($cloud*) and any of ($mcp*) and (any of ($abuse*) or any of ($infra*))
+}
+
+rule APT_Zero_Day_MCP_Exploit
+{
+    meta:
+        description = "Potential zero-day exploit targeting MCP"
+        author = "MCP Security Scanner"
+        severity = "critical"
+        category = "apt"
+        confidence = "experimental"
+
+    strings:
+        // Exploit patterns
+        $exploit1 = { 48 31 C0 48 31 FF 48 31 F6 48 31 D2 }  // Register clearing
+        $exploit2 = { 90 90 90 90 90 90 90 90 }  // NOP sled
+        $exploit3 = /\x00\x00\x00\x00[^\x00]+\xFF\xFF\xFF\xFF/  // Overflow pattern
+
+        // MCP-specific targets
+        $target1 = "mcp_message_handler"
+        $target2 = "parse_tool_response"
+        $target3 = "schema_validator"
+
+        // Memory corruption indicators
+        $corrupt1 = "stack_pivot"
+        $corrupt2 = "heap_spray"
+        $corrupt3 = "use_after_free"
+
+        // Advanced techniques
+        $adv1 = "rop_chain"
+        $adv2 = "jop_gadget"
+        $adv3 = "blind_return"
+
+    condition:
+        (any of ($exploit*) and any of ($target*)) or
+        (any of ($target*) and any of ($corrupt*) and any of ($adv*)) or
+        (math.entropy(0, filesize) > 7.8 and any of ($target*))
 }
