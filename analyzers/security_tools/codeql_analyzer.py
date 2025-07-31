@@ -41,6 +41,12 @@ class CodeQLAnalyzer(BaseAnalyzer):
         super().__init__()
         self._find_codeql_cli()
         self._validate_setup()
+        # hold per-scan options provided by the orchestrator
+        self.scan_options: Dict[str, Any] = {}
+
+    def set_options(self, options: Dict[str, Any]):
+        """Receive scan options from the orchestrator."""
+        self.scan_options = options or {}
 
     def _find_codeql_cli(self):
         """Find CodeQL CLI in PATH or known locations"""
@@ -182,14 +188,34 @@ class CodeQLAnalyzer(BaseAnalyzer):
                 f'--source-root={repo_path}',
                 '--overwrite'
             ]
-
-            # Add quiet flag to reduce output
+            # Make the error more visible and keep output reasonable
             create_cmd.append('--quiet')
+            create_cmd.extend(['--log-to-stderr'])
+
+            # For Go, supply an explicit build command unless caller overrides it
+            if language == 'go':
+                # Use an override if provided in scan_options
+                build_cmd = (self.scan_options or {}).get('codeql_build_command')
+
+                if not build_cmd:
+                    # Default build: set sensible env defaults without ${...} expansions
+                    build_cmd = (
+                        f"sh -c \"cd '{repo_path}'; "
+                        "export GOPROXY='https://proxy.golang.org,direct' "
+                        "GOSUMDB='sum.golang.org' "
+                        "CGO_ENABLED=0; "
+                        "go mod download || true; "
+                        "go build ./...\""
+                    )
+
+                # Add exactly one --command
+                create_cmd.extend(['--command', build_cmd])
 
             result = await self._run_command(create_cmd, timeout=300)
 
             if result.returncode != 0:
-                self.logger.error(f"Database creation failed: {result.stderr}")
+                msg = (result.stderr or "").strip() or (result.stdout or "").strip()
+                self.logger.error(f"Database creation failed: {msg}")
                 return findings
 
             # Step 2: Run analysis with queries
