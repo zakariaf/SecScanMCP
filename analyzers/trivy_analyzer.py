@@ -58,12 +58,11 @@ class TrivyAnalyzer(BaseAnalyzer):
                 'fs',  # Filesystem scan
                 repo_path,
                 '--format', 'json',
-                '--scanners', 'vuln,secret,misconfig,license',  # Enable all scanners
+                '--scanners', 'vuln,secret',  # Enable all scanners, we can add misconfig and license too
                 '--severity', 'CRITICAL,HIGH,MEDIUM,LOW',
                 '--quiet',
                 '--timeout', '10m',
-                '--skip-dirs', '.git,node_modules,__pycache__',
-                '--license-full',  # Get full license info
+                # '--license-full',  # Get full license info, if we add license scanning
                 '--include-non-failures'  # Include all findings
             ]
 
