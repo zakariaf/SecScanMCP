@@ -105,6 +105,17 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && corepack prepare pnpm@latest --activate \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Go (1.22.x) and basic build tools for CGO
+ARG GO_VERSION=1.22.5
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl git build-essential pkg-config \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tgz \
+    && rm -rf /usr/local/go && tar -C /usr/local -xzf /tmp/go.tgz \
+    && ln -s /usr/local/go/bin/go /usr/local/bin/go \
+    && ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt \
+    && rm /tmp/go.tgz
+
 # Copy YARA libraries and binaries from builder
 COPY --from=builder /usr/local/lib/libyara* /usr/local/lib/
 COPY --from=builder /usr/local/include/yara* /usr/local/include/
@@ -134,8 +145,14 @@ ENV CODEQL_HOME="/opt/codeql"
 RUN groupadd -r scanner && useradd -r -g scanner -m scanner
 
 # Create necessary directories with proper permissions
-RUN mkdir -p /home/scanner/.cache /app/rules/yara /app/rules/codeql /tmp/mcp-scanner && \
+RUN mkdir -p /home/scanner/.cache /home/scanner/go /app/rules/yara /app/rules/codeql /tmp/mcp-scanner && \
     chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner
+
+# Set Go env *after* user dirs exist
+ENV GOPATH=/home/scanner/go
+# Build cache defaults to $HOME/.cache/go-build; set explicitly for clarity
+ENV GOCACHE=/home/scanner/.cache/go-build
+ENV PATH=$PATH:/usr/local/go/bin:${GOPATH}/bin
 
 WORKDIR /app
 

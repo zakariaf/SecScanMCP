@@ -11,6 +11,9 @@ services:
       # ClamAV configuration
       - CLAMAV_HOST=clamav
       - CLAMAV_PORT=3310
+      - GOPATH=/home/scanner/go
+      - GOCACHE=/home/scanner/.cache/go-build
+      - GOMODCACHE=/home/scanner/go/pkg/mod
     volumes:
       # Mount Docker socket for dynamic analysis
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -20,6 +23,8 @@ services:
       - scanner-cache:/home/scanner/.cache
       # Rules directories
       - ./rules:/app/rules:ro
+      # Cache GOPATH modules between runs
+      - gocache:/home/scanner/go
     restart: unless-stopped
     depends_on:
       clamav:
@@ -86,6 +91,7 @@ services:
 volumes:
   scanner-cache:
   clamav-db:
+  gocache:
 
 networks:
   scanner-network:
