@@ -1,520 +1,520 @@
 import asyncio
-import subprocess
 import json
-import tempfile
-import shutil
-import logging
-from pathlib import Path
-from typing import List, Dict, Any, Optional, Tuple
-import re
 import os
+import re
+import subprocess
+import tempfile
+from pathlib import Path
+from shutil import which
+from typing import Any, Dict, List, Optional
 
-from analyzers.base import BaseAnalyzer
+from ..base import BaseAnalyzer
 from models import Finding, SeverityLevel, VulnerabilityType
-
-logger = logging.getLogger(__name__)
 
 
 class CodeQLAnalyzer(BaseAnalyzer):
-    """CodeQL semantic code analysis engine"""
+    """
+    CodeQL semantic analyzer with MCP-aware rules and safe autobuilds.
+    - Detects languages
+    - Installs standard packs + local MCP pack
+    - Builds DBs (with safe JS/TS/go heuristics)
+    - Analyzes to SARIF and maps to our Finding model
+    """
 
-    # CodeQL CLI location - use which to find it
-    CODEQL_CLI = None
-
-    # Custom queries directory
+    CODEQL_CLI: Optional[str] = None
     QUERIES_DIR = Path("/app/rules/codeql")
 
-    # Supported languages and their identifiers
     LANGUAGE_MAP = {
-        'python': 'python',
-        'javascript': 'javascript',
-        'typescript': 'javascript',
-        'java': 'java',
-        'csharp': 'csharp',
-        'cpp': 'cpp',
-        'c': 'cpp',
-        'go': 'go',
-        'ruby': 'ruby'
+        "python": "python",
+        "javascript": "javascript",
+        "typescript": "javascript",
+        "java": "java",
+        "csharp": "csharp",
+        "cpp": "cpp",
+        "c": "cpp",
+        "go": "go",
+        "ruby": "ruby",
     }
 
     def __init__(self):
         super().__init__()
         self._find_codeql_cli()
         self._validate_setup()
-        # hold per-scan options provided by the orchestrator
         self.scan_options: Dict[str, Any] = {}
 
+    # ---------- Public API ----------
+
     def set_options(self, options: Dict[str, Any]):
-        """Receive scan options from the orchestrator."""
         self.scan_options = options or {}
 
-    def _find_codeql_cli(self):
-        """Find CodeQL CLI in PATH or known locations"""
-        # First try PATH
-        try:
-            result = subprocess.run(['which', 'codeql'], capture_output=True, text=True)
-            if result.returncode == 0 and result.stdout.strip():
-                self.CODEQL_CLI = result.stdout.strip()
-                self.logger.info(f"Found CodeQL CLI at: {self.CODEQL_CLI}")
-                return
-        except:
-            pass
-
-        # Try known locations
-        known_locations = [
-            '/opt/codeql/codeql',
-            '/usr/local/bin/codeql',
-            '/usr/bin/codeql'
-        ]
-
-        for location in known_locations:
-            if os.path.exists(location) and os.access(location, os.X_OK):
-                self.CODEQL_CLI = location
-                self.logger.info(f"Found CodeQL CLI at: {self.CODEQL_CLI}")
-                return
-
-        self.logger.error("CodeQL CLI not found in PATH or known locations")
-
-    def _validate_setup(self):
-        """Validate CodeQL installation"""
-        if not self.CODEQL_CLI:
-            self.logger.error("CodeQL CLI not found")
-            return
-
-        try:
-            # Test CodeQL CLI
-            result = subprocess.run(
-                [self.CODEQL_CLI, '--version'],
-                capture_output=True,
-                text=True,
-                timeout=10
-            )
-
-            if result.returncode == 0:
-                self.logger.info(f"CodeQL version: {result.stdout.strip()}")
-            else:
-                self.logger.error(f"CodeQL validation failed: {result.stderr}")
-
-        except Exception as e:
-            self.logger.error(f"Failed to validate CodeQL: {e}")
-
     async def analyze(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
-        """Analyze repository with CodeQL"""
         if not self.CODEQL_CLI:
             self.logger.warning("CodeQL CLI not available, skipping analysis")
             return []
 
-        findings = []
-        repo_path = Path(repo_path)
+        findings: List[Finding] = []
+        repo = Path(repo_path)
 
         try:
-            # Determine languages in the project
-            languages = await self._detect_languages(repo_path, project_info)
-
+            languages = await self._detect_languages(repo, project_info)
             if not languages:
                 self.logger.info("No supported languages found for CodeQL analysis")
                 return findings
 
-            # Create temporary directory for CodeQL databases
+            # MCP detection → enables MCP rules unless explicitly disabled
+            mcp_detected = self._detect_mcp(repo)
+            enable_mcp_rules = bool(self.scan_options.get("enable_mcp_rules", mcp_detected))
+            if mcp_detected:
+                self.logger.info("MCP project indicators detected.")
+            if enable_mcp_rules:
+                self.logger.info("MCP-specific rules are enabled.")
+
+            # Pre-fetch packs to speed cold start
+            await self._ensure_packs(languages, enable_mcp_rules)
+
+            create_timeout = int(self.scan_options.get("create_timeout", 900))
+            analyze_timeout = int(self.scan_options.get("analyze_timeout", 2400))
+            threads = str(self.scan_options.get("codeql_threads", os.cpu_count() or 4))
+            ram_mb = str(self.scan_options.get("codeql_ram_mb", 2048))
+
             with tempfile.TemporaryDirectory(prefix="codeql_") as temp_dir:
                 temp_path = Path(temp_dir)
 
-                # Analyze each language
                 for language in languages:
                     self.logger.info(f"Running CodeQL analysis for {language}")
-
                     try:
                         lang_findings = await self._analyze_language(
-                            repo_path,
-                            temp_path,
-                            language
+                            repo=repo,
+                            temp_dir=temp_path,
+                            language=language,
+                            enable_mcp_rules=enable_mcp_rules,
+                            create_timeout=create_timeout,
+                            analyze_timeout=analyze_timeout,
+                            threads=threads,
+                            ram_mb=ram_mb,
                         )
                         findings.extend(lang_findings)
                     except Exception as e:
                         self.logger.error(f"CodeQL analysis failed for {language}: {e}")
 
             self.logger.info(f"CodeQL analysis found {len(findings)} issues")
-
         except Exception as e:
             self.logger.error(f"CodeQL analysis failed: {e}")
 
         return findings
 
+    # ---------- Setup ----------
+
+    def _find_codeql_cli(self):
+        path = which("codeql")
+        if path:
+            self.CODEQL_CLI = path
+            self.logger.info(f"Found CodeQL CLI at: {path}")
+            return
+
+        for location in ("/opt/codeql/codeql", "/usr/local/bin/codeql", "/usr/bin/codeql"):
+            if os.path.exists(location) and os.access(location, os.X_OK):
+                self.CODEQL_CLI = location
+                self.logger.info(f"Found CodeQL CLI at: {location}")
+                return
+
+        self.logger.error("CodeQL CLI not found")
+
+    def _validate_setup(self):
+        if not self.CODEQL_CLI:
+            return
+        try:
+            result = subprocess.run(
+                [self.CODEQL_CLI, "--version"], capture_output=True, text=True, timeout=15
+            )
+            if result.returncode == 0:
+                self.logger.info(f"CodeQL version: {result.stdout.strip()}")
+            else:
+                self.logger.error(f"CodeQL validation failed: {result.stderr}")
+        except Exception as e:
+            self.logger.error(f"Failed to validate CodeQL: {e}")
+
+    # ---------- Language & MCP detection ----------
+
     async def _detect_languages(self, repo_path: Path, project_info: Dict[str, Any]) -> List[str]:
-        """Detect languages in the repository"""
-        languages = set()
+        langs: set[str] = set()
 
-        # Use project info if available
-        if project_info.get('language'):
-            lang = project_info['language'].lower()
-            if lang in self.LANGUAGE_MAP:
-                languages.add(self.LANGUAGE_MAP[lang])
+        hint = (project_info or {}).get("language")
+        if hint:
+            hint = str(hint).lower()
+            if hint in self.LANGUAGE_MAP:
+                langs.add(self.LANGUAGE_MAP[hint])
 
-        # Scan for language indicators
-        language_patterns = {
-            'python': ['*.py'],
-            'javascript': ['*.js', '*.jsx', '*.ts', '*.tsx'],
-            'java': ['*.java'],
-            'csharp': ['*.cs'],
-            'cpp': ['*.cpp', '*.cc', '*.cxx', '*.c', '*.h', '*.hpp'],
-            'go': ['*.go'],
-            'ruby': ['*.rb']
+        patterns = {
+            "python": ["*.py"],
+            "javascript": ["*.js", "*.jsx", "*.ts", "*.tsx"],
+            "java": ["*.java"],
+            "csharp": ["*.cs"],
+            "cpp": ["*.c", "*.cc", "*.cpp", "*.cxx", "*.h", "*.hpp"],
+            "go": ["*.go"],
+            "ruby": ["*.rb"],
         }
-
-        for language, patterns in language_patterns.items():
-            for pattern in patterns:
-                if list(repo_path.rglob(pattern)):
-                    languages.add(language)
+        for language, globs in patterns.items():
+            for pat in globs:
+                if next(repo_path.rglob(pat), None) is not None:
+                    langs.add(language)
                     break
 
-        return list(languages)
+        return sorted(langs)  # stable order
 
-    async def _analyze_language(self, repo_path: Path, temp_dir: Path, language: str) -> List[Finding]:
-        """Analyze a specific language with CodeQL"""
-        findings = []
+    def _detect_mcp(self, repo: Path) -> bool:
+        # Python deps
+        for fn in ("requirements.txt", "pyproject.toml"):
+            p = repo / fn
+            if p.exists():
+                try:
+                    txt = p.read_text(encoding="utf-8", errors="ignore").lower()
+                    if any(s in txt for s in ("modelcontextprotocol", "fastmcp", "mcp ")):
+                        return True
+                except Exception:
+                    pass
 
-        # Create database
+        # Node deps
+        pkg = repo / "package.json"
+        if pkg.exists():
+            try:
+                data = json.loads(pkg.read_text(encoding="utf-8", errors="ignore"))
+                deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
+                if any(k.startswith("@modelcontextprotocol/") or k == "@modelcontextprotocol/sdk" for k in deps):
+                    return True
+            except Exception:
+                pass
+
+        # Source hints
+        for pat in ("**/*.py", "**/*.ts", "**/*.js"):
+            for f in repo.glob(pat):
+                try:
+                    head = f.read_text(encoding="utf-8", errors="ignore")[:20000]
+                except Exception:
+                    continue
+                if re.search(r"@mcp\.tool|\bserver\.tool\(", head) or re.search(r"\bimport\s+mcp\b", head):
+                    return True
+        return False
+
+    # ---------- Pack management & query selection ----------
+
+    async def _ensure_packs(self, languages: List[str], enable_mcp_rules: bool):
+        if not self.CODEQL_CLI:
+            return
+        default = [f"codeql/{lang}-queries" for lang in languages if lang in self.LANGUAGE_MAP]
+        if default:
+            await self._run_command([self.CODEQL_CLI, "pack", "download", *default], timeout=600)
+
+        # Local pack installation (if present)
+        if enable_mcp_rules and self.QUERIES_DIR.exists():
+            try:
+                await self._run_command([self.CODEQL_CLI, "pack", "install", str(self.QUERIES_DIR)], timeout=300)
+            except Exception as e:
+                self.logger.warning(f"Failed to install local MCP pack: {e}")
+
+    def _suite_args(self, language: str, enable_mcp_rules: bool) -> List[str]:
+        args: List[str] = []
+        # Always run the standard security-and-quality pack for this language
+        args.append(f"codeql/{language}-queries:security-and-quality")
+        # If our local MCP pack exists and enabled, run its suite too
+        if enable_mcp_rules and (self.QUERIES_DIR / "mcp-security.qls").exists():
+            # Allow pack reference or path; pack reference preferred
+            args.append(str(self.QUERIES_DIR / "mcp-security.qls"))
+        return args
+
+    # ---------- Per-language DB & analyze ----------
+
+    async def _analyze_language(
+        self,
+        repo: Path,
+        temp_dir: Path,
+        language: str,
+        enable_mcp_rules: bool,
+        create_timeout: int,
+        analyze_timeout: int,
+        threads: str,
+        ram_mb: str,
+    ) -> List[Finding]:
+        findings: List[Finding] = []
         db_path = temp_dir / f"{language}_db"
 
-        try:
-            # Step 1: Create CodeQL database
-            self.logger.info(f"Creating CodeQL database for {language}")
+        # Create DB with safe build heuristics where needed
+        create_cmd = [
+            self.CODEQL_CLI, "database", "create", str(db_path),
+            f"--language={language}",
+            f"--source-root={repo}",
+            "--overwrite",
+            "--log-to-stderr",
+            "--quiet",
+        ]
 
-            create_cmd = [
-                self.CODEQL_CLI,
-                'database', 'create',
-                str(db_path),
-                f'--language={language}',
-                f'--source-root={repo_path}',
-                '--overwrite'
-            ]
-            # Make the error more visible and keep output reasonable
-            create_cmd.append('--quiet')
-            create_cmd.extend(['--log-to-stderr'])
+        # JS/TS safe install to help extraction, without running scripts
+        if language == "javascript":
+            build_cmd = None
+            if (repo / "pnpm-lock.yaml").exists():
+                build_cmd = "sh -c \"pnpm i --ignore-scripts --frozen-lockfile || pnpm i --ignore-scripts; pnpm -v >/dev/null\""
+            elif (repo / "yarn.lock").exists():
+                build_cmd = "sh -c \"yarn install --ignore-scripts --frozen-lockfile || yarn install --ignore-scripts\""
+            elif (repo / "package-lock.json").exists():
+                build_cmd = "sh -c \"npm ci --ignore-scripts --no-audit --no-fund || npm i --ignore-scripts\""
+            if build_cmd:
+                create_cmd.extend(["--command", build_cmd])
 
-            # For Go, supply an explicit build command unless caller overrides it
-            if language == 'go':
-                # Use an override if provided in scan_options
-                build_cmd = (self.scan_options or {}).get('codeql_build_command')
+        # Go: warm caches & build without CGO
+        if language == "go":
+            env = (
+                f"export GOPROXY='https://proxy.golang.org,direct' GOSUMDB='sum.golang.org' CGO_ENABLED=0;"
+                "go env -w GOMODCACHE=${GOMODCACHE:-$HOME/go/pkg/mod} >/dev/null 2>&1 || true;"
+                "go list ./... >/dev/null 2>&1 || true; "
+                "go build ./... || true"
+            )
+            create_cmd.extend(["--command", f"sh -c \"cd '{repo}'; {env}\""])
 
-                if not build_cmd:
-                    # Default build: set sensible env defaults without ${...} expansions
-                    build_cmd = (
-                        f"sh -c \"cd '{repo_path}'; "
-                        "export GOPROXY='https://proxy.golang.org,direct' "
-                        "GOSUMDB='sum.golang.org' "
-                        "CGO_ENABLED=0; "
-                        "go mod download || true; "
-                        "go build ./...\""
-                    )
+        # Java/C#/C/C++: let CodeQL autobuild try first
+        if language in {"java", "csharp", "cpp"}:
+            create_cmd.append("--command=autobuild")
 
-                # Add exactly one --command
-                create_cmd.extend(['--command', build_cmd])
+        # Create database
+        result = await self._run_command(create_cmd, timeout=create_timeout)
+        if result.returncode != 0:
+            msg = (result.stderr or "").strip() or (result.stdout or "").strip()
+            self.logger.error(f"Database creation failed for {language}: {msg}")
+            return findings
 
-            result = await self._run_command(create_cmd, timeout=300)
+        # Analyze
+        results_file = temp_dir / f"{language}_results.sarif"
+        analyze_cmd = [
+            self.CODEQL_CLI, "database", "analyze", str(db_path),
+            "--format=sarif-latest",
+            f"--output={results_file}",
+            "--sarif-add-query-help",
+            "--no-progress",
+            "--quiet",
+            f"--threads={threads}",
+            f"--ram={ram_mb}",
+        ]
+        analyze_cmd.extend(self._suite_args(language, enable_mcp_rules))
 
-            if result.returncode != 0:
-                msg = (result.stderr or "").strip() or (result.stdout or "").strip()
-                self.logger.error(f"Database creation failed: {msg}")
-                return findings
+        result = await self._run_command(analyze_cmd, timeout=analyze_timeout)
+        if result.returncode != 0:
+            self.logger.error(f"Analysis failed for {language}: {result.stderr}")
+            return findings
 
-            # Step 2: Run analysis with queries
-            self.logger.info(f"Running CodeQL queries for {language}")
-
-            # Get queries to run
-            queries = self._get_queries_for_language(language)
-
-            if not queries:
-                self.logger.warning(f"No queries found for {language}")
-                return findings
-
-            # Run analysis
-            results_file = temp_dir / f"{language}_results.sarif"
-
-            analyze_cmd = [
-                self.CODEQL_CLI,
-                'database', 'analyze',
-                str(db_path),
-                '--format=sarif-latest',
-                f'--output={results_file}',
-                '--sarif-add-query-help'
-            ]
-
-            # Add queries
-            analyze_cmd.extend(queries)
-
-            result = await self._run_command(analyze_cmd, timeout=600)
-
-            if result.returncode != 0:
-                self.logger.error(f"Analysis failed: {result.stderr}")
-                return findings
-
-            # Step 3: Parse results
-            if results_file.exists():
-                findings = self._parse_sarif_results(results_file, repo_path)
-
-        except Exception as e:
-            self.logger.error(f"CodeQL analysis error for {language}: {e}")
+        if results_file.exists():
+            findings = self._parse_sarif_results(results_file, repo)
 
         return findings
 
-    def _get_queries_for_language(self, language: str) -> List[str]:
-        """Get CodeQL queries for a specific language"""
-        queries = []
-
-        # Use built-in security queries
-        security_queries = {
-            'python': 'python-security-and-quality.qls',
-            'javascript': 'javascript-security-and-quality.qls',
-            'java': 'java-security-and-quality.qls',
-            'csharp': 'csharp-security-and-quality.qls',
-            'cpp': 'cpp-security-and-quality.qls',
-            'go': 'go-security-and-quality.qls',
-            'ruby': 'ruby-security-and-quality.qls'
-        }
-
-        if language in security_queries:
-            queries.append(security_queries[language])
-
-        # Add custom queries if they exist
-        if self.QUERIES_DIR.exists():
-            custom_queries = list(self.QUERIES_DIR.glob("*.ql"))
-            for query in custom_queries:
-                # Check if query is for this language (simple heuristic)
-                try:
-                    with open(query, 'r') as f:
-                        content = f.read(500)  # Read first 500 chars
-                        if f'language[": ]*{language}' in content.lower():
-                            queries.append(str(query))
-                except:
-                    pass
-
-        return queries
+    # ---------- Subprocess helper ----------
 
     async def _run_command(self, cmd: List[str], timeout: int = 300) -> subprocess.CompletedProcess:
-        """Run a command with timeout"""
+        process = None
         try:
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
-
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(),
-                timeout=timeout
-            )
-
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout)
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=process.returncode,
-                stdout=stdout.decode('utf-8', errors='replace'),
-                stderr=stderr.decode('utf-8', errors='replace')
+                stdout=stdout.decode("utf-8", errors="replace"),
+                stderr=stderr.decode("utf-8", errors="replace"),
             )
-
         except asyncio.TimeoutError:
             if process:
                 process.terminate()
-                await process.wait()
+                try:
+                    await process.wait()
+                except Exception:
+                    pass
             raise TimeoutError(f"Command timed out after {timeout}s: {' '.join(cmd)}")
 
-    def _parse_sarif_results(self, sarif_file: Path, repo_root: Path) -> List[Finding]:
-        """Parse SARIF results file"""
-        findings = []
+    # ---------- SARIF parsing ----------
 
+    def _relativize(self, uri: str, repo_root: Path) -> str:
+        # try to map artifactLocation.uri to a path within repo
         try:
-            with open(sarif_file, 'r') as f:
-                sarif_data = json.load(f)
+            p = Path(uri)
+            if p.is_absolute():
+                try:
+                    return str(p.relative_to(repo_root))
+                except Exception:
+                    return str(p)
+            return str(p)
+        except Exception:
+            return uri
 
-            # Parse each run in the SARIF file
-            for run in sarif_data.get('runs', []):
-                # Get rules mapping
-                rules_by_id = {
-                    rule['id']: rule
-                    for rule in run.get('tool', {}).get('driver', {}).get('rules', [])
-                }
+    def _parse_sarif_results(self, sarif_file: Path, repo_root: Path) -> List[Finding]:
+        findings: List[Finding] = []
+        try:
+            sarif = json.loads(sarif_file.read_text(encoding="utf-8", errors="ignore"))
+            for run in sarif.get("runs", []) or []:
+                rules_by_id = {}
+                driver = run.get("tool", {}).get("driver", {}) or {}
+                for rule in driver.get("rules", []) or []:
+                    if "id" in rule:
+                        rules_by_id[rule["id"]] = rule
 
-                # Process results
-                for result in run.get('results', []):
-                    finding = self._convert_sarif_result(result, rules_by_id, repo_root)
-                    if finding:
-                        findings.append(finding)
-
+                for result in run.get("results", []) or []:
+                    f = self._convert_sarif_result(result, rules_by_id, repo_root)
+                    if f:
+                        findings.append(f)
         except Exception as e:
             self.logger.error(f"Failed to parse SARIF results: {e}")
-
         return findings
 
-    def _convert_sarif_result(self, result: Dict[str, Any], rules: Dict[str, Any], repo_root: Path) -> Optional[Finding]:
-        """Convert SARIF result to Finding"""
+    def _convert_sarif_result(
+        self, result: Dict[str, Any], rules: Dict[str, Any], repo_root: Path
+    ) -> Optional[Finding]:
         try:
-            rule_id = result.get('ruleId', '')
+            rule_id = result.get("ruleId", "")
             rule = rules.get(rule_id, {})
+            level = (result.get("level") or "warning").lower()
 
-            # Extract location
-            locations = result.get('locations', [])
-            if locations:
-                physical_location = locations[0].get('physicalLocation', {})
-                artifact = physical_location.get('artifactLocation', {})
-                uri = artifact.get('uri', 'unknown')
-                region = physical_location.get('region', {})
-                line = region.get('startLine', 0)
-                location = f"{uri}:{line}"
-            else:
-                location = 'unknown'
+            # Location (normalize to repo-relative if we can)
+            location = "unknown"
+            locs = result.get("locations") or []
+            if locs:
+                phys = (locs[0] or {}).get("physicalLocation", {}) or {}
+                artifact = phys.get("artifactLocation", {}) or {}
+                uri = artifact.get("uri", "unknown")
+                region = phys.get("region", {}) or {}
+                line = region.get("startLine", 0)
+                location = f"{self._relativize(uri, repo_root)}:{line}"
 
-            # Extract properties
-            properties = rule.get('properties', {})
-
-            # Build finding
             return self.create_finding(
                 vulnerability_type=self._determine_vuln_type(rule, result),
                 severity=self._determine_severity(rule, result),
                 confidence=self._extract_confidence(rule, result),
-                title=rule.get('name', result.get('message', {}).get('text', 'Unknown issue')),
+                title=self._extract_title(rule, result),
                 description=self._build_description(rule, result),
                 location=location,
                 recommendation=self._extract_recommendation(rule, result),
-                references=self._build_references(rule, properties),
+                references=self._build_references(rule),
                 evidence={
-                    'rule_id': rule_id,
-                    'level': result.get('level', 'warning'),
-                    'message': result.get('message', {}).get('text', ''),
-                    'fingerprint': result.get('fingerprints', {})
-                }
+                    "rule_id": rule_id,
+                    "level": level,
+                    "message": (result.get("message", {}) or {}).get("text", ""),
+                    "fingerprint": result.get("fingerprints", {}),
+                },
             )
-
         except Exception as e:
             self.logger.error(f"Failed to convert SARIF result: {e}")
             return None
 
+    # ---------- Helpers for fields ----------
+
+    def _extract_title(self, rule: Dict[str, Any], result: Dict[str, Any]) -> str:
+        if rule.get("name"):
+            return str(rule["name"])
+        msg = (result.get("message", {}) or {}).get("text")
+        return msg or "CodeQL issue"
+
+    def _build_description(self, rule: Dict[str, Any], result: Dict[str, Any]) -> str:
+        parts: List[str] = []
+        fd = (rule.get("fullDescription") or {}).get("text")
+        if fd:
+            parts.append(fd)
+        sd = (rule.get("shortDescription") or {}).get("text")
+        if sd and sd not in parts:
+            parts.append(sd)
+        msg = (result.get("message", {}) or {}).get("text")
+        if msg:
+            parts.append(f"\nDetails: {msg}")
+        return "\n".join([p for p in parts if p])
+
+    def _extract_recommendation(self, rule: Dict[str, Any], result: Dict[str, Any]) -> str:
+        help_obj = rule.get("help") or {}
+        if isinstance(help_obj, dict):
+            rec = help_obj.get("text") or help_obj.get("markdown")
+            if rec:
+                return rec
+        rid = (rule.get("id") or "").lower()
+        if "sql" in rid:
+            return "Use parameterized queries or prepared statements."
+        if "injection" in rid:
+            return "Validate/sanitize all untrusted input before use."
+        if "xss" in rid:
+            return "Encode output and validate input to prevent XSS."
+        if "crypto" in rid:
+            return "Use modern, strong cryptographic primitives and safe modes."
+        return "Review and apply relevant secure-coding best practices."
+
+    def _build_references(self, rule: Dict[str, Any]) -> List[str]:
+        refs: List[str] = []
+        help_uri = rule.get("helpUri")
+        if help_uri:
+            refs.append(help_uri)
+        tags = (rule.get("properties", {}) or {}).get("tags", []) or []
+        for tag in tags:
+            m = re.search(r"cwe[-/](\d+)", str(tag).lower())
+            if m:
+                refs.append(f"https://cwe.mitre.org/data/definitions/{m.group(1)}.html")
+        return refs
+
     def _determine_vuln_type(self, rule: Dict[str, Any], result: Dict[str, Any]) -> VulnerabilityType:
-        """Determine vulnerability type from CodeQL rule"""
-        tags = rule.get('properties', {}).get('tags', [])
-        rule_id = rule.get('id', '').lower()
+        tags = (rule.get("properties", {}) or {}).get("tags", []) or []
+        tagset = {str(t).lower() for t in tags}
+        rid = (rule.get("id") or "").lower()
 
-        # Check tags first
-        if 'injection' in tags or 'sql-injection' in tags:
-            return VulnerabilityType.SQL_INJECTION
-        elif 'command-injection' in tags:
-            return VulnerabilityType.COMMAND_INJECTION
-        elif 'xss' in tags or 'cross-site-scripting' in tags:
+        if any("cwe-79" in t or "cwe/79" in t for t in tagset):
             return VulnerabilityType.XSS
-        elif 'path-traversal' in tags:
+        if any("cwe-89" in t or "cwe/89" in t for t in tagset):
+            return VulnerabilityType.SQL_INJECTION
+        if any("cwe-78" in t or "cwe/78" in t for t in tagset):
+            return VulnerabilityType.COMMAND_INJECTION
+        if any("cwe-22" in t or "cwe/22" in t for t in tagset):
             return VulnerabilityType.PATH_TRAVERSAL
-        elif 'ssrf' in tags:
+        if any("cwe-352" in t or "cwe/352" in t for t in tagset):
+            return VulnerabilityType.CSRF
+        if any("ssrf" in t for t in tagset):
             return VulnerabilityType.SSRF
-        elif 'crypto' in tags or 'cryptography' in tags:
-            return VulnerabilityType.WEAK_CRYPTO
-        elif 'hardcoded-secret' in tags or 'credential' in tags:
+        if any("hardcoded-secret" in t or "credential" in t for t in tagset):
             return VulnerabilityType.HARDCODED_SECRET
+        if any("crypto" in t or "cryptography" in t for t in tagset):
+            return VulnerabilityType.WEAK_CRYPTO
 
-        # Check rule ID patterns
-        if 'inject' in rule_id:
-            return VulnerabilityType.COMMAND_INJECTION
-        elif 'sql' in rule_id:
-            return VulnerabilityType.SQL_INJECTION
-        elif 'xss' in rule_id:
+        if "xss" in rid:
             return VulnerabilityType.XSS
-        elif 'xxe' in rule_id:
+        if "sql" in rid:
+            return VulnerabilityType.SQL_INJECTION
+        if "inject" in rid:
+            return VulnerabilityType.COMMAND_INJECTION
+        if "xxe" in rid:
             return VulnerabilityType.XXE
-        elif 'path' in rule_id and 'traversal' in rule_id:
+        if "path" in rid and "traversal" in rid:
             return VulnerabilityType.PATH_TRAVERSAL
 
         return VulnerabilityType.GENERIC
 
     def _determine_severity(self, rule: Dict[str, Any], result: Dict[str, Any]) -> SeverityLevel:
-        """Determine severity from CodeQL rule"""
-        # Check rule severity
-        severity = rule.get('properties', {}).get('security-severity', None)
-        if severity:
+        props = (rule.get("properties", {}) or {})
+        sec_sev = props.get("security-severity")
+        if sec_sev is not None:
             try:
-                score = float(severity)
+                score = float(sec_sev)
                 if score >= 9.0:
                     return SeverityLevel.CRITICAL
-                elif score >= 7.0:
+                if score >= 7.0:
                     return SeverityLevel.HIGH
-                elif score >= 4.0:
+                if score >= 4.0:
                     return SeverityLevel.MEDIUM
-                else:
-                    return SeverityLevel.LOW
-            except:
+                return SeverityLevel.LOW
+            except Exception:
                 pass
-
-        # Check result level
-        level = result.get('level', 'warning').lower()
-        level_map = {
-            'error': SeverityLevel.HIGH,
-            'warning': SeverityLevel.MEDIUM,
-            'note': SeverityLevel.LOW,
-            'none': SeverityLevel.INFO
-        }
-
-        return level_map.get(level, SeverityLevel.MEDIUM)
+        level = (result.get("level") or "warning").lower()
+        return {
+            "error": SeverityLevel.HIGH,
+            "warning": SeverityLevel.MEDIUM,
+            "note": SeverityLevel.LOW,
+            "none": SeverityLevel.INFO,
+        }.get(level, SeverityLevel.MEDIUM)
 
     def _extract_confidence(self, rule: Dict[str, Any], result: Dict[str, Any]) -> float:
-        """Extract confidence from CodeQL rule"""
-        precision = rule.get('properties', {}).get('precision', 'medium').lower()
-
-        precision_map = {
-            'very-high': 0.95,
-            'high': 0.85,
-            'medium': 0.70,
-            'low': 0.50
-        }
-
-        return precision_map.get(precision, 0.70)
-
-    def _build_description(self, rule: Dict[str, Any], result: Dict[str, Any]) -> str:
-        """Build comprehensive description"""
-        parts = []
-
-        # Add rule description
-        if rule.get('fullDescription'):
-            parts.append(rule['fullDescription'].get('text', ''))
-        elif rule.get('shortDescription'):
-            parts.append(rule['shortDescription'].get('text', ''))
-
-        # Add result message
-        message = result.get('message', {}).get('text', '')
-        if message and message not in parts:
-            parts.append(f"\n\nDetails: {message}")
-
-        return '\n'.join(parts)
-
-    def _extract_recommendation(self, rule: Dict[str, Any], result: Dict[str, Any]) -> str:
-        """Extract recommendation from rule"""
-        # Check for explicit recommendation
-        help_text = rule.get('help', {}).get('text', '')
-        if help_text:
-            return help_text
-
-        # Generate based on vulnerability type
-        rule_id = rule.get('id', '')
-        if 'sql' in rule_id.lower():
-            return "Use parameterized queries or prepared statements."
-        elif 'injection' in rule_id.lower():
-            return "Sanitize and validate all user input before use."
-        elif 'xss' in rule_id.lower():
-            return "Encode output and validate input to prevent XSS."
-        elif 'crypto' in rule_id.lower():
-            return "Use strong, modern cryptographic algorithms."
-
-        return "Review the code and apply security best practices."
-
-    def _build_references(self, rule: Dict[str, Any], properties: Dict[str, Any]) -> List[str]:
-        """Build references list"""
-        references = []
-
-        # Add CWE references
-        for tag in properties.get('tags', []):
-            if tag.startswith('CWE-'):
-                cwe_num = tag.replace('CWE-', '')
-                references.append(f"https://cwe.mitre.org/data/definitions/{cwe_num}.html")
-
-        # Add rule documentation
-        rule_id = rule.get('id', '')
-        if rule_id:
-            references.append(f"https://codeql.github.com/codeql-query-help/{rule_id}/")
-
-        return references
+        precision = (rule.get("properties", {}) or {}).get("precision", "medium").lower()
+        return {
+            "very-high": 0.95,
+            "high": 0.85,
+            "medium": 0.70,
+            "low": 0.50,
+        }.get(precision, 0.70)

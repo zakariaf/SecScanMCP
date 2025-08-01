@@ -1,0 +1,6 @@
+name: mcp/security-queries
+version: 0.2.0
+library: false
+dependencies:
+  codeql/python-all: "*"
+  codeql/javascript-all: "*"
