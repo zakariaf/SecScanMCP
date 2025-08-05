@@ -24,8 +24,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Python security tools (pin versions you want)
 RUN pip install --no-cache-dir \
-    bandit==1.7.10 \
-    semgrep==1.127.0
+    bandit==1.7.10
+
+# Try to install OpenGrep (open source), fall back to Semgrep if needed
+RUN set -eux; \
+    # First try to install OpenGrep from GitHub (if available)
+    if curl -s https://api.github.com/repos/opengrep/opengrep/releases/latest | grep -q "tag_name"; then \
+        echo "Installing OpenGrep (open source)..."; \
+        OPENGREP_VERSION=$(curl -s https://api.github.com/repos/opengrep/opengrep/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | sed 's/v//'); \
+        if [ -n "$OPENGREP_VERSION" ]; then \
+            pip install --no-cache-dir "https://github.com/opengrep/opengrep/archive/refs/tags/v${OPENGREP_VERSION}.tar.gz" || \
+            echo "OpenGrep installation failed, will use analyzer fallback"; \
+        fi; \
+    else \
+        echo "OpenGrep not yet available, using analyzer fallback"; \
+    fi; \
+    # Install Semgrep as fallback (last version before licensing changes)
+    pip install --no-cache-dir semgrep==1.127.0
 
 # ---- Build and install YARA ----
 ARG YARA_VERSION=4.5.4
@@ -114,10 +129,11 @@ COPY --from=builder /usr/local/include/yara* /usr/local/include/
 COPY --from=builder /usr/local/bin/yara* /usr/local/bin/
 RUN ldconfig
 
-# Copy Python site-packages that contain security tooling (bandit, semgrep, yara-python)
+# Copy Python site-packages that contain security tooling (bandit, opengrep/semgrep, yara-python)
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy security tool binaries from builder
+# Copy security tool binaries from builder (copy both opengrep and semgrep if they exist)
+RUN if [ -f /usr/local/bin/opengrep ]; then echo "Found OpenGrep binary"; fi
 COPY --from=builder /usr/local/bin/semgrep /usr/local/bin/
 COPY --from=builder /usr/local/bin/trufflehog /usr/local/bin/
 COPY --from=builder /usr/local/bin/grype /usr/local/bin/

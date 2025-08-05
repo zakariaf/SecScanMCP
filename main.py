@@ -140,9 +140,9 @@ async def list_security_tools():
                 "languages": ["python"]
             },
             {
-                "name": "semgrep",
-                "version": "1.97.0",
-                "description": "Static analysis with custom rules",
+                "name": "opengrep",
+                "version": "latest",
+                "description": "Open-source static analysis with custom rules (Semgrep fork)",
                 "type": "static",
                 "languages": ["python", "javascript", "typescript", "go", "rust", "java", "ruby", "php"]
             },

@@ -15,7 +15,7 @@ import shutil
 
 from analyzers import (
     BanditAnalyzer,
-    SemgrepAnalyzer,
+    OpenGrepAnalyzer,  # Open-source static analysis (replaces Semgrep)
     TrivyAnalyzer,
     GrypeAnalyzer,
     SyftAnalyzer,
@@ -42,7 +42,7 @@ class SecurityScanner:
             'trivy': TrivyAnalyzer(),        # Comprehensive scanner
             'grype': GrypeAnalyzer(),        # Fast vulnerability scanner
             'bandit': BanditAnalyzer(),      # Python AST analysis
-            'semgrep': SemgrepAnalyzer(),    # Pattern-based analysis
+            'opengrep': OpenGrepAnalyzer(),  # Open-source pattern-based analysis
             'trufflehog': TruffleHogAnalyzer(), # Secret detection
             'mcp_specific': MCPSpecificAnalyzer(), # MCP vulnerabilities
             'dynamic': DynamicAnalyzer(),    # Behavioral analysis
@@ -217,7 +217,7 @@ class SecurityScanner:
         analyzers_to_run.append('syft')
 
         # Universal analyzers that work for all languages
-        analyzers_to_run.extend(['trivy', 'grype', 'semgrep', 'trufflehog', 'clamav', 'yara'])
+        analyzers_to_run.extend(['trivy', 'grype', 'opengrep', 'trufflehog', 'clamav', 'yara'])
 
         # CodeQL for supported languages
         codeql_languages = ['python', 'javascript', 'typescript', 'java', 'go', 'cpp', 'csharp', 'ruby']
