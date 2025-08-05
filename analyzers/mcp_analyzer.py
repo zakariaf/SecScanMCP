@@ -148,9 +148,10 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         findings.extend(config_findings)
 
         # Analyze MCP configuration from project_info if available
-        if project_info.get('mcp_config'):
+        mcp_config = project_info.get('mcp_config')
+        if mcp_config and isinstance(mcp_config, dict):
             main_config_findings = self._analyze_mcp_config(
-                project_info['mcp_config'],
+                mcp_config,
                 repo_path,
                 'mcp.json'
             )
@@ -185,6 +186,8 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         findings.extend(cross_server_findings)
 
         self.logger.info(f"MCP analyzer found {len(findings)} issues")
+        return findings
+
     def _analyze_client_servers(self, servers: Dict[str, Any], config_file: str) -> List[Finding]:
         """Analyze client-side server configurations for security issues"""
         findings = []
@@ -799,8 +802,8 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         findings = []
 
         # Check if declared permissions match actual usage
-        mcp_config = project_info.get('mcp_config', {})
-        declared_permissions = mcp_config.get('permissions', {})
+        mcp_config = project_info.get('mcp_config') or {}
+        declared_permissions = mcp_config.get('permissions', {}) if isinstance(mcp_config, dict) else {}
 
         # Scan for actual permission usage
         permission_usage = await self._scan_permission_usage(repo_path)
