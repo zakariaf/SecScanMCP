@@ -158,14 +158,20 @@ rules:
         findings = []
 
         try:
+            # Log scan summary
+            self.log_scan_summary(repo_path)
+            
             # Create temporary file for custom MCP rules
             with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
                 f.write(self.MCP_RULES)
                 self.custom_rules_file = f.name
 
+            # Create ignore file for OpenGrep
+            ignore_file = self.create_ignore_file(repo_path)
+
             # Run OpenGrep with both standard rulesets and custom MCP rules
-            findings.extend(await self._run_opengrep_rulesets(repo_path))
-            findings.extend(await self._run_custom_mcp_rules(repo_path))
+            findings.extend(await self._run_opengrep_rulesets(repo_path, ignore_file))
+            findings.extend(await self._run_custom_mcp_rules(repo_path, ignore_file))
 
             self.logger.info(f"OpenGrep found {len(findings)} issues")
             return findings
@@ -174,11 +180,13 @@ rules:
             self.logger.error(f"OpenGrep analysis failed: {e}")
             return []
         finally:
-            # Clean up temporary rules file
+            # Clean up temporary files
             if self.custom_rules_file and Path(self.custom_rules_file).exists():
                 Path(self.custom_rules_file).unlink()
+            if 'ignore_file' in locals() and Path(ignore_file).exists():
+                Path(ignore_file).unlink()
 
-    async def _run_opengrep_rulesets(self, repo_path: str) -> List[Finding]:
+    async def _run_opengrep_rulesets(self, repo_path: str, ignore_file: str = None) -> List[Finding]:
         """Run OpenGrep with standard rulesets"""
         findings = []
 
@@ -193,9 +201,14 @@ rules:
                     '--config', ruleset,
                     '--json',
                     '--quiet',
-                    '--disable-version-check',
-                    repo_path
+                    '--disable-version-check'
                 ])
+                
+                # Add ignore patterns if available
+                if ignore_file:
+                    cmd.extend(['--exclude-rule', ignore_file])
+                
+                cmd.append(repo_path)
 
                 process = await asyncio.create_subprocess_exec(
                     *cmd,
@@ -215,7 +228,7 @@ rules:
 
         return findings
 
-    async def _run_custom_mcp_rules(self, repo_path: str) -> List[Finding]:
+    async def _run_custom_mcp_rules(self, repo_path: str, ignore_file: str = None) -> List[Finding]:
         """Run OpenGrep with custom MCP-specific rules"""
         findings = []
 
@@ -228,9 +241,14 @@ rules:
                 '--config', self.custom_rules_file,
                 '--json',
                 '--quiet',
-                '--disable-version-check',
-                repo_path
+                '--disable-version-check'
             ])
+            
+            # Add ignore patterns if available
+            if ignore_file:
+                cmd.extend(['--exclude-rule', ignore_file])
+                
+            cmd.append(repo_path)
 
             process = await asyncio.create_subprocess_exec(
                 *cmd,

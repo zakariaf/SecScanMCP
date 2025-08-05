@@ -102,11 +102,18 @@ class YARAAnalyzer(BaseAnalyzer):
         repo_path = Path(repo_path)
 
         try:
-            # Scan all files in repository
+            # Log scan summary
+            self.log_scan_summary(str(repo_path))
+            
+            # Get filtered files using ignore patterns
+            filtered_files = self.get_filtered_files(str(repo_path))
+            
+            # Scan filtered files in repository
             with ThreadPoolExecutor(max_workers=4) as executor:
                 tasks = []
-                for file_path in repo_path.rglob("*"):
-                    if file_path.is_file() and not self._should_skip_file(file_path):
+                for file_path_str in filtered_files:
+                    file_path = Path(file_path_str)
+                    if file_path.is_file() and not self._should_skip_file_additional(file_path):
                         tasks.append(
                             executor.submit(self._scan_file, file_path, repo_path)
                         )
@@ -161,29 +168,15 @@ class YARAAnalyzer(BaseAnalyzer):
 
         return findings
 
-    def _should_skip_file(self, file_path: Path) -> bool:
-        """Determine if file should be skipped"""
-        skip_extensions = {
-            '.pyc', '.pyo', '.so', '.dll', '.dylib',
-            '.jpg', '.jpeg', '.png', '.gif', '.ico',
-            '.mp3', '.mp4', '.avi', '.mov',
-            '.zip', '.tar', '.gz', '.rar'
-        }
-
-        skip_dirs = {
-            '.git', '__pycache__', 'node_modules',
-            '.venv', 'venv', 'env', '.env'
-        }
-
-        # Skip by extension
-        if file_path.suffix.lower() in skip_extensions:
-            return True
-
-        # Skip if in excluded directory
-        for parent in file_path.parents:
-            if parent.name in skip_dirs:
+    def _should_skip_file_additional(self, file_path: Path) -> bool:
+        """Additional file skip checks beyond ignore patterns"""
+        # Check file size limit
+        try:
+            if file_path.stat().st_size > self.MAX_FILE_SIZE:
                 return True
-
+        except (OSError, IOError):
+            return True
+            
         return False
 
     def _convert_match_to_finding(self, match: Any, file_path: Path, repo_root: Path) -> Optional[Finding]:

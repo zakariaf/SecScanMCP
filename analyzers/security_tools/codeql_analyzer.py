@@ -106,6 +106,9 @@ class CodeQLAnalyzer(BaseAnalyzer):
         repo = Path(repo_path)
 
         try:
+            # Log scan summary
+            self.log_scan_summary(repo_path)
+            
             languages = await self._detect_languages(repo, project_info)
             if not languages:
                 logger.info("No supported languages found for CodeQL analysis")
@@ -155,27 +158,30 @@ class CodeQLAnalyzer(BaseAnalyzer):
         if lang in {"python", "javascript", "java", "csharp", "cpp", "go", "ruby", "typescript"}:
             languages.add("javascript" if lang in {"javascript", "typescript"} else lang)
 
-        patterns = {
-            "python": ["*.py"],
-            "javascript": ["*.js", "*.jsx", "*.ts", "*.tsx"],
-            "java": ["*.java"],
-            "csharp": ["*.cs"],
-            "cpp": ["*.c", "*.cc", "*.cpp", "*.cxx", "*.h", "*.hpp"],
-            "go": ["*.go"],
-            "ruby": ["*.rb"],
+        # Get filtered files to check language patterns efficiently
+        filtered_files = self.get_filtered_files(str(repo_path))
+        
+        # Map extensions to languages
+        ext_to_lang = {
+            ".py": "python",
+            ".js": "javascript", ".jsx": "javascript", ".ts": "javascript", ".tsx": "javascript",
+            ".java": "java",
+            ".cs": "csharp",
+            ".c": "cpp", ".cc": "cpp", ".cpp": "cpp", ".cxx": "cpp", ".h": "cpp", ".hpp": "cpp",
+            ".go": "go",  
+            ".rb": "ruby",
         }
-        for language, globs in patterns.items():
-            for pat in globs:
-                if next(repo_path.rglob(pat), None):
-                    languages.add(language)
-                    break
+        
+        # Check filtered files for language patterns
+        for file_path in filtered_files:
+            file_ext = Path(file_path).suffix.lower()
+            if file_ext in ext_to_lang:
+                languages.add(ext_to_lang[file_ext])
 
-        # MCP indicator logging (optional)
+        # MCP indicator logging (check only filtered files)
         mcp_indicators = any([
-            next(repo_path.rglob("*mcp*.json"), None),
-            next(repo_path.rglob("*mcp*.yaml"), None),
-            next(repo_path.rglob("*mcp*.yml"), None),
-            next(repo_path.rglob("*Tool*schema*.json"), None),
+            any("mcp" in Path(f).name.lower() and f.endswith((".json", ".yaml", ".yml")) for f in filtered_files),
+            any("tool" in Path(f).name.lower() and "schema" in Path(f).name.lower() and f.endswith(".json") for f in filtered_files),
         ])
         if mcp_indicators:
             logger.info("MCP project indicators detected.")

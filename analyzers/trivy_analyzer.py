@@ -52,6 +52,12 @@ class TrivyAnalyzer(BaseAnalyzer):
         findings = []
 
         try:
+            # Log scan summary
+            self.log_scan_summary(repo_path)
+            
+            # Create temporary ignore file for Trivy
+            ignore_file = self.create_ignore_file(repo_path)
+            
             # Run Trivy with multiple scanners
             cmd = [
                 'trivy',
@@ -65,6 +71,10 @@ class TrivyAnalyzer(BaseAnalyzer):
                 # '--license-full',  # Get full license info, if we add license scanning
                 '--include-non-failures'  # Include all findings
             ]
+
+            # Add ignore patterns
+            if ignore_file:
+                cmd.extend(['--ignorefile', ignore_file])
 
             # Add cache directory for offline mode
             cache_dir = tempfile.gettempdir() + '/.trivy_cache'
@@ -105,6 +115,10 @@ class TrivyAnalyzer(BaseAnalyzer):
             logger.warning("Trivy not found, skipping Trivy analysis")
         except Exception as e:
             logger.error(f"Trivy analysis failed: {e}")
+        finally:
+            # Clean up ignore file
+            if 'ignore_file' in locals() and ignore_file and Path(ignore_file).exists():
+                Path(ignore_file).unlink()
 
         return findings
 

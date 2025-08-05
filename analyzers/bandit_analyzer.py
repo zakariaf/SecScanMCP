@@ -80,6 +80,12 @@ class BanditAnalyzer(BaseAnalyzer):
         findings = []
 
         try:
+            # Log scan summary
+            self.log_scan_summary(repo_path)
+            
+            # Create ignore file for Bandit
+            ignore_file = self.create_ignore_file(repo_path)
+            
             # Run bandit as Python module
             cmd = [
                 'python3', '-m', 'bandit',
@@ -89,6 +95,10 @@ class BanditAnalyzer(BaseAnalyzer):
                 '-ll',  # Only medium and high severity
                 '--quiet'
             ]
+            
+            # Add ignore patterns
+            if ignore_file:
+                cmd.extend(['--exclude', ignore_file])
 
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -109,6 +119,10 @@ class BanditAnalyzer(BaseAnalyzer):
                         findings.append(finding)
 
             self.logger.info(f"Bandit found {len(findings)} issues")
+            
+            # Clean up ignore file
+            if ignore_file and Path(ignore_file).exists():
+                Path(ignore_file).unlink()
 
         except Exception as e:
             self.logger.error(f"Bandit analysis failed: {e}")
