@@ -2,30 +2,38 @@
 # Simplifies common operations
 DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 
-.PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all
+.PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all test-examples test-real-repos
 
 # Default target
 help:
-	@echo "MCP Security Scanner - Available commands:"
+	@echo "🔐 MCP Security Scanner - Available Commands"
+	@echo "================================================"
 	@echo ""
-	@echo "  make build       - Build Docker image"
-	@echo "  make up          - Start scanner service"
-	@echo "  make down        - Stop scanner service"
-	@echo "  make test        - Run tests"
+	@echo "🚀 Development:"
+	@echo "  make restart       - Stop, build, and start all services"
+	@echo "  make build         - Build Docker images"
+	@echo "  make up           - Start services"
+	@echo "  make down         - Stop services"
+	@echo ""
+	@echo "🧪 Testing:"
+	@echo "  make test         - Run comprehensive tests"
+	@echo "  make test-examples - Test with local vulnerable examples"
+	@echo "  make test-real-repos - Test with real vulnerable repositories"
+	@echo "  make test-python  - Quick test with Python example"
+	@echo "  make test-js      - Quick test with JavaScript example"
+	@echo ""
+	@echo "🔍 Scanning:"
 	@echo "  make scan URL=<repo>  - Scan a repository"
-	@echo "  make example     - Run example scan"
-	@echo "  make shell       - Open development shell"
-	@echo "  make clean       - Remove containers and volumes"
-	@echo "  make versions    - Show tool versions"
-	@echo "  make logs        - Show scanner logs"
+	@echo "  make scan-vulnerable  - Scan local vulnerable examples"
 	@echo ""
-	@echo "Development:"
-	@echo "  make dev         - Start with hot reload"
-	@echo "  make install-local - Install tools locally"
-	@echo "  make setup-clamav  - Setup ClamAV for local development"
-	@echo "  make setup-yara  - Setup YARA for local development"
-	@echo "  make setup-codeql - Setup CodeQL for local development"
-	@echo "  make setup-all   - Setup all security tools"
+	@echo "🔧 Monitoring:"
+	@echo "  make logs         - Show scanner logs"
+	@echo "  make health       - Check scanner health"
+	@echo "  make status       - Show service status"
+	@echo ""
+	@echo "🧹 Cleanup:"
+	@echo "  make clean        - Clean up containers and volumes"
+	@echo ""
 
 # Build Docker image
 build:
@@ -42,11 +50,39 @@ down:
 	docker-compose down
 
 restart: down build up
-	@echo "Restarting scanner..."
+	@echo "✅ Scanner restarted successfully"
 
-# Run tests
-test:
-	docker-compose run --rm test-runner
+# Testing commands
+test: test-examples
+	@echo "🎉 All tests completed!"
+
+test-examples:
+	@echo "🧪 Testing with local vulnerable examples..."
+	python test_scanner.py
+
+test-real-repos:
+	@echo "🌐 Testing with real vulnerable repositories..."
+	python test_scanner.py --real-repos
+
+test-python:
+	@echo "🐍 Quick test with Python vulnerable server..."
+	@mkdir -p /tmp/vuln-test-py
+	@cp examples/vulnerable-mcp-server.py /tmp/vuln-test-py/
+	@cd /tmp/vuln-test-py && git init > /dev/null 2>&1 && git config user.email "test@example.com" && git config user.name "Test" && git add . && git commit -m "test" > /dev/null 2>&1 || true
+	@curl -s -X POST http://localhost:8000/scan \
+		-H "Content-Type: application/json" \
+		-d '{"repository_url": "file:///tmp/vuln-test-py"}' | python -m json.tool || cat
+	@rm -rf /tmp/vuln-test-py
+
+test-js:
+	@echo "🟨 Quick test with JavaScript vulnerable server..."
+	@mkdir -p /tmp/vuln-test-js
+	@cp examples/test_vulnerable_mcp.js /tmp/vuln-test-js/
+	@cd /tmp/vuln-test-js && git init > /dev/null 2>&1 && git config user.email "test@example.com" && git config user.name "Test" && git add . && git commit -m "test" > /dev/null 2>&1 || true
+	@curl -s -X POST http://localhost:8000/scan \
+		-H "Content-Type: application/json" \
+		-d '{"repository_url": "file:///tmp/vuln-test-js"}' | python -m json.tool || cat
+	@rm -rf /tmp/vuln-test-js
 
 # Scan a repository (usage: make scan URL=https://github.com/user/repo)
 scan:
@@ -81,6 +117,11 @@ versions:
 # Show logs
 logs:
 	docker-compose logs -f scanner
+
+# Additional monitoring commands
+status:
+	@echo "📊 Service Status:"
+	@docker-compose ps
 
 # Development mode with hot reload
 dev:
