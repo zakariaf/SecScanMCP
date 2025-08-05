@@ -1,0 +1,14 @@
+# name: mcp/mcp-security-queries
+# version: 0.1.0
+# dependencies:
+#   codeql/python-all: "*"
+#   codeql/javascript-all: "*"
+# suites: mcp-suite.qls
+
+name: mcp/mcp-security-queries
+version: 1.0.0
+library: false
+dependencies:
+  codeql/python-all: "*"
+  codeql/javascript-all: "*"
+suites: mcp-suite.qls

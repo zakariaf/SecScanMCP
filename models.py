@@ -1,11 +1,11 @@
 """
 Data models for the security scanner
 """
-
-from pydantic import BaseModel, HttpUrl, Field
-from typing import Dict, List, Any, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 
 class SeverityLevel(str, Enum):
@@ -23,22 +23,22 @@ class VulnerabilityType(str, Enum):
     PATH_TRAVERSAL = "path_traversal"
     XXE = "xxe"
     SSRF = "ssrf"
-    XSS = "xss"  # support cross-site scripting detections
+    XSS = "xss"
 
     # Cryptography
-    WEAK_CRYPTO = "weak_crypto"  # support weak or deprecated crypto detections
+    WEAK_CRYPTO = "weak_crypto"
 
     # MCP-specific
     PROMPT_INJECTION = "prompt_injection"
     TOOL_POISONING = "tool_poisoning"
-    MCP_SPECIFIC = "mcp_specific"  # support custom MCP-specific detections
-    TOOL_MANIPULATION = "tool_manipulation"  # support manipulation of analyzer tools
+    MCP_SPECIFIC = "mcp_specific"
+    TOOL_MANIPULATION = "tool_manipulation"
     PERMISSION_ABUSE = "permission_abuse"
     SCHEMA_INJECTION = "schema_injection"
     OUTPUT_POISONING = "output_poisoning"
 
     # Privilege issues
-    PRIVILEGE_ESCALATION = "privilege_escalation"  # support privilege escalation detections
+    PRIVILEGE_ESCALATION = "privilege_escalation"
 
     # Secrets and credentials
     HARDCODED_SECRET = "hardcoded_secret"
@@ -53,24 +53,9 @@ class VulnerabilityType(str, Enum):
     INSECURE_CONFIGURATION = "insecure_configuration"
     MISSING_SECURITY_HEADERS = "missing_security_headers"
 
-    # Malware
+    # Malware / other
     MALWARE = "malware"
     BACKDOOR = "backdoor"
-
-    # APT detections
-    APT_COBALT_STRIKE_BEACON = "apt_cobalt_strike_beacon"
-    APT_LAZARUS_MALWARE = "apt_lazarus_malware"
-    APT_EMPIRE_POWERSHELL = "apt_empire_powershell"
-    APT_METASPLOIT_PAYLOAD = "apt_metasploit_payload"
-    APT_MIMIKATZ_CREDENTIAL_THEFT = "apt_mimikatz_credential_theft"
-    APT_LIVING_OFF_THE_LAND = "apt_living_off_the_land"
-    APT_PROCESS_INJECTION = "apt_process_injection"
-    APT_PERSISTENCE_REGISTRY = "apt_persistence_registry"
-    APT_DATA_STAGING = "apt_data_staging"
-    APT_NETWORK_RECONNAISSANCE = "apt_network_reconnaissance"
-    APT_DEFENSE_EVASION = "apt_defense_evasion"
-
-    # Other
     GENERIC = "generic"
 
 
@@ -99,8 +84,8 @@ class Finding(BaseModel):
     cwe_id: Optional[str] = None
     cve_id: Optional[str] = None
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "vulnerability_type": "command_injection",
                 "severity": "critical",
@@ -109,10 +94,13 @@ class Finding(BaseModel):
                 "description": "User input is passed directly to subprocess.run without sanitization",
                 "location": "app/utils.py:45",
                 "recommendation": "Use shlex.quote() to escape shell arguments",
-                "tool": "bandit",
-                "cwe_id": "CWE-78"
+                "references": ["https://cwe.mitre.org/data/definitions/78.html"],
+                "evidence": {"rule_id": "python/command-injection", "message": "user input reaches shell"},
+                "tool": "codeql",
+                "cwe_id": "CWE-78",
             }
         }
+    )
 
 
 class ScanRequest(BaseModel):
@@ -121,16 +109,19 @@ class ScanRequest(BaseModel):
     repository_url: HttpUrl
     options: Dict[str, Any] = Field(default_factory=dict)
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "repository_url": "https://github.com/user/mcp-server",
                 "options": {
-                    "enable_dynamic_analysis": True,
-                    "skip_dependencies": False
-                }
+                    "enable_mcp_rules": True,
+                    "attempt_autobuild": True,
+                    "codeql_threads": 0,
+                    "codeql_ram_mb": 4096,
+                },
             }
         }
+    )
 
 
 class ScanResult(BaseModel):
@@ -163,11 +154,11 @@ class ScanResult(BaseModel):
         super().__init__(**data)
         self.total_findings = len(self.findings)
 
-    class Config:
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "repository_url": "https://github.com/user/mcp-server",
-                "project_type": "python",
+                "project_type": "javascript",
                 "is_mcp_server": True,
                 "findings": [],
                 "total_findings": 5,
@@ -175,20 +166,15 @@ class ScanResult(BaseModel):
                 "security_grade": "B+",
                 "summary": {
                     "total_findings": 5,
-                    "severity_breakdown": {
-                        "critical": 0,
-                        "high": 1,
-                        "medium": 3,
-                        "low": 1,
-                        "info": 0
-                    },
-                    "risk_level": "medium"
+                    "severity_breakdown": {"critical": 0, "high": 1, "medium": 3, "low": 1, "info": 0},
+                    "risk_level": "medium",
                 },
                 "detailed_results": {},
                 "scan_metadata": {},
-                "scan_timestamp": "2024-01-01T12:00:00Z"
+                "scan_timestamp": "2025-01-01T12:00:00Z",
             }
         }
+    )
 
 
 class ToolConfiguration(BaseModel):

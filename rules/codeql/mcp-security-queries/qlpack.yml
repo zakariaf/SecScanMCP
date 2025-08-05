@@ -1,0 +1,8 @@
+name: mcp/mcp-security-queries-javascript
+version: 1.0.0
+library: false
+extSearchPath:
+  - javascript
+dependencies:
+  codeql/javascript-all: "*"
+defaultSuiteFile: mcp-javascript-suite.qls

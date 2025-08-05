@@ -1,0 +1,18 @@
+#- description: MCP Security Queries for Python
+#- include:
+#    kind: problem
+#    paths:
+#      - python/
+#- description: MCP Security Queries for JavaScript
+#- include:
+#    kind: problem
+#    paths:
+#      - javascript/
+
+- description: "A suite of custom security queries for Model Context Protocol (MCP) servers."
+
+- queries: python
+  from: mcp/mcp-security-queries
+
+- queries: javascript
+  from: mcp/mcp-security-queries

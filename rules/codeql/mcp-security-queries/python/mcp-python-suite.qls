@@ -1,0 +1,6 @@
+- description: MCP Security Queries for Python
+- queries: .
+- include:
+    kind: problem
+    paths:
+      - "*.ql"

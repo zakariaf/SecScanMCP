@@ -25,6 +25,7 @@ services:
       - ./rules:/app/rules:ro
       # Cache GOPATH modules between runs
       - gocache:/home/scanner/go
+      - codeql-cache:/home/scanner/.codeql
     restart: unless-stopped
     depends_on:
       clamav:
@@ -92,6 +93,7 @@ volumes:
   scanner-cache:
   clamav-db:
   gocache:
+  codeql-cache:
 
 networks:
   scanner-network:

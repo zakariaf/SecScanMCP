@@ -1,8 +1,0 @@
-
-name: MCP Security Suite
-version: 1.0.0
-queries:
-  - ./python/MCPToolParamCommandInjection.ql
-  - ./python/MCPToolParamPathTraversal.ql
-  - ./python/MCPDescriptionDirective.ql
-  - ./javascript/MCPToolParamCommandInjectionJS.ql

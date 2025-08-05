@@ -1,0 +1,6 @@
+name: mcp/mcp-security-queries-python
+version: 1.0.0
+library: false
+dependencies:
+  codeql/python-all: "*"
+defaultSuiteFile: mcp-python-suite.qls

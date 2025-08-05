@@ -1,0 +1,6 @@
+- description: MCP Security Queries for JavaScript/TypeScript
+- queries: javascript
+- include:
+    kind: problem
+    paths:
+      - javascript/*.ql

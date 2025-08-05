@@ -408,9 +408,9 @@ MIT License - See LICENSE file
 ## Acknowledgments
 
 This scanner integrates several excellent open-source security tools:
-- [Bandit](https://github.com/PyCQA/bandit)
+- [CodeQL](https://github.com/github/codeql)
+- [YARA](https://virustotal.github.io/yara/)
+- [ClamAV](https://www.clamav.net/)
 - [Semgrep](https://semgrep.dev/)
 - [Safety](https://github.com/pyupio/safety)
 - [TruffleHog](https://github.com/trufflesecurity/trufflehog)
-- [OSV-Scanner](https://github.com/google/osv-scanner)
-- [pip-audit](https://github.com/pypa/pip-audit)

@@ -1,184 +1,182 @@
-# Multi-stage build for efficiency
-FROM python:3.11-slim-bullseye AS base
+# ---------- Base image (Debian bookworm) ----------
+FROM python:3.11-slim-bookworm AS base
 
-# Install base dependencies
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONUNBUFFERED=1
+
+# Common OS deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git \
-    curl \
-    wget \
-    ca-certificates \
-    gnupg \
-    lsb-release \
-    build-essential \
+    git curl wget ca-certificates gnupg lsb-release unzip xz-utils \
+    build-essential pkg-config jq \
     && rm -rf /var/lib/apt/lists/*
 
-# Builder stage for compiling tools
+
+# ---------- Builder stage (compile tools) ----------
 FROM base AS builder
 
-# Install build dependencies
+# Build toolchain + headers required by YARA
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    automake \
-    libtool \
-    make \
-    gcc \
-    g++ \
-    pkg-config \
-    libssl-dev \
-    libjansson-dev \
-    libmagic-dev \
-    python3-dev \
+    automake autoconf libtool make gcc g++ \
+    libssl-dev libjansson-dev libmagic-dev python3-dev \
+    bison flex \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python security tools
+# Python security tools (pin versions you want)
 RUN pip install --no-cache-dir \
     bandit==1.7.10 \
-    semgrep==1.97.0
+    semgrep==1.127.0
 
-# Build and install YARA
-RUN wget https://github.com/VirusTotal/yara/archive/v4.5.0.tar.gz && \
-    tar -xzf v4.5.0.tar.gz && \
-    cd yara-4.5.0 && \
-    ./bootstrap.sh && \
-    ./configure --enable-cuckoo --enable-magic --enable-dotnet && \
-    make && \
-    make install && \
-    ldconfig && \
-    cd .. && \
-    rm -rf yara-4.5.0 v4.5.0.tar.gz
+# ---- Build and install YARA ----
+ARG YARA_VERSION=4.5.4
+RUN set -eux; \
+    wget -qO /tmp/yara.tar.gz https://github.com/VirusTotal/yara/archive/refs/tags/v${YARA_VERSION}.tar.gz; \
+    mkdir -p /tmp/yara && tar -xzf /tmp/yara.tar.gz -C /tmp/yara --strip-components=1; \
+    cd /tmp/yara; \
+    ./bootstrap.sh; \
+    ./configure --enable-cuckoo --enable-magic --enable-dotnet; \
+    make -j"$(nproc)"; \
+    make install; \
+    ldconfig; \
+    rm -rf /tmp/yara /tmp/yara.tar.gz
 
-# Now install yara-python (will link against the installed libyara)
-RUN pip install --no-cache-dir yara-python==4.5.1
+# yara-python matching the libyara above
+RUN pip install --no-cache-dir yara-python==4.5.4
 
-# Install other security tools
-RUN curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin && \
-    curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+# Grype & Syft (installers place binaries in /usr/local/bin)
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin \
+ && curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh  | sh -s -- -b /usr/local/bin
 
-# Install Trivy
-RUN wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | apt-key add - && \
-    echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | tee -a /etc/apt/sources.list.d/trivy.list && \
-    apt-get update && \
-    apt-get install -y trivy && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install CodeQL - with architecture detection
-ENV CODEQL_VERSION=2.16.1
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then \
-        echo "Warning: CodeQL may have limited support on ARM architecture" && \
-        echo "CodeQL will be skipped for ARM builds" && \
-        mkdir -p /opt/codeql && \
-        echo '#!/bin/sh\necho "CodeQL not available on ARM architecture"\nexit 1' > /opt/codeql/codeql && \
-        chmod +x /opt/codeql/codeql; \
-    else \
-        cd /opt && \
-        wget -q https://github.com/github/codeql-action/releases/download/codeql-bundle-v${CODEQL_VERSION}/codeql-bundle-linux64.tar.gz && \
-        tar -xzf codeql-bundle-linux64.tar.gz && \
-        rm codeql-bundle-linux64.tar.gz && \
-        chmod -R 755 /opt/codeql; \
-    fi
-
-# Install TruffleHog
-RUN wget -q https://github.com/trufflesecurity/trufflehog/releases/download/v3.82.0/trufflehog_3.82.0_linux_amd64.tar.gz && \
-    tar -xzf trufflehog_3.82.0_linux_amd64.tar.gz && \
-    mv trufflehog /usr/local/bin/ && \
-    rm trufflehog_3.82.0_linux_amd64.tar.gz && \
+# TruffleHog
+ARG TRUFFLEHOG_VERSION=3.90.2
+RUN set -eux; \
+    wget -q https://github.com/trufflesecurity/trufflehog/releases/download/v${TRUFFLEHOG_VERSION}/trufflehog_${TRUFFLEHOG_VERSION}_linux_amd64.tar.gz; \
+    tar -xzf trufflehog_${TRUFFLEHOG_VERSION}_linux_amd64.tar.gz; \
+    mv trufflehog /usr/local/bin/; \
+    rm trufflehog_${TRUFFLEHOG_VERSION}_linux_amd64.tar.gz; \
     chmod +x /usr/local/bin/trufflehog
 
-# Final stage
+# CodeQL CLI (amd64 only). On other architectures, install a stub that exits.
+ARG CODEQL_VERSION=2.22.1
+RUN set -eux; \
+    ARCH="$(dpkg --print-architecture)"; \
+    if [ "$ARCH" = "amd64" ]; then \
+      wget -qO /tmp/codeql.zip https://github.com/github/codeql-cli-binaries/releases/download/v${CODEQL_VERSION}/codeql-linux64.zip; \
+      unzip -q /tmp/codeql.zip -d /opt; \
+      mv /opt/codeql /opt/codeql-${CODEQL_VERSION}; \
+      ln -s /opt/codeql-${CODEQL_VERSION} /opt/codeql; \
+      rm /tmp/codeql.zip; \
+    else \
+      mkdir -p /opt/codeql; \
+      printf '#!/bin/sh\necho "CodeQL CLI not available for %s"\nexit 1\n' "$ARCH" >/opt/codeql/codeql; \
+      chmod +x /opt/codeql/codeql; \
+    fi
+
+
+# ---------- Final runtime image ----------
 FROM base
 
-# Install runtime dependencies (removed clamdscan)
+# Minimal runtime deps: Java for some analyzers, file magic, tini as PID1
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    docker.io \
-    libssl1.1 \
-    libjansson4 \
-    libmagic1 \
-    default-jre-headless \
+    default-jre-headless libjansson4 libmagic1 tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for CodeQL JavaScript autobuild
-# (Use Node 20 LTS; includes corepack so yarn/pnpm can be enabled)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get update && apt-get install -y --no-install-recommends nodejs \
-    && corepack enable \
-    && corepack prepare yarn@stable --activate \
-    && corepack prepare pnpm@latest --activate \
-    && rm -rf /var/lib/apt/lists/*
+# Node.js 22 LTS (for JS/TS autobuilds)
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+ && apt-get update && apt-get install -y --no-install-recommends nodejs \
+ && corepack enable \
+ && corepack prepare yarn@stable --activate \
+ && corepack prepare pnpm@latest --activate \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install Go (1.22.x) and basic build tools for CGO
+# Go toolchain (1.22.x)
 ARG GO_VERSION=1.22.5
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates curl git build-essential pkg-config \
-    && rm -rf /var/lib/apt/lists/* \
-    && curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tgz \
-    && rm -rf /usr/local/go && tar -C /usr/local -xzf /tmp/go.tgz \
-    && ln -s /usr/local/go/bin/go /usr/local/bin/go \
-    && ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt \
-    && rm /tmp/go.tgz
+RUN set -eux; \
+    curl -fsSL https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz -o /tmp/go.tgz; \
+    rm -rf /usr/local/go; \
+    tar -C /usr/local -xzf /tmp/go.tgz; \
+    ln -sf /usr/local/go/bin/go /usr/local/bin/go; \
+    ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt; \
+    rm /tmp/go.tgz
 
-# Copy YARA libraries and binaries from builder
+# Trivy (repository installed without deprecated apt-key)
+RUN install -m 0755 -d /etc/apt/keyrings \
+ && curl -fsSL https://aquasecurity.github.io/trivy-repo/deb/public.key \
+    | gpg --dearmor -o /etc/apt/keyrings/trivy.gpg \
+ && echo "deb [signed-by=/etc/apt/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb $(. /etc/os-release && echo $VERSION_CODENAME) main" \
+    > /etc/apt/sources.list.d/trivy.list \
+ && apt-get update && apt-get install -y --no-install-recommends trivy \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy YARA (libs, headers, CLI) from builder
 COPY --from=builder /usr/local/lib/libyara* /usr/local/lib/
 COPY --from=builder /usr/local/include/yara* /usr/local/include/
 COPY --from=builder /usr/local/bin/yara* /usr/local/bin/
-
-# Update library cache
 RUN ldconfig
 
-# Copy Python packages from builder
+# Copy Python site-packages that contain security tooling (bandit, semgrep, yara-python)
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 
-# Copy security tools from builder
+# Copy security tool binaries from builder
 COPY --from=builder /usr/local/bin/semgrep /usr/local/bin/
 COPY --from=builder /usr/local/bin/trufflehog /usr/local/bin/
 COPY --from=builder /usr/local/bin/grype /usr/local/bin/
 COPY --from=builder /usr/local/bin/syft /usr/local/bin/
-COPY --from=builder /usr/bin/trivy /usr/bin/
 
-# Copy CodeQL from builder
+# Copy CodeQL CLI from builder
 COPY --from=builder /opt/codeql /opt/codeql
-
-# Set CodeQL in PATH
+ENV CODEQL_HOME=/opt/codeql
 ENV PATH="/opt/codeql:${PATH}"
-ENV CODEQL_HOME="/opt/codeql"
 
-# Create non-root user
-RUN groupadd -r scanner && useradd -r -g scanner -m scanner
+# App user & directories
+RUN groupadd -r scanner && useradd -r -g scanner -m scanner \
+ && mkdir -p /home/scanner/.cache /home/scanner/go /home/scanner/.codeql \
+           /app/rules/yara /app/rules/codeql /tmp/mcp-scanner \
+ && chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner
 
-# Create necessary directories with proper permissions
-RUN mkdir -p /home/scanner/.cache /home/scanner/go /app/rules/yara /app/rules/codeql /tmp/mcp-scanner && \
-    chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner
-
-# Set Go env *after* user dirs exist
-ENV GOPATH=/home/scanner/go
-# Build cache defaults to $HOME/.cache/go-build; set explicitly for clarity
-ENV GOCACHE=/home/scanner/.cache/go-build
-ENV PATH=$PATH:/usr/local/go/bin:${GOPATH}/bin
+# Go env (cache to user dirs)
+ENV GOPATH=/home/scanner/go \
+    GOCACHE=/home/scanner/.cache/go-build \
+    PATH=$PATH:/usr/local/go/bin:${GOPATH}/bin
 
 WORKDIR /app
 
-# Copy application requirements
+# (Optional) Copy rules so they are available in the image; safe if empty.
+# If you maintain a local CodeQL pack for MCP rules here, it will be included.
+COPY rules /app/rules
+
+# Pre-warm CodeQL query packs (best effort). Also install local pack deps if present.
+# This speeds up first scans and works even if rules are empty. Runs as root.
+RUN if command -v codeql >/dev/null 2>&1; then \
+      codeql pack download codeql/python-queries codeql/javascript-queries codeql/go-queries \
+        --common-caches=/home/scanner/.codeql || true; \
+      if [ -d /app/rules/codeql ]; then \
+        codeql pack install /app/rules/codeql --common-caches=/home/scanner/.codeql || true; \
+      fi; \
+    fi \
+ && chown -R scanner:scanner /home/scanner/.codeql
+
+# Copy app requirements separately to leverage layer caching
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code last
 COPY . .
-
-# Fix permissions after copying
 RUN chown -R scanner:scanner /app
 
-# Switch to non-root user
 USER scanner
 
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV LOG_LEVEL=INFO
+# App env
+ENV PYTHONPATH=/app \
+    LOG_LEVEL=INFO
 
-# Expose port
+# Healthcheck endpoint uses curl (present)
 EXPOSE 8000
-
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# Run the application
+# Use tini as PID 1 to handle signals and reap zombies
+ENTRYPOINT ["/usr/bin/tini","--"]
+
+# Run the API
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
