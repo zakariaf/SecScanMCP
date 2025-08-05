@@ -80,9 +80,9 @@ class BanditAnalyzer(BaseAnalyzer):
         findings = []
 
         try:
-            # Run bandit
+            # Run bandit as Python module
             cmd = [
-                'bandit',
+                'python3', '-m', 'bandit',
                 '-r',  # Recursive
                 repo_path,
                 '-f', 'json',  # JSON output
