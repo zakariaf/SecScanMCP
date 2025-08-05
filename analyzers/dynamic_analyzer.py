@@ -26,7 +26,10 @@ class DynamicAnalyzer(BaseAnalyzer):
 
     def is_applicable(self, project_info: Dict[str, Any]) -> bool:
         """Only applicable to MCP projects with dynamic analysis enabled"""
-        return project_info.get('is_mcp', False)
+        # Make dynamic analysis more optional - only run if explicitly enabled
+        dynamic_enabled = project_info.get('enable_dynamic_analysis', False)
+        is_mcp = project_info.get('is_mcp', False)
+        return dynamic_enabled and is_mcp
 
     async def analyze(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
         """Run dynamic analysis in sandboxed environment"""
@@ -41,9 +44,15 @@ class DynamicAnalyzer(BaseAnalyzer):
                 self.docker_client = docker.from_env()
                 # Test Docker access
                 self.docker_client.ping()
+                self.logger.info("Docker connection successful - dynamic analysis enabled")
+            except PermissionError as pe:
+                self.logger.warning(f"Docker permission denied: {pe}")
+                self.logger.info("Hint: Container user may need to be in 'docker' group for Docker-in-Docker")
+                self.logger.info("Dynamic analysis requires Docker access - skipping")
+                return findings
             except Exception as docker_error:
                 self.logger.warning(f"Docker not accessible: {docker_error}")
-                self.logger.info("Dynamic analysis requires Docker access - skipping")
+                self.logger.info("Dynamic analysis requires Docker daemon access - skipping")
                 return findings
 
             # Determine how to run the MCP server

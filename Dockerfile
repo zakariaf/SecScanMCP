@@ -148,7 +148,9 @@ ENV PATH="/opt/codeql:${PATH}"
 RUN groupadd -r scanner && useradd -r -g scanner -m scanner \
  && mkdir -p /home/scanner/.cache /home/scanner/go /home/scanner/.codeql \
            /app/rules/yara /app/rules/codeql /tmp/mcp-scanner \
- && chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner
+ && chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner \
+ && groupadd -f docker \
+ && usermod -aG docker scanner
 
 # Go env (cache to user dirs)
 ENV GOPATH=/home/scanner/go \
