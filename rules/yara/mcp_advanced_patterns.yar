@@ -191,7 +191,7 @@ rule MCP_Unsafe_Network_Requests
         // Missing validation
         $novald1 = /fetch\s*\(\s*url\)\s*\.then/ // No URL validation
         $novald2 = /requests\.get\s*\(\s*url\)\s*\.text/ // Direct request
-        $novald3 = /^(?!.*(?:validateUrl|allowedHosts|url_whitelist)).*fetch.*url/ // No validation keywords
+        $novald3 = /fetch.*url/ // Simple fetch pattern
 
     condition:
         any of ($tool*) and any of ($net*) and any of ($param*) and any of ($novald*)
