@@ -36,8 +36,15 @@ class DynamicAnalyzer(BaseAnalyzer):
         findings = []
 
         try:
-            # Initialize Docker client
-            self.docker_client = docker.from_env()
+            # Initialize Docker client with error handling
+            try:
+                self.docker_client = docker.from_env()
+                # Test Docker access
+                self.docker_client.ping()
+            except Exception as docker_error:
+                self.logger.warning(f"Docker not accessible: {docker_error}")
+                self.logger.info("Dynamic analysis requires Docker access - skipping")
+                return findings
 
             # Determine how to run the MCP server
             runtime_info = self._determine_runtime(project_info, repo_path)
