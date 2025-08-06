@@ -197,8 +197,10 @@ class YARAAnalyzer(BaseAnalyzer):
             if 'details' in meta:
                 description += f"\n\nDetails: {meta['details']}"
 
-            # Extract matched strings
+            # Extract matched strings with line numbers
             matched_strings = []
+            file_content = None
+            
             for s in match.strings:
                 if isinstance(s, tuple):
                     # pre-4.3: (<offset>, <identifier>, <data>)
@@ -216,13 +218,40 @@ class YARAAnalyzer(BaseAnalyzer):
                         offset = None
                         data   = None
 
+                # Convert byte offset to line number
+                line_number = None
+                line_content = None
+                if offset is not None:
+                    try:
+                        if file_content is None:
+                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                file_content = f.read()
+                        
+                        # Count newlines up to offset to get line number
+                        line_number = file_content[:offset].count('\n') + 1
+                        
+                        # Get the actual line content
+                        lines = file_content.split('\n')
+                        if 0 < line_number <= len(lines):
+                            line_content = lines[line_number - 1].strip()
+                            
+                    except Exception as e:
+                        self.logger.debug(f"Could not determine line number for offset {offset}: {e}")
+
                 # truncate to 100 bytes/characters
                 content = data[:100] if data else ''
                 matched_strings.append({
                     'offset':     offset,
+                    'line':       line_number,
+                    'line_content': line_content,
                     'identifier': identifier,
                     'content':    content,
                 })
+
+            # Use first line number for location if available
+            location = str(relative_path)
+            if matched_strings and matched_strings[0].get('line'):
+                location = f"{relative_path}:{matched_strings[0]['line']}"
 
             return self.create_finding(
                 vulnerability_type=self._determine_vuln_type(meta),
@@ -230,7 +259,7 @@ class YARAAnalyzer(BaseAnalyzer):
                 confidence=float(meta.get('confidence', 0.8)),
                 title=f"YARA Detection: {match.rule}",
                 description=description,
-                location=str(relative_path),
+                location=location,
                 recommendation=meta.get('recommendation', 'Review the detected pattern and take appropriate action'),
                 references=self._extract_references(meta),
                 evidence={

@@ -289,20 +289,23 @@ rule MCP_Type_Confusion_Vulnerability
         category = "vulnerability"
 
     strings:
-        // Unsafe type coercion
-        $type1 = /==\s*['"]/  // Loose equality
-        $type2 = /parseInt.*user.*input/
-        $type3 = /JSON\.parse.*catch\s*\{\s*\}/
+        // Actually dangerous type coercion (not just any string comparison)
+        $type1 = /parseInt\s*\(\s*user_input\s*\)/
+        $type2 = /parseFloat\s*\(\s*params\[/
+        $type3 = /Number\s*\(\s*req\.body/
+        $type4 = /JSON\.parse\s*\(\s*user_.*\)\s*catch\s*\{\s*\}/
+        $type5 = /eval\s*\(\s*.*user.*\)/
 
         // Prototype pollution risk
-        $proto1 = "__proto__"
-        $proto2 = "constructor.prototype"
-        $proto3 = /Object\.assign.*req\.body/
+        $proto1 = /__proto__\s*=/
+        $proto2 = /constructor\.prototype\s*=/
+        $proto3 = /Object\.assign\s*\(\s*.*\s*,\s*req\.body/
+        $proto4 = /\{\s*\[.*user.*\]\s*:/
 
-        // Type assumption
-        $assume1 = /assume.*string/
-        $assume2 = /cast.*without.*check/
-        $assume3 = "// Assuming type"
+        // Dangerous type assumptions in MCP context
+        $assume1 = /tool_params\s*\.\s*\w+\s*\+\s*['"]/  // String concatenation without type check
+        $assume2 = /request\.\w+\s*-\s*\d+/              // Math ops on user input
+        $assume3 = /params\s*\[\s*.*\s*\]\s*\|\|\s*0/    // Assuming numeric with fallback
 
     condition:
         any of ($type*) or
