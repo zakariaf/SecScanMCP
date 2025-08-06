@@ -10,6 +10,7 @@ from .grype_analyzer import GrypeAnalyzer
 from .syft_analyzer import SyftAnalyzer
 from .trufflehog_analyzer import TruffleHogAnalyzer
 from .mcp_analyzer import MCPSpecificAnalyzer
+from .mcp_config_analyzer import MCPConfigAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
 
 from .security_tools.clamav_analyzer import ClamAVAnalyzer
@@ -25,6 +26,7 @@ __all__ = [
     'SyftAnalyzer',
     'TruffleHogAnalyzer',
     'MCPSpecificAnalyzer',
+    'MCPConfigAnalyzer',
     'DynamicAnalyzer',
     'ClamAVAnalyzer',
     'YARAAnalyzer',

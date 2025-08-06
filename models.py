@@ -57,6 +57,7 @@ class VulnerabilityType(str, Enum):
     # Runtime & Behavioral
     BEHAVIORAL_ANOMALY = "behavioral_anomaly"
     DATA_LEAKAGE = "data_leakage"
+    DATA_EXPOSURE = "data_exposure"
     NETWORK_SECURITY = "network_security"
     RESOURCE_ABUSE = "resource_abuse"
     

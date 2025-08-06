@@ -21,6 +21,7 @@ from analyzers import (
     SyftAnalyzer,
     TruffleHogAnalyzer,
     MCPSpecificAnalyzer,
+    MCPConfigAnalyzer,  # MCP-native configuration analysis
     DynamicAnalyzer,
     ClamAVAnalyzer,  # Military-grade malware detection
     YARAAnalyzer,    # Advanced pattern matching
@@ -45,6 +46,7 @@ class SecurityScanner:
             'opengrep': OpenGrepAnalyzer(),  # Open-source pattern-based analysis
             'trufflehog': TruffleHogAnalyzer(), # Secret detection
             'mcp_specific': MCPSpecificAnalyzer(), # MCP vulnerabilities
+            'mcp_config': MCPConfigAnalyzer(), # MCP configuration analysis
             'dynamic': DynamicAnalyzer(),    # Behavioral analysis
             'clamav': ClamAVAnalyzer(),       # Military-grade malware detection
             'yara': YARAAnalyzer(),          # Advanced pattern matching
@@ -284,6 +286,7 @@ class SecurityScanner:
         # 6. MCP-specific analysis (critical for MCP servers)
         if is_mcp:
             analyzers.append('mcp_specific')  # Always run for MCP servers
+            analyzers.append('mcp_config')    # MCP-native configuration analysis
             
             # Dynamic analysis (optional but recommended)
             if scan_options.get('enable_dynamic_analysis', True):
