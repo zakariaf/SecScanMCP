@@ -19,6 +19,7 @@ class SeverityLevel(str, Enum):
 class VulnerabilityType(str, Enum):
     # Code vulnerabilities
     COMMAND_INJECTION = "command_injection"
+    CODE_INJECTION = "code_injection"
     SQL_INJECTION = "sql_injection"
     PATH_TRAVERSAL = "path_traversal"
     XXE = "xxe"
@@ -53,6 +54,12 @@ class VulnerabilityType(str, Enum):
     INSECURE_CONFIGURATION = "insecure_configuration"
     MISSING_SECURITY_HEADERS = "missing_security_headers"
 
+    # Runtime & Behavioral
+    BEHAVIORAL_ANOMALY = "behavioral_anomaly"
+    DATA_LEAKAGE = "data_leakage"
+    NETWORK_SECURITY = "network_security"
+    RESOURCE_ABUSE = "resource_abuse"
+    
     # Malware / other
     MALWARE = "malware"
     BACKDOOR = "backdoor"
@@ -134,11 +141,13 @@ class ScanResult(BaseModel):
 
     # Findings
     findings: List[Finding]
+    user_centric_findings: List[Finding] = Field(default_factory=list)
     total_findings: int = 0
 
-    # Scoring
-    security_score: float = Field(ge=0.0, le=100.0)
-    security_grade: str = Field(pattern="^[A-F][+-]?$")
+    # Enhanced Scoring (main scores)
+    security_score: float = Field(ge=0.0, le=100.0)  # User Safety Score
+    security_grade: str = Field(pattern="^[A-F]$")  # User Safety Grade
+    enhanced_scores: Dict[str, Any] = Field(default_factory=dict)
 
     # Summary
     summary: Dict[str, Any]

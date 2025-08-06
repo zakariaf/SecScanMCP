@@ -27,7 +27,7 @@ from analyzers import (
     CodeQLAnalyzer   # Semantic code analysis
 )
 from models import Finding, ScanResult
-from scoring import SecurityScorer
+from enhanced_scoring import EnhancedSecurityScorer
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ class SecurityScanner:
             'codeql': CodeQLAnalyzer()       # Semantic code analysis
         }
 
-        self.scorer = SecurityScorer()
+        self.enhanced_scorer = EnhancedSecurityScorer()
 
     async def scan_repository(
         self,
@@ -81,8 +81,11 @@ class SecurityScanner:
         # Run all analyzers in parallel where possible
         findings = await self._run_analyzers(repo_path, project_info, scan_options)
 
-        # Calculate security score
-        score_data = self.scorer.calculate_score(findings)
+        # Calculate enhanced dual scores
+        enhanced_scores = self.enhanced_scorer.calculate_both_scores(findings)
+        
+        # Separate user-centric security issues
+        user_centric_findings = self._extract_user_centric_findings(findings)
 
         # Build result
         result = ScanResult(
@@ -90,9 +93,11 @@ class SecurityScanner:
             project_type=project_info['type'],
             is_mcp_server=project_info['is_mcp'],
             findings=findings,
-            security_score=score_data['score'],
-            security_grade=score_data['grade'],
-            summary=self._generate_summary(findings, score_data),
+            user_centric_findings=user_centric_findings,
+            security_score=enhanced_scores['user_safety']['score'],
+            security_grade=enhanced_scores['user_safety']['grade'],
+            enhanced_scores=enhanced_scores,
+            summary=self._generate_summary(findings, enhanced_scores),
             detailed_results=self._organize_findings(findings),
             scan_metadata={
                 'analyzers_run': list(self.analyzers.keys()),
@@ -258,8 +263,11 @@ class SecurityScanner:
             if result:
                 all_findings.extend(result)
 
-        # Deduplicate findings with improved logic
-        return self._deduplicate_findings(all_findings)
+        # Deduplicate findings with enhanced logic for scoring
+        deduplicated_findings = self._deduplicate_findings(all_findings)
+        
+        # Apply additional aggregation for enhanced scoring
+        return self._aggregate_for_enhanced_scoring(deduplicated_findings)
 
     async def _run_analyzer_safe(
         self,
@@ -364,10 +372,32 @@ class SecurityScanner:
                 finding.title.lower().strip()
             )
 
+    def _extract_user_centric_findings(self, findings: List[Finding]) -> List[Finding]:
+        """Extract findings that directly impact MCP server users"""
+        # Import the categories from enhanced scoring
+        from enhanced_scoring import EnhancedSecurityScorer
+        
+        scorer = EnhancedSecurityScorer()
+        user_centric = []
+        
+        for finding in findings:
+            if finding.confidence < 0.5:  # Skip low confidence
+                continue
+                
+            vuln_type = finding.vulnerability_type
+            
+            # Check if this is a user-impacting vulnerability
+            if (vuln_type in scorer.MCP_EXPLOITABLE_CRITICAL or 
+                vuln_type in scorer.MCP_RELATED_HIGH or 
+                vuln_type in scorer.INDIRECT_USER_IMPACT):
+                user_centric.append(finding)
+        
+        return user_centric
+    
     def _generate_summary(
         self,
         findings: List[Finding],
-        score_data: Dict[str, Any]
+        enhanced_scores: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate executive summary"""
         severity_counts = {
@@ -386,13 +416,21 @@ class SecurityScanner:
                 type_counts[finding.vulnerability_type] = 0
             type_counts[finding.vulnerability_type] += 1
 
+        # Add enhanced scoring information
+        user_safety = enhanced_scores['user_safety']
+        developer_security = enhanced_scores['developer_security']
+        summary_info = enhanced_scores['summary']
+        
         return {
             'total_findings': len(findings),
             'severity_breakdown': severity_counts,
             'vulnerability_types': type_counts,
-            'security_score': score_data['score'],
-            'security_grade': score_data['grade'],
-            'risk_level': self._determine_risk_level(score_data['score']),
+            
+            # MCP-specific information
+            'mcp_exploitable_issues': summary_info['mcp_exploitable'],
+            'requires_immediate_attention': summary_info['requires_immediate_attention'],
+            'scan_completeness': summary_info['scan_completeness'],
+            
             'top_risks': self._get_top_risks(findings)
         }
 
@@ -449,3 +487,95 @@ class SecurityScanner:
             })
 
         return organized
+    
+    def _aggregate_for_enhanced_scoring(self, findings: List[Finding]) -> List[Finding]:
+        """Apply enhanced aggregation logic for dual scoring system"""
+        # Group related findings for better scoring
+        aggregated_findings = []
+        
+        # Group findings by vulnerability type and location for potential merging
+        vulnerability_groups = {}
+        
+        for finding in findings:
+            # Create a group key based on vulnerability type and general location
+            location_base = finding.location.split(':')[0] if ':' in finding.location else finding.location
+            group_key = f"{finding.vulnerability_type.value}:{location_base}"
+            
+            if group_key not in vulnerability_groups:
+                vulnerability_groups[group_key] = []
+            vulnerability_groups[group_key].append(finding)
+        
+        # Process each group
+        for group_key, group_findings in vulnerability_groups.items():
+            if len(group_findings) == 1:
+                # Single finding - add as is
+                aggregated_findings.extend(group_findings)
+            else:
+                # Multiple findings - check if they should be merged
+                merged_finding = self._merge_related_findings(group_findings)
+                if merged_finding:
+                    aggregated_findings.append(merged_finding)
+                else:
+                    # Keep separate if merging not appropriate
+                    aggregated_findings.extend(group_findings)
+        
+        logger.info(f"Aggregated {len(findings)} findings into {len(aggregated_findings)} for enhanced scoring")
+        return aggregated_findings
+    
+    def _merge_related_findings(self, findings: List[Finding]) -> Optional[Finding]:
+        """Merge related findings if appropriate for enhanced scoring"""
+        if not findings:
+            return None
+        
+        # Only merge if they're the same vulnerability type and similar severity
+        base_finding = findings[0]
+        vuln_type = base_finding.vulnerability_type
+        
+        # Check if all findings are similar enough to merge
+        similar_findings = [
+            f for f in findings 
+            if f.vulnerability_type == vuln_type 
+            and abs(f.confidence - base_finding.confidence) <= 0.2  # Similar confidence
+        ]
+        
+        if len(similar_findings) < len(findings):
+            return None  # Don't merge if findings are too different
+        
+        # Select the highest severity and confidence
+        best_finding = max(findings, key=lambda f: (
+            {'critical': 5, 'high': 4, 'medium': 3, 'low': 2, 'info': 1}[f.severity.value],
+            f.confidence
+        ))
+        
+        # Create merged finding with combined evidence
+        merged_evidence = {}
+        all_locations = set()
+        all_references = set()
+        
+        for finding in findings:
+            if finding.evidence:
+                merged_evidence.update(finding.evidence)
+            all_locations.add(finding.location)
+            all_references.update(finding.references)
+        
+        # Add instance count to evidence
+        merged_evidence['instance_count'] = len(findings)
+        merged_evidence['all_locations'] = list(all_locations)
+        
+        # Create the merged finding
+        merged_finding = Finding(
+            vulnerability_type=best_finding.vulnerability_type,
+            severity=best_finding.severity,
+            confidence=min(1.0, best_finding.confidence + 0.1),  # Slight confidence boost for multiple instances
+            title=f"{best_finding.title} (Found in {len(findings)} locations)",
+            description=best_finding.description,
+            location=best_finding.location,  # Use the primary location
+            recommendation=best_finding.recommendation,
+            references=list(all_references),
+            evidence=merged_evidence,
+            tool=best_finding.tool,
+            cwe_id=best_finding.cwe_id,
+            cve_id=best_finding.cve_id
+        )
+        
+        return merged_finding
