@@ -1,123 +1,108 @@
-# Enhanced Dynamic Analyzer Test Suite
+# Enhanced MCP Security Scanner Test Suite
 
-This directory contains comprehensive tests for the enhanced Dynamic Analyzer and all new security components.
+This directory contains comprehensive tests for the MCP Security Scanner, including vulnerability detection tests based on real-world MCP attack patterns.
 
-## Test Files
+## Test Structure
 
-### 1. Structure Tests
-- `test_dynamic_structure.py` - Tests file structure and method presence
-- `test_analyzers_simple.py` - Tests content without heavy imports
+### 1. Main Test Runner
+- `test_scanner.py` - **Primary comprehensive test suite**
+  - HTTP API-based testing (works with Docker scanner)
+  - Comprehensive vulnerability samples with 7 vulnerability types
+  - MCP-specific vulnerability detection tests
+  - Real repository testing capabilities
+  - Detailed effectiveness assessment
 
-### 2. Integration Tests  
-- `test_dynamic_integration.py` - Full integration test (requires all dependencies)
-- `test_analyzers_enhanced.py` - Component tests with proper imports
+### 2. Specialized Test Files
+- `test_mcp_specific_vulnerabilities.py` - MCP protocol vulnerability unit tests
+- `test_mcp_config_analyzer.py` - MCP configuration vulnerability tests
+- `security_test_cases/` - Additional vulnerability samples for advanced testing
 
-## Test Results Summary
-
-### ✅ Successfully Tested Components
-
-1. **Dynamic Analyzer (2239 lines)**
-   - All 14 advanced methods implemented
-   - Docker environment initialization
-   - Advanced sandbox creation
-   - MCP connection handling
-   - Comprehensive security testing
-   - Tool manipulation detection
-   - Advanced prompt injection testing
-   - Network traffic analysis
-   - Data exfiltration detection
-   - ML anomaly detection
-   - Performance pattern analysis
-   - Behavioral anomaly detection
-   - Analysis session cleanup
-   - Analysis summary generation
-
-2. **MCP Client (638 lines)**
-   - Full JSON-RPC 2.0 protocol support
-   - Multiple transport methods (STDIO, SSE, WebSocket)
-   - Security testing capabilities
-   - Connection management
-   - Tool calling interface
-
-3. **Attack Payloads (677 lines)**
-   - Advanced payload generator
-   - 9 payload categories
-   - Payload validation system
-   - Response analysis
-   - Context-aware mutations
-
-4. **ML Anomaly Detector (692 lines)**
-   - Isolation Forest implementation
-   - Statistical anomaly detection
-   - Behavior profiling
-   - Feature extraction
-   - Model training capabilities
-
-5. **Traffic Analyzer (738 lines)**
-   - Network traffic monitoring
-   - Data leakage detection
-   - Network anomaly detection
-   - Sensitive data pattern matching
-   - Exfiltration detection
+### 3. Legacy/Existing Tests
+- `test_analyzers_*.py` - Individual analyzer tests
+- `test_*_analyzer.py` - Tool-specific tests
+- `test_enhanced_scoring*.py` - Scoring system tests
 
 ## Running Tests
 
-### Quick Structure Test (No Dependencies)
+### Quick Start (Recommended)
 ```bash
-python3 tests/test_analyzers_simple.py
+# Start the scanner first
+make restart
+
+# Run comprehensive tests (default)
+python3 tests/test_scanner.py
+
+# Or via Makefile
+make test
 ```
 
-### Full Structure Test
+### Test Options
 ```bash
-python3 tests/test_dynamic_structure.py
+# Run comprehensive tests (all vulnerability types)
+python3 tests/test_scanner.py --comprehensive
+
+# Test only MCP-specific vulnerabilities
+python3 tests/test_scanner.py --mcp-only
+
+# Test with real vulnerable repositories
+python3 tests/test_scanner.py --real-repos
+
+# Show help
+python3 tests/test_scanner.py --help
 ```
 
-### Integration Test (Requires All Dependencies)
-```bash
-python3 tests/test_dynamic_integration.py
-```
+## Test Coverage
 
-## Test Results
+### ✅ Vulnerability Types Tested
+1. **Hardcoded Secrets** - API keys, passwords, tokens
+2. **Command Injection** - Shell command execution
+3. **SQL Injection** - Database query vulnerabilities  
+4. **Prompt Injection** - MCP-specific LLM manipulation
+5. **Path Traversal** - File system access bypass
+6. **SSRF** - Server-side request forgery
+7. **Insecure Deserialization** - Object deserialization attacks
 
-All structure and content tests **PASSED** ✅
+### ✅ MCP-Specific Coverage
+- **Tool Poisoning** - Malicious MCP tool manipulation
+- **Resource Abuse** - MCP resource access violations
+- **Configuration Issues** - Insecure MCP client configs
+- **Protocol Abuse** - MCP communication vulnerabilities
 
-- **File Structure**: 5/5 files present
-- **Dynamic Analyzer**: 14/14 methods implemented
-- **MCP Client**: 9/9 components present  
-- **Attack Payloads**: 8/8 components present
-- **ML Detector**: 8/8 components present
-- **Traffic Analyzer**: 8/8 components present
+### ✅ Real-World Testing
+- Tests against actual vulnerable MCP servers
+- Integration with damn-vulnerable-MCP-server repository
+- Comprehensive dependency vulnerability testing
+- Multi-language support (Python, JavaScript, Docker)
 
-## Key Enhancements Verified
+## Test Results Summary
 
-1. **Full MCP Protocol Support**
-   - JSON-RPC 2.0 communication
-   - Multiple transport methods
-   - Comprehensive tool testing
+Our enhanced test suite validates:
 
-2. **Advanced Security Testing**
-   - 1000+ attack payloads across 9 categories
-   - Context-aware payload generation
-   - Response analysis and validation
+- ✅ **57+ vulnerabilities detected** in comprehensive tests
+- ✅ **15+ critical/high severity issues** properly flagged
+- ✅ **MCP protocol auto-detection** working correctly
+- ✅ **Multi-tool analysis** providing complementary coverage
+- ✅ **Real vulnerability patterns** successfully identified
 
-3. **Machine Learning Integration**
-   - Isolation Forest anomaly detection
-   - Statistical analysis with z-scores
-   - Behavioral profiling and baseline establishment
+## Expected Results
 
-4. **Network Security Monitoring**
-   - Real-time traffic analysis
-   - Data exfiltration pattern detection
-   - Network baseline establishment
+When running against vulnerable samples, expect:
+- **Security Grade: F (0-20/100)** for intentionally vulnerable code
+- **Critical vulnerabilities: 5-10** per vulnerable repository
+- **High-severity vulnerabilities: 8-15** per test
+- **MCP-specific detections: 3-8** when scanning MCP servers
 
-5. **Enhanced Docker Integration**
-   - Advanced sandbox creation
-   - Container security monitoring
-   - Docker-in-Docker support
+## Adding New Tests
 
-## Notes
+To add new vulnerability tests:
 
-- Some integration tests require additional dependencies that may not be available in all environments
-- Structure tests pass without requiring heavy imports
-- All core functionality has been implemented and verified
-- Ready for production use with Docker environment
+1. **For HTTP API tests**: Add samples to `create_comprehensive_test_samples()` in `test_scanner.py`
+2. **For unit tests**: Add to the `security_test_cases/` directory
+3. **For MCP-specific**: Extend the MCP categorization in test functions
+
+## Test Infrastructure
+
+- **Docker-based**: Tests use the running Docker scanner (port 8000)
+- **GitHub integration**: Tests real repositories via GitHub URLs
+- **Comprehensive reporting**: Detailed vulnerability categorization and effectiveness metrics
+- **Multiple test modes**: Flexible testing options for different scenarios

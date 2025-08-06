@@ -2,7 +2,7 @@
 # Simplifies common operations
 DOCKER_DEFAULT_PLATFORM ?= linux/amd64
 
-.PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all test-examples test-real-repos
+.PHONY: help build up down test scan example shell clean versions logs setup-clamav setup-yara setup-codeql setup-all test-examples test-real-repos test-mcp-only test-local-only
 
 # Default target
 help:
@@ -16,8 +16,10 @@ help:
 	@echo "  make down         - Stop services"
 	@echo ""
 	@echo "🧪 Testing:"
-	@echo "  make test         - Run comprehensive tests"
-	@echo "  make test-examples - Test with local vulnerable examples"
+	@echo "  make test         - Run comprehensive tests (default)"
+	@echo "  make test-examples - Test comprehensive vulnerability detection"
+	@echo "  make test-mcp-only - Test MCP-specific vulnerabilities only"
+	@echo "  make test-local-only - Test with local samples only"
 	@echo "  make test-real-repos - Test with real vulnerable repositories"
 	@echo "  make test-python  - Quick test with Python example"
 	@echo "  make test-js      - Quick test with JavaScript example"
@@ -57,12 +59,27 @@ test: test-examples
 	@echo "🎉 All tests completed!"
 
 test-examples:
-	@echo "🧪 Testing with local vulnerable examples..."
-	python test_scanner.py
+	@echo "🧪 Testing with comprehensive vulnerability detection..."
+	@echo "⚠️  Note: Scanner must be running (make up) before running tests"
+	@echo "🔄 Waiting for scanner to be ready..."
+	@timeout 30 sh -c 'until curl -s http://localhost:8000/health >/dev/null 2>&1; do sleep 1; done' || (echo "❌ Scanner not responding" && exit 1)
+	@echo "✅ Scanner is ready, running tests..."
+	@docker-compose run --rm scanner python3 tests/test_scanner.py --comprehensive
 
 test-real-repos:
 	@echo "🌐 Testing with real vulnerable repositories..."
-	python test_scanner.py --real-repos
+	@timeout 30 sh -c 'until curl -s http://localhost:8000/health >/dev/null 2>&1; do sleep 1; done' || (echo "❌ Scanner not responding" && exit 1)
+	@docker-compose run --rm scanner python3 tests/test_scanner.py --real-repos
+
+test-mcp-only:
+	@echo "🎯 Testing MCP-specific vulnerability detection..."
+	@timeout 30 sh -c 'until curl -s http://localhost:8000/health >/dev/null 2>&1; do sleep 1; done' || (echo "❌ Scanner not responding" && exit 1)
+	@docker-compose run --rm scanner python3 tests/test_scanner.py --mcp-only
+
+test-local-only:
+	@echo "🏠 Testing with local samples only..."
+	@timeout 30 sh -c 'until curl -s http://localhost:8000/health >/dev/null 2>&1; do sleep 1; done' || (echo "❌ Scanner not responding" && exit 1)
+	@docker-compose run --rm scanner python3 tests/test_scanner.py --local-only
 
 test-python:
 	@echo "🐍 Quick test with Python vulnerable server..."
