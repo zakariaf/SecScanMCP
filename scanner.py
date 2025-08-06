@@ -215,29 +215,8 @@ class SecurityScanner:
         """Run all applicable analyzers"""
         all_findings = []
 
-        # Determine which analyzers to run
-        analyzers_to_run = []
-
-        # Always run SBOM generation first
-        analyzers_to_run.append('syft')
-
-        # Universal analyzers that work for all languages
-        analyzers_to_run.extend(['trivy', 'grype', 'opengrep', 'trufflehog', 'clamav', 'yara'])
-
-        # CodeQL for supported languages
-        codeql_languages = ['python', 'javascript', 'typescript', 'java', 'go', 'cpp', 'csharp', 'ruby']
-        if project_info['language'] in codeql_languages:
-            analyzers_to_run.append('codeql')
-
-        # Language-specific analyzers
-        if project_info['language'] == 'python':
-            analyzers_to_run.append('bandit')
-
-        # MCP-specific if applicable
-        if project_info['is_mcp']:
-            analyzers_to_run.append('mcp_specific')
-            if scan_options.get('enable_dynamic_analysis', True):
-                analyzers_to_run.append('dynamic')
+        # Smart analyzer selection to minimize overlap
+        analyzers_to_run = self._select_optimal_analyzers(project_info, scan_options)
 
         # Run analyzers
         tasks = []
@@ -269,6 +248,54 @@ class SecurityScanner:
         # Apply additional aggregation for enhanced scoring
         return self._aggregate_for_enhanced_scoring(deduplicated_findings)
 
+    def _select_optimal_analyzers(self, project_info: Dict[str, Any], scan_options: Dict[str, Any]) -> List[str]:
+        """Select non-overlapping analyzers based on project type and requirements"""
+        analyzers = []
+        language = project_info.get('language', 'unknown')
+        is_mcp = project_info.get('is_mcp', False)
+        
+        # 1. Always generate SBOM first
+        analyzers.append('syft')
+        
+        # 2. Core security tools (specialized, no overlap)
+        analyzers.extend([
+            'trufflehog',    # Best for secrets detection
+            'clamav',        # Malware detection
+        ])
+        
+        # 3. Language-specific analysis (avoid opengrep+bandit overlap)
+        if language == 'python':
+            analyzers.append('bandit')     # Python-specific security linting
+            # Skip opengrep for Python to avoid overlap with bandit
+        else:
+            analyzers.append('opengrep')   # Multi-language pattern matching
+        
+        # 4. Dependency scanning (choose one primary)
+        if scan_options.get('fast_scan', False):
+            analyzers.append('grype')      # Faster for quick scans
+        else:
+            analyzers.append('trivy')      # More comprehensive (configs, licenses, etc.)
+        
+        # 5. Advanced semantic analysis
+        codeql_languages = ['python', 'javascript', 'typescript', 'java', 'go', 'cpp', 'csharp', 'ruby']
+        if language in codeql_languages and not scan_options.get('skip_advanced', False):
+            analyzers.append('codeql')
+        
+        # 6. MCP-specific analysis (critical for MCP servers)
+        if is_mcp:
+            analyzers.append('mcp_specific')  # Always run for MCP servers
+            
+            # Dynamic analysis (optional but recommended)
+            if scan_options.get('enable_dynamic_analysis', True):
+                analyzers.append('dynamic')
+        
+        # 7. Advanced pattern matching (for complex threats)
+        if not scan_options.get('skip_advanced', False):
+            analyzers.append('yara')       # Advanced behavioral patterns
+        
+        logger.info(f"Selected {len(analyzers)} analyzers for {language} {'MCP ' if is_mcp else ''}project: {', '.join(analyzers)}")
+        return analyzers
+
     async def _run_analyzer_safe(
         self,
         analyzer,
@@ -283,10 +310,22 @@ class SecurityScanner:
             return []
 
     def _deduplicate_findings(self, findings: List[Finding]) -> List[Finding]:
-        """Remove duplicate findings with improved logic"""
-        seen = set()
-        unique_findings = []
-
+        """Remove duplicate findings with improved logic and tool priority"""
+        from collections import defaultdict
+        
+        # Tool priority for same vulnerability type (higher number = higher priority)
+        TOOL_PRIORITY = {
+            'hardcoded_secret': {'trufflehog': 3, 'trivy': 2, 'bandit': 1},
+            'command_injection': {'mcpspecific': 4, 'codeql': 3, 'dynamic': 2, 'bandit': 1},
+            'prompt_injection': {'mcpspecific': 4, 'mcp_specific': 4, 'codeql': 2, 'opengrep': 1},
+            'vulnerable_dependency': {'trivy': 3, 'grype': 2, 'syft': 1},
+            'sql_injection': {'codeql': 3, 'bandit': 2, 'opengrep': 1},
+            'generic': {'yara': 2, 'clamav': 3, 'opengrep': 1},  # Prioritize advanced pattern matching
+        }
+        
+        # Group findings by vulnerability type + normalized location
+        grouped = defaultdict(list)
+        
         for finding in findings:
             # Normalize location to handle path variations
             normalized_location = finding.location.lstrip('/').strip()
@@ -298,35 +337,46 @@ class SecurityScanner:
             if cve_id:
                 # For CVE-based findings, use CVE ID + package info
                 package_info = self._extract_package_info(finding.title, finding.evidence)
-                key = (
-                    finding.vulnerability_type,
-                    cve_id,
-                    package_info,
-                    normalized_location
-                )
+                key = (finding.vulnerability_type, cve_id, package_info)
             else:
-                # For non-CVE findings, use original logic with normalized location
-                key = (
-                    finding.vulnerability_type,
-                    normalized_location,
-                    finding.title.lower().strip()
-                )
+                # For non-CVE findings, use type + location
+                key = (finding.vulnerability_type, normalized_location)
+            
+            grouped[key].append(finding)
 
-            if key not in seen:
-                seen.add(key)
-                unique_findings.append(finding)
+        # Process each group with tool priority
+        unique_findings = []
+        total_before = len(findings)
+        
+        for findings_group in grouped.values():
+            if len(findings_group) == 1:
+                unique_findings.extend(findings_group)
             else:
-                # If duplicate found, try to merge information (take higher confidence)
-                for existing in unique_findings:
-                    existing_key = self._generate_key_for_finding(existing)
-                    if existing_key == key and finding.confidence > existing.confidence:
-                        existing.confidence = finding.confidence
-                        # Merge evidence if useful
-                        if finding.evidence and existing.evidence:
-                            existing.evidence.update(finding.evidence)
-                        break
+                # Multiple findings for same vulnerability - pick best tool
+                vuln_type = findings_group[0].vulnerability_type.value
+                priorities = TOOL_PRIORITY.get(vuln_type, {})
+                
+                # Sort by tool priority (desc) then confidence (desc)
+                best_finding = max(findings_group, key=lambda f: (
+                    priorities.get(f.tool, 0),  # Tool priority
+                    f.confidence,               # Confidence
+                    f.severity == 'critical'    # Critical severity bonus
+                ))
+                
+                # If there are multiple high-priority findings, merge evidence
+                other_findings = [f for f in findings_group if f != best_finding]
+                if other_findings:
+                    # Combine evidence from other high-confidence findings
+                    high_conf_others = [f for f in other_findings if f.confidence >= 0.7]
+                    for other in high_conf_others:
+                        if other.evidence:
+                            best_finding.evidence.update({
+                                f"{other.tool}_evidence": other.evidence
+                            })
+                
+                unique_findings.append(best_finding)
 
-        logger.info(f"Deduplicated {len(findings)} findings down to {len(unique_findings)}")
+        logger.info(f"Deduplicated {total_before} findings down to {len(unique_findings)} ({(total_before-len(unique_findings))/total_before*100:.1f}% reduction)")
         return unique_findings
 
     def _extract_cve_from_title(self, title: str) -> str:
