@@ -7,10 +7,17 @@ A streamlined security scanner for Model Context Protocol (MCP) servers that foc
 - **Comprehensive Security Analysis**
   - Universal vulnerability scanning for 20+ languages
   - MCP-specific vulnerability detection
-  - Dynamic behavioral analysis
+  - Dynamic behavioral analysis with ML anomaly detection
+  - Advanced prompt injection and tool poisoning detection
   - Secret and credential detection
   - License compliance checking
   - SBOM generation and analysis
+
+- **Dual Scoring System** 🆕
+  - **User Safety Score**: Focus on MCP-exploitable vulnerabilities that affect end users
+  - **Developer Security Score**: Comprehensive code security for maintainers
+  - User-friendly A-F grades with color-coded badges
+  - Automatic malware/backdoor detection with instant F rating
 
 - **Universal Security Tools**
   - **Trivy** - All-in-one scanner (vulnerabilities, secrets, misconfigs, licenses)
@@ -136,6 +143,13 @@ python main.py
   "total_findings": 5,
   "security_score": 72.5,
   "security_grade": "C+",
+  "user_safety_score": 68.0,
+  "user_safety_grade": "D",
+  "user_safety_message": "This MCP server has significant security vulnerabilities. Use with caution.",
+  "user_badge_color": "#FF5722",
+  "developer_score": 85.2,
+  "developer_grade": "B",
+  "mcp_exploitable_issues": 1,
   "summary": {
     "total_findings": 5,
     "severity_breakdown": {
@@ -208,6 +222,54 @@ python main.py
     },
     ...
   ]
+}
+```
+
+## Enhanced Scoring System 🆕
+
+Our dual scoring system provides two perspectives on security:
+
+### User Safety Score
+- **What it measures**: Vulnerabilities that directly affect MCP server users
+- **Focus**: MCP-exploitable issues, data leakage, service integrity
+- **Grades**: A (Safe for all users) to F (Dangerous - do not use)
+- **Key features**:
+  - Command/Code injection → Automatic C- cap
+  - Malware/Backdoor detection → Automatic F grade
+  - User-friendly messages and color-coded badges
+
+### Developer Security Score  
+- **What it measures**: Comprehensive code security analysis
+- **Focus**: All vulnerabilities, code quality, dependency health
+- **Purpose**: Help developers improve their overall security posture
+- **Includes**: Improvement suggestions and detailed breakdowns
+
+### Example Scoring Output
+
+```json
+{
+  "user_safety": {
+    "score": 68.0,
+    "grade": "D",
+    "risk_level": "HIGH", 
+    "message": "This MCP server has significant security vulnerabilities. Use with caution.",
+    "badge_color": "#FF5722",
+    "critical_issues": 1,
+    "categories": {
+      "direct_exploitation": 1,
+      "data_protection": 0,
+      "service_integrity": 1
+    }
+  },
+  "developer_security": {
+    "score": 85.2,
+    "grade": "B",
+    "total_findings": 5,
+    "improvement_areas": [
+      "Remove hardcoded secrets and use environment variables",
+      "Sanitize user inputs and avoid shell commands"
+    ]
+  }
 }
 ```
 
