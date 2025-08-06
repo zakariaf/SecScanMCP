@@ -185,6 +185,18 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         cross_server_findings = await self._analyze_cross_server_risks(repo_path)
         findings.extend(cross_server_findings)
 
+        # NEW: Check for resource-based prompt injection
+        resource_injection_findings = await self._analyze_resource_prompt_injection(repo_path)
+        findings.extend(resource_injection_findings)
+
+        # NEW: Check for indirect prompt injection via external data
+        indirect_injection_findings = await self._analyze_indirect_prompt_injection(repo_path)
+        findings.extend(indirect_injection_findings)
+
+        # NEW: Enhanced permission scope analysis
+        scope_findings = await self._analyze_permission_scope_violations(repo_path, project_info)
+        findings.extend(scope_findings)
+
         self.logger.info(f"MCP analyzer found {len(findings)} issues")
         return findings
 
@@ -959,3 +971,350 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
                     continue
 
         return findings
+
+    async def _analyze_resource_prompt_injection(self, repo_path: str) -> List[Finding]:
+        """Check for prompt injection in MCP resource content (Challenge 1 gap)"""
+        findings = []
+
+        # Look for resource files and content
+        resource_patterns = [
+            '*resource*.json', '*resource*.yaml', '*resource*.yml',
+            'resources/**/*.json', 'resources/**/*.yaml', 'resources/**/*.txt', 'resources/**/*.md'
+        ]
+
+        for pattern in resource_patterns:
+            for file_path in Path(repo_path).rglob(pattern):
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+
+                    # Check if this looks like resource content
+                    if any(indicator in content.lower() for indicator in 
+                           ['resource', 'note', 'message', 'content', 'data']):
+                        
+                        # Check for prompt injection patterns
+                        injection_findings = self._check_text_for_injection(
+                            content,
+                            str(file_path.relative_to(repo_path)),
+                            "Resource content"
+                        )
+                        
+                        if injection_findings:
+                            # Upgrade severity for resource-based injection
+                            for finding in injection_findings:
+                                finding.title = f"Resource-based {finding.title}"
+                                finding.description = f"Resource file contains prompt injection that could manipulate LLM behavior when accessed"
+                                finding.vulnerability_type = VulnerabilityType.PROMPT_INJECTION
+                                finding.severity = SeverityLevel.CRITICAL  # Resources are directly fed to LLM
+                                finding.confidence = 0.95
+                                
+                        findings.extend(injection_findings)
+
+                        # Also check for user input placeholders that might be injectable
+                        user_input_patterns = [
+                            r'\{\{.*?user.*?\}\}',
+                            r'\$\{.*?input.*?\}',
+                            r'\{.*?user_input.*?\}',
+                            r'USER_INPUT_HERE',
+                            r'REPLACE_WITH_USER_DATA'
+                        ]
+                        
+                        for pattern in user_input_patterns:
+                            if re.search(pattern, content, re.IGNORECASE):
+                                findings.append(self.create_finding(
+                                    vulnerability_type=VulnerabilityType.PROMPT_INJECTION,
+                                    severity=SeverityLevel.HIGH,
+                                    confidence=0.8,
+                                    title="Unsanitized user input placeholder in resource",
+                                    description="Resource contains user input placeholder without validation",
+                                    location=str(file_path.relative_to(repo_path)),
+                                    recommendation="Validate and sanitize user input before inserting into resource content",
+                                    evidence={'pattern': pattern, 'context': 'resource_content'}
+                                ))
+                                break
+
+                except Exception as e:
+                    self.logger.debug(f"Failed to analyze resource file {file_path}: {e}")
+
+        # Also check Python/JS code for dynamic resource content creation
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Look for MCP resource handlers that build content from user input
+                resource_handler_patterns = [
+                    r'@mcp\.resource\s*\(.*?\)\s*(?:async\s+)?def\s+(\w+)',
+                    r'def\s+get_resource.*?\([^)]*\)\s*:',
+                    r'def\s+.*resource.*?\([^)]*\)\s*:',
+                    r'class.*Resource.*:'
+                ]
+
+                for pattern in resource_handler_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE)
+                    for match in matches:
+                        # Check if this resource handler does unsafe string operations
+                        if re.search(r'return\s+f["\'][^"\']*(\{[^}]*user[^}]*\}|\{[^}]*input[^}]*\}|\{[^}]*request[^}]*\})', content):
+                            findings.append(self.create_finding(
+                                vulnerability_type=VulnerabilityType.PROMPT_INJECTION,
+                                severity=SeverityLevel.HIGH,
+                                confidence=0.9,
+                                title="Resource handler with unsanitized user input",
+                                description="MCP resource handler directly interpolates user input without sanitization",
+                                location=str(file_path.relative_to(repo_path)),
+                                recommendation="Sanitize and validate all user input before including in resource content",
+                                evidence={'handler_type': 'resource_handler'}
+                            ))
+
+            except Exception as e:
+                self.logger.debug(f"Failed to analyze {file_path}: {e}")
+
+        return findings
+
+    async def _analyze_indirect_prompt_injection(self, repo_path: str) -> List[Finding]:
+        """Check for indirect prompt injection via external data processing (Challenge 6 gap)"""
+        findings = []
+
+        # Patterns for external data sources
+        external_data_patterns = [
+            # Web scraping/fetching
+            (r'requests\.(get|post)\s*\([^)]*url', 'HTTP request'),
+            (r'fetch\s*\([^)]*http', 'Fetch request'),
+            (r'urllib\.request\.urlopen', 'URL request'),
+            (r'scrapy', 'Web scraping'),
+            (r'BeautifulSoup', 'HTML parsing'),
+            
+            # File/document processing
+            (r'open\s*\([^)]*user.*?\)', 'User-specified file'),
+            (r'pd\.read_csv\s*\([^)]*user', 'CSV from user input'),
+            (r'json\.load\s*\([^)]*user', 'JSON from user input'),
+            (r'yaml\.load\s*\([^)]*user', 'YAML from user input'),
+            
+            # Database queries with external content
+            (r'SELECT.*FROM.*WHERE.*user', 'Database query with user data'),
+            (r'db\.query\s*\([^)]*user', 'Database query'),
+            
+            # API integrations
+            (r'api\.get.*user', 'API call with user data'),
+            (r'client\.(get|post).*user', 'Client request with user data'),
+        ]
+
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Check if this file has MCP tools
+                if '@mcp.tool' in content or 'def tool_' in content:
+                    for pattern, source_type in external_data_patterns:
+                        matches = re.finditer(pattern, content, re.IGNORECASE)
+                        for match in matches:
+                            # Check if the external data is processed without sanitization
+                            function_content = self._extract_function_around_match(content, match.start())
+                            
+                            # Look for signs that external data is passed directly to LLM
+                            if any(direct_use in function_content.lower() for direct_use in 
+                                   ['return', 'response', 'result', 'output', 'content']):
+                                
+                                # Check if there's no sanitization
+                                has_sanitization = any(sanitize in function_content.lower() for sanitize in 
+                                                     ['sanitize', 'clean', 'escape', 'validate', 'filter', 'strip_tags'])
+                                
+                                if not has_sanitization:
+                                    line_num = content[:match.start()].count('\n') + 1
+                                    findings.append(self.create_finding(
+                                        vulnerability_type=VulnerabilityType.PROMPT_INJECTION,
+                                        severity=SeverityLevel.HIGH,
+                                        confidence=0.8,
+                                        title=f"Indirect prompt injection via {source_type}",
+                                        description=f"Tool processes external data without sanitization, allowing indirect prompt injection",
+                                        location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                                        recommendation="Sanitize and validate all external data before processing or presenting to LLM",
+                                        evidence={'source_type': source_type, 'pattern': match.group(0)}
+                                    ))
+
+            except Exception as e:
+                self.logger.debug(f"Failed to analyze {file_path}: {e}")
+
+        return findings
+
+    def _extract_function_around_match(self, content: str, match_pos: int, context_lines: int = 10) -> str:
+        """Extract function context around a regex match"""
+        lines = content.split('\n')
+        match_line = content[:match_pos].count('\n')
+        
+        start_line = max(0, match_line - context_lines)
+        end_line = min(len(lines), match_line + context_lines + 1)
+        
+        return '\n'.join(lines[start_line:end_line])
+
+    async def _analyze_permission_scope_violations(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
+        """Enhanced permission scope analysis (Challenge 3 gap)"""
+        findings = []
+
+        # Get declared permissions from MCP config
+        mcp_config = project_info.get('mcp_config', {})
+        declared_permissions = mcp_config.get('permissions', {}) if isinstance(mcp_config, dict) else {}
+        
+        # Enhanced permission scope patterns
+        scope_violation_patterns = {
+            'file_browser_tool': {
+                'declared_scope': ['read_only', 'specific_directory'],
+                'violation_patterns': [
+                    (r'os\.remove\s*\(', 'file deletion'),
+                    (r'shutil\.rmtree\s*\(', 'directory deletion'),
+                    (r'open\s*\([^)]+["\']w["\']', 'file writing'),
+                    (r'Path\s*\([^)]+\)\.mkdir', 'directory creation'),
+                    (r'os\.chmod\s*\(', 'permission changes'),
+                    (r'subprocess.*rm\s+-rf', 'shell file deletion')
+                ]
+            },
+            'network_tool': {
+                'declared_scope': ['read_only', 'specific_domains'],
+                'violation_patterns': [
+                    (r'requests\.(post|put|patch|delete)', 'HTTP write operations'),
+                    (r'socket\.socket\s*\(', 'raw socket access'),
+                    (r'ftp\.(put|delete)', 'FTP write operations'),
+                    (r'smtp\.(send|deliver)', 'email sending'),
+                    (r'192\.168\.|10\.|172\.', 'internal network access'),
+                    (r'localhost|127\.0\.0\.1', 'local network access')
+                ]
+            },
+            'system_tool': {
+                'declared_scope': ['read_only', 'specific_commands'],
+                'violation_patterns': [
+                    (r'subprocess.*sudo', 'privilege escalation'),
+                    (r'os\.setuid|os\.setgid', 'user/group changes'),
+                    (r'ctypes.*kernel32', 'system API access'),
+                    (r'subprocess.*(?:rm|del|format|fdisk)', 'destructive commands'),
+                    (r'import\s+win32api|import\s+win32security', 'Windows API access')
+                ]
+            }
+        }
+
+        # Analyze each Python file for scope violations
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                # Check if this file contains MCP tools
+                if '@mcp.tool' in content or 'def tool_' in content:
+                    
+                    # Extract tool names
+                    tool_pattern = r'(?:@mcp\.tool\s*\(\s*\)\s*)?(?:async\s+)?def\s+(\w+)'
+                    tool_matches = re.finditer(tool_pattern, content)
+                    
+                    for tool_match in tool_matches:
+                        tool_name = tool_match.group(1)
+                        
+                        # Determine tool type from name
+                        tool_type = None
+                        if any(keyword in tool_name.lower() for keyword in ['file', 'browse', 'read', 'write']):
+                            tool_type = 'file_browser_tool'
+                        elif any(keyword in tool_name.lower() for keyword in ['network', 'request', 'http', 'api']):
+                            tool_type = 'network_tool'
+                        elif any(keyword in tool_name.lower() for keyword in ['system', 'command', 'execute', 'run']):
+                            tool_type = 'system_tool'
+                        
+                        if tool_type and tool_type in scope_violation_patterns:
+                            # Check for scope violations
+                            violations = scope_violation_patterns[tool_type]['violation_patterns']
+                            
+                            for violation_pattern, violation_desc in violations:
+                                if re.search(violation_pattern, content, re.IGNORECASE):
+                                    # Extract the function to see if this violation is in the same function
+                                    func_start = tool_match.start()
+                                    func_content = self._extract_function_content(content, func_start)
+                                    
+                                    if re.search(violation_pattern, func_content, re.IGNORECASE):
+                                        findings.append(self.create_finding(
+                                            vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                                            severity=SeverityLevel.HIGH,
+                                            confidence=0.85,
+                                            title=f"Permission scope violation in '{tool_name}'",
+                                            description=f"Tool '{tool_name}' performs {violation_desc} beyond its intended scope",
+                                            location=f"{file_path.relative_to(repo_path)}:{tool_name}",
+                                            recommendation="Limit tool functionality to match declared permissions and intended purpose",
+                                            evidence={
+                                                'tool_type': tool_type,
+                                                'violation': violation_desc,
+                                                'pattern': violation_pattern
+                                            }
+                                        ))
+
+            except Exception as e:
+                self.logger.debug(f"Failed to analyze {file_path}: {e}")
+
+        # Check for overly broad file path access patterns
+        broad_path_patterns = [
+            (r'os\.path\.join\s*\(\s*["\'][/\\\\]?["\']', 'root directory access'),
+            (r'Path\s*\(["\']/?["\']', 'root path access'),
+            (r'glob\.glob\s*\(["\'][/*].*?["\']', 'wildcard file access'),
+            (r'os\.walk\s*\(["\'][/\\\\]?["\']', 'full filesystem traversal'),
+            (r'\.\./', 'path traversal patterns')
+        ]
+
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+
+                if '@mcp.tool' in content:
+                    for pattern, desc in broad_path_patterns:
+                        matches = re.finditer(pattern, content, re.IGNORECASE)
+                        for match in matches:
+                            line_num = content[:match.start()].count('\n') + 1
+                            findings.append(self.create_finding(
+                                vulnerability_type=VulnerabilityType.PATH_TRAVERSAL,
+                                severity=SeverityLevel.MEDIUM,
+                                confidence=0.7,
+                                title=f"Overly broad file access: {desc}",
+                                description="Tool may access files outside intended scope",
+                                location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                                recommendation="Restrict file access to specific directories and validate all paths",
+                                evidence={'access_type': desc}
+                            ))
+
+            except Exception as e:
+                self.logger.debug(f"Failed to analyze {file_path}: {e}")
+
+        return findings
+
+    def _extract_function_content(self, content: str, func_start_pos: int) -> str:
+        """Extract the complete function content starting from func_start_pos"""
+        lines = content.split('\n')
+        start_line = content[:func_start_pos].count('\n')
+        
+        # Find function end by looking for the next function or class definition
+        function_lines = []
+        in_function = False
+        base_indent = None
+        
+        for i in range(start_line, len(lines)):
+            line = lines[i]
+            
+            # Start of our function
+            if not in_function and ('def ' in line or 'async def' in line):
+                in_function = True
+                base_indent = len(line) - len(line.lstrip())
+                function_lines.append(line)
+                continue
+            
+            if in_function:
+                # Empty lines are okay
+                if not line.strip():
+                    function_lines.append(line)
+                    continue
+                    
+                # Calculate current indentation
+                current_indent = len(line) - len(line.lstrip())
+                
+                # If we hit a line with equal or less indentation that's not empty,
+                # and it's not a decorator, we've reached the end
+                if current_indent <= base_indent and not line.strip().startswith('@'):
+                    break
+                    
+                function_lines.append(line)
+        
+        return '\n'.join(function_lines)
