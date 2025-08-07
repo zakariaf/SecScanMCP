@@ -825,6 +825,9 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
             declared = declared_permissions.get(perm_type, 'none')
 
             if usage == 'write' and declared in ['none', 'read']:
+                # Get detailed evidence of where the permission is used
+                usage_evidence = await self._get_detailed_permission_evidence(repo_path, perm_type, usage)
+                
                 findings.append(self.create_finding(
                     vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
                     severity=SeverityLevel.HIGH,
@@ -832,7 +835,8 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
                     title=f"Undeclared {perm_type} permission usage",
                     description=f"Code uses {perm_type} write access but only declares '{declared}'",
                     location='permission_manifest',
-                    recommendation=f"Update manifest to declare {perm_type} write permission or remove the functionality"
+                    recommendation=f"Update manifest to declare {perm_type} write permission or remove the functionality",
+                    evidence=usage_evidence
                 ))
 
         return findings
@@ -900,6 +904,136 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
                     continue
 
         return usage
+
+    async def _get_detailed_permission_evidence(self, repo_path: str, perm_type: str, usage_level: str) -> Dict[str, Any]:
+        """Get detailed evidence of where permissions are actually used"""
+        evidence = {
+            'permission_type': perm_type,
+            'usage_level': usage_level,
+            'declared_level': 'none',
+            'violations': [],
+            'files_affected': [],
+            'specific_operations': []
+        }
+
+        # Enhanced patterns with more specific details
+        patterns = {
+            'filesystem': {
+                'write': [
+                    (r'fs\.writeFile\s*\([^)]+\)', 'fs.writeFile() - Node.js file writing'),
+                    (r'await\s+fs\.writeFile', 'fs.writeFile() with await'),
+                    (r'open\s*\([^)]+[\'\"]\s*[wa]', 'Python file open in write/append mode'),
+                    (r'\.write\s*\([^)]+\)', 'File write() method call'),
+                    (r'save.*file|dump.*file', 'File save/dump operation'),
+                    (r'JSON\.stringify.*writeFile', 'JSON data writing to file'),
+                    (r'join\(.*\)\.write', 'String joining with file write')
+                ]
+            },
+            'network': {
+                'write': [
+                    (r'requests\.(post|put|patch)', 'HTTP write requests'),
+                    (r'fetch.*method.*post', 'Fetch POST request'),
+                    (r'http\.(post|put)', 'HTTP client write operation'),
+                    (r'webhook|send.*request', 'Webhook or request sending')
+                ]
+            },
+            'system': {
+                'write': [
+                    (r'subprocess\.run|subprocess\.call', 'System command execution'),
+                    (r'os\.system\s*\(', 'Shell command via os.system'),
+                    (r'child_process\.exec|spawn', 'Node.js process execution'),
+                    (r'shell\s*=\s*True', 'Shell command with shell=True')
+                ]
+            }
+        }
+
+        # Scan files for specific evidence
+        type_patterns = patterns.get(perm_type, {}).get(usage_level, [])
+        
+        for file_path in Path(repo_path).rglob('*'):
+            if file_path.suffix in ['.py', '.js', '.ts'] and file_path.is_file():
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+
+                    file_violations = []
+                    for pattern, description in type_patterns:
+                        matches = list(re.finditer(pattern, content, re.IGNORECASE))
+                        for match in matches:
+                            line_num = content[:match.start()].count('\n') + 1
+                            # Get the line content for context
+                            lines = content.split('\n')
+                            line_content = lines[line_num - 1].strip() if line_num <= len(lines) else ""
+                            
+                            violation = {
+                                'operation': description,
+                                'file': str(file_path.relative_to(repo_path)),
+                                'line': line_num,
+                                'code_snippet': line_content[:100] + ('...' if len(line_content) > 100 else ''),
+                                'pattern_matched': match.group(0)
+                            }
+                            file_violations.append(violation)
+                            evidence['specific_operations'].append(f"{description} at {file_path.name}:{line_num}")
+                    
+                    if file_violations:
+                        evidence['violations'].extend(file_violations)
+                        evidence['files_affected'].append({
+                            'file': str(file_path.relative_to(repo_path)),
+                            'violation_count': len(file_violations)
+                        })
+
+                except Exception:
+                    continue
+
+        # Add summary information
+        evidence['summary'] = {
+            'total_violations': len(evidence['violations']),
+            'files_with_violations': len(evidence['files_affected']),
+            'most_common_operation': self._get_most_common_operation(evidence['violations']),
+            'risk_assessment': self._assess_permission_risk(perm_type, evidence['violations'])
+        }
+
+        return evidence
+
+    def _get_most_common_operation(self, violations: List[Dict]) -> str:
+        """Get the most common operation type from violations"""
+        if not violations:
+            return "Unknown"
+        
+        operation_counts = {}
+        for violation in violations:
+            op = violation['operation'].split(' - ')[0]  # Get just the operation name
+            operation_counts[op] = operation_counts.get(op, 0) + 1
+        
+        return max(operation_counts.items(), key=lambda x: x[1])[0] if operation_counts else "Unknown"
+
+    def _assess_permission_risk(self, perm_type: str, violations: List[Dict]) -> str:
+        """Assess the risk level based on permission type and violations"""
+        violation_count = len(violations)
+        
+        risk_factors = {
+            'filesystem': {
+                'high_risk_operations': ['writeFile', 'open.*w', 'dump'],
+                'medium_risk_operations': ['append', 'save']
+            },
+            'system': {
+                'high_risk_operations': ['os.system', 'shell=True', 'subprocess'],
+                'medium_risk_operations': ['spawn', 'exec']
+            },
+            'network': {
+                'high_risk_operations': ['post', 'put', 'patch'],
+                'medium_risk_operations': ['get']
+            }
+        }
+        
+        if violation_count == 0:
+            return "No violations found"
+        elif violation_count > 5:
+            return "High risk - Multiple permission violations"
+        elif violation_count > 2:
+            return "Medium risk - Several permission violations" 
+        else:
+            return "Low risk - Few permission violations"
 
     async def _analyze_output_poisoning(self, repo_path: str) -> List[Finding]:
         """Check for output poisoning vulnerabilities"""
