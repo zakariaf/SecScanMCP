@@ -137,9 +137,10 @@ class EnhancedSecurityScorer:
                         (vuln_type, severity), 10
                     )
                     score -= penalty
-                else:
+                elif severity == SeverityLevel.MEDIUM:
                     medium_risks.append(finding)
                     score -= 5
+                # INFO and LOW level findings don't get penalties in user safety scoring
             
             # Check for indirect user impact
             elif vuln_type in self.INDIRECT_USER_IMPACT:

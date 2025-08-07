@@ -147,7 +147,8 @@ ENV PATH="/opt/codeql:${PATH}"
 # App user & directories
 RUN groupadd -r scanner && useradd -r -g scanner -m scanner \
  && mkdir -p /home/scanner/.cache /home/scanner/go /home/scanner/.codeql \
-           /app/rules/yara /app/rules/codeql /tmp/mcp-scanner \
+           /app/rules/yara /app/rules/codeql /app/models/embeddings \
+           /app/data/learning /tmp/mcp-scanner \
  && chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner \
  && groupadd -f docker \
  && usermod -aG docker scanner
@@ -175,18 +176,41 @@ RUN if command -v codeql >/dev/null 2>&1; then \
  && chown -R scanner:scanner /home/scanner/.codeql
 
 # Copy app requirements separately to leverage layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# set a sensible timeout & retry count
+ENV PIP_DEFAULT_TIMEOUT=400
+# (optional) tell pip to retry on failures up to 5 times
+ENV PIP_RETRIES=5
 
+COPY requirements.txt .
+RUN pip install \
+      --no-cache-dir \
+      --timeout $PIP_DEFAULT_TIMEOUT \
+      --retries $PIP_RETRIES \
+      -r requirements.txt
+
+# Copy model download script
+COPY scripts/download_models.py /tmp/download_models.py
+
+# Pre-download and cache transformer models for intelligent analysis
+# This makes the container production-ready without runtime model downloads
+RUN python3 /tmp/download_models.py && rm /tmp/download_models.py
 # Copy application code last
 COPY . .
 RUN chown -R scanner:scanner /app
 
+# Note: Container model verification can be run manually after deployment
+# RUN python3 test_container_models.py && echo "✅ Container model verification passed"
+
+# Switch to scanner user for runtime
 USER scanner
 
 # App env
 ENV PYTHONPATH=/app \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    TRANSFORMERS_CACHE=/app/models/embeddings \
+    SENTENCE_TRANSFORMERS_HOME=/app/models/embeddings \
+    INTELLIGENT_ANALYZER_MODEL_PATH=/app/models/embeddings \
+    INTELLIGENT_ANALYZER_DB_PATH=/app/data/learning/security_learning.db
 
 # Healthcheck endpoint uses curl (present)
 EXPOSE 8000

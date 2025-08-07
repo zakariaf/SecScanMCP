@@ -38,6 +38,16 @@ A streamlined security scanner for Model Context Protocol (MCP) servers that foc
   - Input: Repository URL
   - Output: Comprehensive security report
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the [`docs/`](docs/) directory:
+
+- **[📖 Documentation Index](docs/README.md)** - Start here for organized documentation
+- **[🚀 Quick Reference](docs/quick-reference.md)** - Fast commands and examples  
+- **[🧪 Testing Guide](docs/guides/TESTING.md)** - How to test the scanner
+- **[🚀 Deployment Guide](docs/guides/DEPLOYMENT.md)** - Production deployment
+- **[🔧 Tool Documentation](docs/tools/)** - Individual analyzer docs
+
 ## Quick Start
 
 ### Using Docker Compose (Recommended)
@@ -421,33 +431,20 @@ docker run -e LOG_LEVEL=DEBUG ...
 docker logs mcp-scanner
 ```
 
-## Development
+## 🔧 Advanced Usage & Development
 
-### Adding New Analyzers
+For detailed information on advanced usage, development, and analyzer-specific configuration, see the comprehensive documentation:
 
-1. Create analyzer in `analyzers/` directory:
-   ```python
-   from analyzers.base import BaseAnalyzer
+### Development Resources
+- **[📊 New Analyzers Analysis](docs/analysis/NEW_ANALYZERS_ANALYSIS.md)** - Complete technical analysis of all components
+- **[🔧 Tool Documentation](docs/tools/)** - Individual analyzer setup and configuration
+- **[🧪 Testing Guide](docs/guides/TESTING.md)** - How to test and validate changes
+- **[🚀 Deployment Guide](docs/guides/DEPLOYMENT.md)** - Production deployment best practices
 
-   class MyAnalyzer(BaseAnalyzer):
-       async def analyze(self, repo_path, project_info):
-           # Your analysis logic
-           return findings
-   ```
-
-2. Register in `analyzers/__init__.py`
-
-3. Add to scanner.py analyzer list
-
-### Running Tests
-
-```bash
-# Run test suite
-docker-compose run test-runner
-
-# Run specific test
-pytest tests/test_mcp_analyzer.py
-```
+### Key Documentation
+- **[🤖 Intelligent Context Analyzer](docs/tools/intelligent_analyzer_documentation.md)** - ML-powered legitimacy assessment
+- **[🔍 Security Analysis Overview](docs/analysis/USER_IMPACT_ANALYSIS.md)** - Understanding which vulnerabilities affect users
+- **[⚖️ Scoring System](docs/analysis/SECURITY_RATING_RECOMMENDATION.md)** - Detailed explanation of the dual scoring system
 
 ## Limitations
 
@@ -470,9 +467,26 @@ MIT License - See LICENSE file
 ## Acknowledgments
 
 This scanner integrates several excellent open-source security tools:
-- [CodeQL](https://github.com/github/codeql)
-- [YARA](https://virustotal.github.io/yara/)
-- [ClamAV](https://www.clamav.net/)
-- [Semgrep](https://semgrep.dev/)
-- [Safety](https://github.com/pyupio/safety)
-- [TruffleHog](https://github.com/trufflesecurity/trufflehog)
+
+**Static Analysis:**
+- [CodeQL](https://github.com/github/codeql) - Semantic code analysis
+- [YARA](https://virustotal.github.io/yara/) - Pattern matching for malware
+- [Bandit](https://github.com/PyCQA/bandit) - Python security linting
+- [Semgrep](https://semgrep.dev/) - Multi-language static analysis
+
+**Vulnerability & Dependency Analysis:**
+- [Trivy](https://github.com/aquasecurity/trivy) - Universal vulnerability scanner
+- [Grype](https://github.com/anchore/grype) - Fast vulnerability scanner  
+- [Syft](https://github.com/anchore/syft) - SBOM generation
+
+**Secret Detection:**
+- [TruffleHog](https://github.com/trufflesecurity/trufflehog) - Advanced secret scanning
+
+**Malware Detection:**
+- [ClamAV](https://www.clamav.net/) - Antivirus engine
+
+**Machine Learning:**
+- [sentence-transformers](https://www.sbert.net/) - Semantic text analysis
+- [scikit-learn](https://scikit-learn.org/) - Statistical analysis
+
+For complete tool documentation and integration details, see [`docs/tools/`](docs/tools/).

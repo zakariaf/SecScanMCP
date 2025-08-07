@@ -1,185 +1,98 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this MCP security scanner repository.
 
-## Commands
+## Essential Commands
 
 ### Development & Testing
 ```bash
-# Development workflow
-make restart              # Stop, build, and start all services
+make restart              # Stop, build, and start all services  
 make up                  # Start services
 make down                # Stop services
 make logs                # Show scanner logs
-make health              # Check scanner health
-
-# Testing
 make test                # Run comprehensive tests
-make test-examples       # Test with local vulnerable examples
-make test-python         # Quick test with Python example
-make test-js             # Quick test with JavaScript example
-
-# Scanning
 make scan URL=<repo>     # Scan a repository
-make scan-vulnerable     # Scan local vulnerable examples
-
-# Setup and cleanup
-make clean               # Clean up containers and volumes
-make setup-all           # Install all security tools
 ```
 
 ### Direct Python Usage
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Run scanner directly
-python main.py
-
-# Run specific analyzer tests
-python test_scanner.py
-python test_scanner.py --real-repos
-
-# Dynamic analysis only
-python scanner.py --dynamic-analysis /path/to/repo
+python main.py                    # Run FastAPI server
+python test_scanner.py           # Run tests
 ```
 
-### Docker Commands
-```bash
-# Build and run with Docker Compose
-docker-compose up -d
-docker-compose logs -f scanner
+## Architecture Overview
 
-# Build individual image
-docker build -t mcp-scanner .
-
-# Run with Docker (requires Docker-in-Docker for dynamic analysis)
-docker run -d -p 8000:8000 \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  mcp-scanner
-```
-
-## Architecture
+**Main Flow**: `scanner.py` → **Analyzers** → **Scoring** → **Results**
 
 ### Core Components
 
-**Main Scanner Flow**: `scanner.py` → **Analyzers** → **Scoring** → **Results**
-
-1. **SecurityScanner** (`scanner.py`): Main orchestrator that:
-   - Clones repositories
-   - Detects project type and MCP configuration
-   - Runs analyzers in parallel
-   - Calculates security scores
-   - Builds comprehensive results
-
-2. **Analyzer Architecture** (`analyzers/`): Modular analyzer system:
-   - **BaseAnalyzer**: Abstract base class for all analyzers
-   - **Static Analysis**: Bandit, OpenGrep, CodeQL, YARA
-   - **Universal Scanners**: Trivy, Grype, Syft
-   - **Secret Detection**: TruffleHog
+1. **SecurityScanner** (`scanner.py`): Main orchestrator
+2. **Modular Analyzers** (`analyzers/`):
+   - **Static Analysis**: Bandit, CodeQL, YARA
+   - **Universal**: Trivy, Grype  
    - **MCP-Specific**: Custom MCP vulnerability detection
-   - **Dynamic Analysis**: Advanced runtime behavior analysis with ML
-   - **Malware Detection**: ClamAV for enterprise-grade malware scanning
+   - **Intelligent Context**: ML-based analysis with reduced false positives
+   - **Dynamic Analysis**: Runtime behavior analysis
+   - **Secret Detection**: TruffleHog
+   - **Malware**: ClamAV
 
-3. **Enhanced Dynamic Analyzer** (`analyzers/dynamic_analyzer.py`): Enterprise-grade dynamic analysis with:
-   - **Full MCP Protocol Support**: JSON-RPC 2.0, STDIO, SSE, WebSocket transports
-   - **Advanced Attack Payloads**: 1000+ sophisticated payloads across 9 categories
-   - **ML-based Anomaly Detection**: Isolation Forest and statistical analysis
-   - **Network Traffic Analysis**: Real-time monitoring and data exfiltration detection
-   - **Behavioral Profiling**: Runtime behavior pattern analysis
+3. **Intelligent Analysis** (`analyzers/intelligent/`): Modular ML-powered system:
+   - **Semantic Analysis**: Intent vs behavior alignment
+   - **Behavioral Patterns**: Code pattern recognition
+   - **Ecosystem Intelligence**: Peer project comparison  
+   - **Anomaly Detection**: Statistical and ML anomaly detection
+   - **Risk Aggregation**: Probabilistic risk assessment
+   - **Learning System**: Continuous improvement from feedback
 
-### Key Architecture Patterns
+### Key Architecture Principles
 
-**Parallel Analysis**: Most analyzers run concurrently using `asyncio.gather()` for performance.
+- **Sandi Metz Best Practices**: Small classes (≤100 lines), short methods (≤10 lines)
+- **Single Responsibility**: Each component has one clear purpose
+- **Modular Design**: Components can be enabled/disabled independently
+- **Async/Parallel**: Uses `asyncio.gather()` for performance
+- **Docker Integration**: Containerized security tools for consistency
 
-**Modular Design**: Each analyzer is self-contained and can be enabled/disabled independently.
+## MCP Security Focus
 
-**Docker-in-Docker**: Dynamic analysis uses nested containers for secure sandboxing.
+Specialized for Model Context Protocol server security:
 
-**Scoring System**: OWASP-style weighted scoring with confidence factors and severity multipliers.
-
-### Critical Files
-
-- `scanner.py`: Main scanning orchestration
-- `analyzers/dynamic_analyzer.py`: Advanced dynamic analysis (2200+ lines, enterprise-grade)
-- `analyzers/mcp_analyzer.py`: MCP-specific vulnerability detection
-- `models.py`: Pydantic models for all data structures
-- `scoring.py`: Security scoring algorithm
-- `main.py`: FastAPI web service
-
-### Advanced Dynamic Analysis Components
-
-The enhanced Dynamic Analyzer includes several sophisticated components:
-
-- `analyzers/mcp_client.py`: Full MCP protocol implementation
-- `analyzers/attack_payloads.py`: Advanced payload generation (1000+ payloads)
-- `analyzers/ml_anomaly_detector.py`: Machine learning anomaly detection
-- `analyzers/traffic_analyzer.py`: Network traffic and data exfiltration analysis
-
-### Testing and Examples
-- `tests/`: Comprehensive test suite for all components
-- `examples/`: Local vulnerable examples for testing
-- `TESTING.md`: Guidelines for writing and running tests
-- `test_scanner.py`: Main test runner for the scanner
-
-*Never test against https://github.com/modelcontextprotocol/servers. it includes many many repos and we get timeouts.*
-
-## MCP-Specific Security Features
-
-This scanner specializes in Model Context Protocol (MCP) server security:
-
-**MCP Vulnerability Types**:
-- Prompt injection in tool descriptions and prompts
-- Tool manipulation and poisoning attacks
-- Schema injection vulnerabilities
+**Vulnerability Types**:
+- Prompt injection in tool descriptions
+- Tool poisoning attacks (TPAs)
 - Permission abuse and privilege escalation
-- Output poisoning risks
+- Schema injection vulnerabilities
+- Data exfiltration patterns
 
-**Dynamic MCP Analysis**:
-- Runtime MCP server instantiation in sandboxed containers
+**Advanced Features**:
+- Context-aware analysis to reduce false positives
+- ML-based legitimacy assessment
 - Real MCP protocol communication testing
-- Behavioral analysis of tool execution
-- Network traffic monitoring for data exfiltration
+- Behavioral pattern recognition
 
-## Integration Notes
+## Critical Files
 
-**Docker Socket Access**: Required for dynamic analysis. The scanner runs containers within containers for isolation.
-
-**Security Tools Integration**: Uses external tools (Trivy, CodeQL, YARA, ClamAV) via subprocess calls and Docker containers.
-
-**Async Architecture**: Heavy use of `asyncio` for parallel processing and I/O operations.
-
-**Error Handling**: Robust error handling with partial results - if one analyzer fails, others continue.
+- `scanner.py`: Main orchestration
+- `analyzers/mcp_analyzer.py`: MCP-specific detection  
+- `analyzers/intelligent/`: Modular ML analysis system
+- `models.py`: Pydantic data structures
+- `main.py`: FastAPI web service
 
 ## Development Guidelines
 
-### Adding New Analyzers
+### Adding Analyzers
+1. Inherit from `BaseAnalyzer` 
+2. Implement `async def analyze(self, repo_path, project_info)`
+3. Register in `analyzers/__init__.py` and `scanner.py`
+4. Follow Sandi Metz principles (small, focused classes)
 
-1. Create analyzer class inheriting from `BaseAnalyzer` in `analyzers/`
-2. Implement `async def analyze(self, repo_path, project_info)` method
-3. Register in `analyzers/__init__.py`
-4. Add to `scanner.py` analyzer dictionary
-5. Add corresponding tests
+### Working with Intelligent Analysis
+- Keep classes ≤100 lines, methods ≤10 lines
+- Use composition over inheritance
+- Single responsibility per class
+- Clear separation of concerns
 
-### Working with Dynamic Analysis
+### Git Workflow
+⚠️ **IMPORTANT**: Always git commit changes after completing tasks or implementing features. This ensures work is preserved and progress is tracked.
 
-The Dynamic Analyzer requires Docker access and uses advanced features:
-- Docker-in-Docker for container sandboxing
-- Advanced MCP protocol client implementation
-- ML-based behavioral analysis
-- Real-time network traffic monitoring
-
-When modifying dynamic analysis, ensure:
-- Container cleanup in finally blocks
-- Proper error handling for Docker operations
-- Resource limits to prevent DoS
-- Traffic analyzer cleanup
-
-### Security Tool Configuration
-
-Security tools are configured via:
-- Environment variables in `docker-compose.yml`
-- Rule files in `rules/` directory (YARA, CodeQL)
-- Tool-specific configuration in analyzer classes
-
-The system supports both containerized and local tool execution, with containerized being preferred for consistency.
+**Never test against** `https://github.com/modelcontextprotocol/servers` (causes timeouts)
