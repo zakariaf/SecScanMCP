@@ -92,4 +92,7 @@ Specialized for Model Context Protocol server security:
 - Single responsibility per class
 - Clear separation of concerns
 
+### Git Workflow
+⚠️ **IMPORTANT**: Always git commit changes after completing tasks or implementing features. This ensures work is preserved and progress is tracked.
+
 **Never test against** `https://github.com/modelcontextprotocol/servers` (causes timeouts)
