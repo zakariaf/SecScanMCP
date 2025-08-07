@@ -12,7 +12,7 @@ rule MCP_Server_Implementation_Detection
         author = "Enhanced MCP Security Scanner"
         severity = "info"
         category = "mcp_detection"
-        confidence = 0.9
+        confidence = "0.9"
 
     strings:
         // Python MCP patterns
@@ -55,7 +55,7 @@ rule MCP_Tool_Definition_Unsafe_Implementation
         author = "Enhanced MCP Security Scanner"
         severity = "critical"
         category = "mcp_tool_security"
-        confidence = 0.85
+        confidence = "0.85"
 
     strings:
         // Tool decorators
@@ -87,7 +87,7 @@ rule MCP_Resource_Data_Leakage
         author = "Enhanced MCP Security Scanner"
         severity = "high"
         category = "mcp_resource_security"
-        confidence = 0.8
+        confidence = "0.8"
 
     strings:
         // Resource decorators
@@ -126,7 +126,7 @@ rule MCP_Configuration_Security_Issues
         author = "Enhanced MCP Security Scanner"
         severity = "high"
         category = "mcp_config_security"
-        confidence = 0.9
+        confidence = "0.9"
 
     strings:
         // Configuration structure
@@ -144,7 +144,7 @@ rule MCP_Configuration_Security_Issues
         $cmd1 = /"command":\s*".*sudo.*"/
         $cmd2 = /"command":\s*".*rm\s+-rf.*"/
         $cmd3 = /"command":\s*".*chmod\s+777.*"/
-        $cmd4 = /"command":\s*".*>/dev/null.*"/
+        $cmd4 = /"command":\s*".*>\x2Fdev\x2Fnull.*"/
         
         // Network exposure
         $net1 = /"url":\s*".*0\.0\.0\.0.*"/
@@ -164,7 +164,7 @@ rule MCP_Protocol_Implementation_Vulnerabilities
         author = "Enhanced MCP Security Scanner"
         severity = "high"
         category = "mcp_protocol"
-        confidence = 0.8
+        confidence = "0.8"
 
     strings:
         // JSON-RPC handling
@@ -176,12 +176,16 @@ rule MCP_Protocol_Implementation_Vulnerabilities
         $unsafe_msg3 = /exec\s*\([^)]*message[^)]*\)/
         
         // Missing validation
-        $no_validate1 = /def\s+handle_.*request.*:\s*(?!.*validate)/
-        $no_validate2 = /def\s+process_.*message.*:\s*(?!.*validate)/
+        $no_validate1 = /def\s+handle_.*request/
+        $no_validate2 = /def\s+process_.*message/
         
         // Direct parameter usage
-        $direct_param1 = /params\[.*\]\s*(?!.*validate)/
-        $direct_param2 = /request\[["']\w+["']\]\s*(?!.*sanitize)/
+        $direct_param1 = /params\[.*\]/
+        $direct_param2 = /request\[["']\w+["']\]/
+        
+        // Check for presence of validation keywords
+        $has_validate = "validate" nocase
+        $has_sanitize = "sanitize" nocase
         
         // Capability exposure
         $cap_expose1 = /capabilities.*=.*\[.*".*".*\]/
@@ -189,8 +193,9 @@ rule MCP_Protocol_Implementation_Vulnerabilities
 
     condition:
         $jsonrpc and (
-            any of ($unsafe_msg*) or any of ($no_validate*) or 
-            any of ($direct_param*) or any of ($cap_expose*)
+            any of ($unsafe_msg*) or 
+            ((any of ($no_validate*) or any of ($direct_param*)) and not ($has_validate or $has_sanitize)) or
+            any of ($cap_expose*)
         )
 }
 
@@ -201,7 +206,7 @@ rule MCP_Tool_Interaction_Chain_Risk
         author = "Enhanced MCP Security Scanner"
         severity = "medium"
         category = "mcp_tool_interaction"
-        confidence = 0.7
+        confidence = "0.7"
 
     strings:
         // File operations
@@ -230,7 +235,8 @@ rule MCP_Tool_Interaction_Chain_Risk
         ($net_fetch and $file_write) or
         ($db_query and $sys_exec) or
         ($file_read and $sys_command) or
-        (math.count == 3 and (any of ($file_*) or any of ($net_*) or any of ($sys_*)))
+        // Three or more different tool types
+        (3 of ($file_*, $net_*, $sys_*, $db_*))
 }
 
 rule MCP_Prompt_Template_Injection
@@ -240,7 +246,7 @@ rule MCP_Prompt_Template_Injection
         author = "Enhanced MCP Security Scanner"
         severity = "high"
         category = "mcp_prompt_injection"
-        confidence = 0.85
+        confidence = "0.85"
 
     strings:
         // Prompt decorators
@@ -272,12 +278,18 @@ rule MCP_Authorization_Bypass
         author = "Enhanced MCP Security Scanner"  
         severity = "critical"
         category = "mcp_authorization"
-        confidence = 0.8
+        confidence = "0.8"
 
     strings:
         // MCP definitions without auth
-        $unauth_tool = /@mcp\.tool\s*\([^)]*\)\s*\n\s*def\s+(?!.*(?:auth|permission|validate|check))/
-        $unauth_resource = /@mcp\.resource\s*\([^)]*\)\s*\n\s*def\s+(?!.*(?:auth|permission|validate|check))/
+        $unauth_tool = /@mcp\.tool\s*\([^)]*\)\s*\n\s*def\s+\w+/
+        $unauth_resource = /@mcp\.resource\s*\([^)]*\)\s*\n\s*def\s+\w+/
+        
+        // Check for absence of auth keywords
+        $no_auth1 = "auth" nocase
+        $no_auth2 = "permission" nocase
+        $no_auth3 = "validate" nocase
+        $no_auth4 = "check" nocase
         
         // Explicit auth bypass
         $bypass1 = /skip_auth\s*=\s*True/
@@ -295,8 +307,8 @@ rule MCP_Authorization_Bypass
         $backdoor2 = /if\s+secret_key\s*==\s*["'][^"']+["']/
 
     condition:
-        any of ($unauth_*) or any of ($bypass*) or 
-        any of ($hardcoded*) or any of ($backdoor*)
+        (($unauth_tool or $unauth_resource) and not (any of ($no_auth*))) or
+        any of ($bypass*) or any of ($hardcoded*) or any of ($backdoor*)
 }
 
 rule MCP_Resource_Path_Traversal
@@ -306,7 +318,7 @@ rule MCP_Resource_Path_Traversal
         author = "Enhanced MCP Security Scanner"
         severity = "high"
         category = "mcp_path_traversal"
-        confidence = 0.9
+        confidence = "0.9"
 
     strings:
         // Resource definitions
@@ -325,9 +337,9 @@ rule MCP_Resource_Path_Traversal
         $unsafe_path4 = /os\.path\.join\s*\([^)]*user/
         
         // Root access
-        $root1 = /open\s*\(\s*["']\//
-        $root2 = /Path\s*\(\s*["']\//
-        $root3 = /os\.path\.join\s*\(\s*["']\/["']/
+        $root1 = /open\s*\(\s*["']\x2F/
+        $root2 = /Path\s*\(\s*["']\x2F/
+        $root3 = /os\.path\.join\s*\(\s*["']\x2F["']/
 
     condition:
         $resource_def and (
@@ -342,7 +354,7 @@ rule MCP_Server_Information_Disclosure
         author = "Enhanced MCP Security Scanner"
         severity = "medium" 
         category = "mcp_info_disclosure"
-        confidence = 0.8
+        confidence = "0.8"
 
     strings:
         // Server metadata exposure
