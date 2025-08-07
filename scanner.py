@@ -21,7 +21,6 @@ from analyzers import (
     SyftAnalyzer,
     TruffleHogAnalyzer,
     MCPSpecificAnalyzer,
-    MCPConfigAnalyzer,  # MCP-native configuration analysis
     DynamicAnalyzer,
     ClamAVAnalyzer,  # Military-grade malware detection
     YARAAnalyzer,    # Advanced pattern matching
@@ -47,7 +46,6 @@ class SecurityScanner:
             'opengrep': OpenGrepAnalyzer(),  # Open-source pattern-based analysis
             'trufflehog': TruffleHogAnalyzer(), # Secret detection
             'mcp_specific': MCPSpecificAnalyzer(), # MCP vulnerabilities
-            'mcp_config': MCPConfigAnalyzer(), # MCP configuration analysis
             'dynamic': DynamicAnalyzer(),    # Behavioral analysis
             'clamav': ClamAVAnalyzer(),       # Military-grade malware detection
             'yara': YARAAnalyzer(),          # Advanced pattern matching
