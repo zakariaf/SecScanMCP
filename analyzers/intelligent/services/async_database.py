@@ -21,7 +21,14 @@ class AsyncDatabaseManager:
         self.config_manager = config_manager
         settings = config_manager.load_settings()
         self.db_path = Path(settings.database.path)
+        
+        # Ensure database directory exists (important for container deployment)
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
+        logger.info("Database path configured",
+                   db_path=str(self.db_path),
+                   async_enabled=settings.database.async_enabled,
+                   component="async_database")
+        
         self._connection = None
     
     @asynccontextmanager

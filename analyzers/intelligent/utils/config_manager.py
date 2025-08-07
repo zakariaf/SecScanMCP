@@ -1,5 +1,6 @@
 """Configuration management with Pydantic settings."""
 
+import os
 import yaml
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -57,10 +58,12 @@ class SemanticConfig(BaseModel):
 class DatabaseConfig(BaseModel):
     """Database configuration."""
     type: str = "sqlite"
-    path: str = "/tmp/security_learning/feedback.db"
-    async_enabled: bool = False
+    path: str = "/app/data/learning/security_learning.db"
+    async_enabled: bool = True
     connection_pool_size: int = 10
     timeout: int = 30
+    retention_days: int = 365
+    auto_cleanup_enabled: bool = True
 
 
 class LoggingConfig(BaseModel):
@@ -90,6 +93,7 @@ class IntelligentAnalyzerSettings(BaseSettings):
     class Config:
         env_prefix = "INTELLIGENT_ANALYZER_"
         case_sensitive = False
+        env_nested_delimiter = "__"
 
 
 class ConfigManager:
@@ -100,20 +104,43 @@ class ConfigManager:
         self._settings = None
     
     def load_settings(self) -> IntelligentAnalyzerSettings:
-        """Load and validate settings."""
+        """Load and validate settings with environment override support."""
         if self._settings is None:
             # Load YAML config
+            yaml_config = {}
             if self.config_path.exists():
                 with open(self.config_path, 'r') as f:
                     yaml_config = yaml.safe_load(f)
-                
-                # Create settings with YAML data
-                self._settings = IntelligentAnalyzerSettings(**yaml_config)
-            else:
-                # Use defaults
-                self._settings = IntelligentAnalyzerSettings()
+            
+            # Apply environment variable overrides for production deployment
+            self._apply_env_overrides(yaml_config)
+            
+            # Create settings with merged config (YAML + env overrides)
+            self._settings = IntelligentAnalyzerSettings(**yaml_config)
         
         return self._settings
+    
+    def _apply_env_overrides(self, config: Dict):
+        """Apply environment variable overrides for container deployment."""
+        # Model path override for container
+        if 'INTELLIGENT_ANALYZER_MODEL_PATH' in os.environ:
+            if 'ml_models' not in config:
+                config['ml_models'] = {}
+            if 'embeddings' not in config['ml_models']:
+                config['ml_models']['embeddings'] = {}
+            config['ml_models']['embeddings']['model_path'] = os.environ['INTELLIGENT_ANALYZER_MODEL_PATH']
+        
+        # Database path override for container
+        if 'INTELLIGENT_ANALYZER_DB_PATH' in os.environ:
+            if 'database' not in config:
+                config['database'] = {}
+            config['database']['path'] = os.environ['INTELLIGENT_ANALYZER_DB_PATH']
+        
+        # Logging level override
+        if 'LOG_LEVEL' in os.environ:
+            if 'logging' not in config:
+                config['logging'] = {}
+            config['logging']['level'] = os.environ['LOG_LEVEL']
     
     def get_weights(self) -> Dict[str, float]:
         """Get risk assessment weights."""
@@ -159,3 +186,18 @@ class ConfigManager:
         """Get trusted dependency patterns."""
         settings = self.load_settings()
         return settings.semantic_analysis.trusted_dependencies
+    
+    def get_model_path(self) -> str:
+        """Get ML model storage path."""
+        settings = self.load_settings()
+        return settings.ml_models.embeddings.get('model_path', '/app/models/embeddings/')
+    
+    def get_db_config(self) -> DatabaseConfig:
+        """Get database configuration."""
+        settings = self.load_settings()
+        return settings.database
+    
+    def get_logging_config(self) -> LoggingConfig:
+        """Get logging configuration."""
+        settings = self.load_settings()
+        return settings.logging

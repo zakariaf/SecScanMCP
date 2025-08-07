@@ -5,9 +5,11 @@
 ml_models:
   embeddings:
     model_name: "all-MiniLM-L6-v2"
-    model_path: "models/embeddings/"
+    model_path: "/app/models/embeddings/"  # Production container path
     dimension: 384
     max_seq_length: 512
+    cache_enabled: true
+    download_at_runtime: false  # Pre-cached in container
   
   anomaly_detection:
     contamination: 0.1
@@ -78,11 +80,13 @@ semantic_analysis:
 
 # Database Configuration
 database:
-  type: "sqlite"  # Will migrate to postgresql
-  path: "/tmp/security_learning/feedback.db"
-  async_enabled: false  # Will enable with aiosqlite
+  type: "sqlite"
+  path: "/app/data/learning/security_learning.db"  # Production container path
+  async_enabled: true  # Enabled with aiosqlite
   connection_pool_size: 10
   timeout: 30
+  retention_days: 365
+  auto_cleanup_enabled: true
 
 # Logging Configuration
 logging:

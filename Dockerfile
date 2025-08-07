@@ -147,7 +147,8 @@ ENV PATH="/opt/codeql:${PATH}"
 # App user & directories
 RUN groupadd -r scanner && useradd -r -g scanner -m scanner \
  && mkdir -p /home/scanner/.cache /home/scanner/go /home/scanner/.codeql \
-           /app/rules/yara /app/rules/codeql /tmp/mcp-scanner \
+           /app/rules/yara /app/rules/codeql /app/models/embeddings \
+           /app/data/learning /tmp/mcp-scanner \
  && chown -R scanner:scanner /home/scanner /app /tmp/mcp-scanner \
  && groupadd -f docker \
  && usermod -aG docker scanner
@@ -178,15 +179,31 @@ RUN if command -v codeql >/dev/null 2>&1; then \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy model download script
+COPY scripts/download_models.py /tmp/download_models.py
+
+# Pre-download and cache transformer models for intelligent analysis
+# This makes the container production-ready without runtime model downloads
+RUN python3 /tmp/download_models.py && rm /tmp/download_models.py
 # Copy application code last
 COPY . .
 RUN chown -R scanner:scanner /app
 
+# Verify model loading works in container (run as scanner user)
+USER scanner
+RUN python3 test_container_models.py && echo "✅ Container model verification passed"
+USER root
+
+# Switch to scanner user for runtime
 USER scanner
 
 # App env
 ENV PYTHONPATH=/app \
-    LOG_LEVEL=INFO
+    LOG_LEVEL=INFO \
+    TRANSFORMERS_CACHE=/app/models/embeddings \
+    SENTENCE_TRANSFORMERS_HOME=/app/models/embeddings \
+    INTELLIGENT_ANALYZER_MODEL_PATH=/app/models/embeddings \
+    INTELLIGENT_ANALYZER_DB_PATH=/app/data/learning/security_learning.db
 
 # Healthcheck endpoint uses curl (present)
 EXPOSE 8000

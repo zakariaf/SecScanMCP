@@ -14,6 +14,11 @@ services:
       - GOPATH=/home/scanner/go
       - GOCACHE=/home/scanner/.cache/go-build
       - GOMODCACHE=/home/scanner/go/pkg/mod
+      # Intelligent analyzer configuration (set in Dockerfile but can be overridden)
+      - INTELLIGENT_ANALYZER_MODEL_PATH=/app/models/embeddings
+      - INTELLIGENT_ANALYZER_DB_PATH=/app/data/learning/security_learning.db
+      - TRANSFORMERS_CACHE=/app/models/embeddings
+      - SENTENCE_TRANSFORMERS_HOME=/app/models/embeddings
     volumes:
       # Mount Docker socket for dynamic analysis
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -26,6 +31,9 @@ services:
       # Cache GOPATH modules between runs
       - gocache:/home/scanner/go
       - codeql-cache:/home/scanner/.codeql
+      # Persistent ML models and learning data
+      - ml-models:/app/models
+      - learning-data:/app/data
     restart: unless-stopped
     depends_on:
       clamav:
@@ -94,6 +102,12 @@ volumes:
   clamav-db:
   gocache:
   codeql-cache:
+  # Persistent storage for ML models (transformer weights)
+  ml-models:
+    driver: local
+  # Persistent storage for learning system data
+  learning-data:
+    driver: local
 
 networks:
   scanner-network:

@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import hashlib
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -58,11 +59,23 @@ class FrozenEmbedder:
             logger.info(f"Loading cached transformer model from {model_cache_path}")
             self.model = SentenceTransformer(str(model_cache_path))
         else:
-            logger.info(f"Downloading transformer model {self.model_name}")
+            # In production container, model should be pre-cached
+            # Check if running in container (environment variable set in Dockerfile)
+            in_container = os.environ.get('INTELLIGENT_ANALYZER_MODEL_PATH') is not None
+            
+            if in_container:
+                logger.warning(f"Model not found in container cache: {model_cache_path}")
+                logger.info("Attempting to download model at runtime (not recommended for production)")
+            else:
+                logger.info(f"Downloading transformer model {self.model_name} (development mode)")
+            
             self.model = SentenceTransformer(self.model_name)
             # Save to cache
-            self.model.save(str(model_cache_path))
-            logger.info(f"Cached transformer model to {model_cache_path}")
+            try:
+                self.model.save(str(model_cache_path))
+                logger.info(f"Cached transformer model to {model_cache_path}")
+            except Exception as e:
+                logger.warning(f"Failed to cache model: {e} (using in-memory model)")
     
     def _initialize_tfidf_fallback(self):
         """Initialize TF-IDF fallback system."""
@@ -163,7 +176,9 @@ class FrozenEmbedder:
             'transformer_available': self.model is not None,
             'tfidf_available': self.fallback_vectorizer is not None,
             'sentence_transformers_installed': SENTENCE_TRANSFORMERS_AVAILABLE,
-            'sklearn_installed': SKLEARN_AVAILABLE
+            'sklearn_installed': SKLEARN_AVAILABLE,
+            'in_container': os.environ.get('INTELLIGENT_ANALYZER_MODEL_PATH') is not None,
+            'model_cached': (self.model_path / self.model_name).exists() if self.model_path else False
         }
         
         if self.model is not None:
@@ -186,8 +201,18 @@ class EmbeddingsManager:
     def __init__(self, model_path: Optional[Path] = None):
         if hasattr(self, '_initialized'):
             return
+        
+        # Use container-aware path resolution
+        if model_path is None:
+            # Check environment variable (set in Dockerfile)
+            env_path = os.environ.get('INTELLIGENT_ANALYZER_MODEL_PATH')
+            if env_path:
+                model_path = Path(env_path)
+            else:
+                # Fallback to relative path for development
+                model_path = Path(__file__).parent.parent.parent / "models" / "embeddings"
             
-        self.model_path = model_path or Path(__file__).parent.parent.parent / "models" / "embeddings"
+        self.model_path = model_path
         self.embedder = FrozenEmbedder(self.model_path)
         self._initialized = True
         
