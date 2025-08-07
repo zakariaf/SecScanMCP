@@ -7,6 +7,7 @@ from typing import Tuple, Dict, Any, List
 from .base_analyzer import BaseAnalyzer
 from ..models.analysis_models import CodeContext
 from ..utils.ml_utils import is_ml_available
+from ..utils.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,10 @@ class FeatureExtractor:
 
 
 class StatisticalAnomalyDetector:
-    """Statistical anomaly detection using simple heuristics."""
+    """Statistical anomaly detection using configurable thresholds."""
+    
+    def __init__(self, config_manager: ConfigManager):
+        self.config_manager = config_manager
     
     def detect_anomalies(self, context: CodeContext) -> List[str]:
         """Detect statistical anomalies in the code context."""
@@ -70,21 +74,22 @@ class StatisticalAnomalyDetector:
         return anomalies
     
     def _check_operation_counts(self, context: CodeContext) -> List[str]:
-        """Check for unusual operation counts."""
+        """Check for unusual operation counts using configurable thresholds."""
         anomalies = []
+        thresholds = self.config_manager.get_anomaly_thresholds()
         
         file_ops = len(context.file_operations)
         net_ops = len(context.network_operations)
         sys_ops = len(context.system_operations)
         
-        # Excessive operations (configurable thresholds)
-        if file_ops > 25:
+        # Check against configured thresholds
+        if file_ops > thresholds['excessive_file_ops']:
             anomalies.append(f"Excessive file operations ({file_ops})")
         
-        if net_ops > 20:
+        if net_ops > thresholds['excessive_network_ops']:
             anomalies.append(f"Excessive network operations ({net_ops})")
         
-        if sys_ops > 8:
+        if sys_ops > thresholds['excessive_system_ops']:
             anomalies.append(f"Excessive system operations ({sys_ops})")
         
         return anomalies
@@ -130,22 +135,23 @@ class StatisticalAnomalyDetector:
         return anomalies
     
     def _check_complexity_anomalies(self, context: CodeContext) -> List[str]:
-        """Check for complexity-related anomalies."""
+        """Check for complexity-related anomalies using configurable thresholds."""
         anomalies = []
+        thresholds = self.config_manager.get_anomaly_thresholds()
         
         if context.functions:
             complexities = [f.get('complexity', 1) for f in context.functions]
             max_complexity = max(complexities)
             avg_complexity = np.mean(complexities)
             
-            if max_complexity > 15:
+            if max_complexity > thresholds['max_function_complexity']:
                 anomalies.append(f"Very high function complexity ({max_complexity})")
             
-            if avg_complexity > 8:
+            if avg_complexity > thresholds['max_avg_complexity']:
                 anomalies.append(f"High average complexity ({avg_complexity:.1f})")
         
         # Dependency anomalies
-        if len(context.dependencies) > 50:
+        if len(context.dependencies) > thresholds['max_dependencies']:
             anomalies.append(f"Excessive dependencies ({len(context.dependencies)})")
         
         return anomalies
@@ -227,8 +233,9 @@ class MLAnomalyDetector:
 class AnomalyDetector(BaseAnalyzer):
     """Comprehensive anomaly detection system."""
     
-    def __init__(self):
-        self.statistical_detector = StatisticalAnomalyDetector()
+    def __init__(self, config_manager: ConfigManager = None):
+        self.config_manager = config_manager or ConfigManager()
+        self.statistical_detector = StatisticalAnomalyDetector(self.config_manager)
         self.ml_detector = MLAnomalyDetector()
     
     async def analyze(self, context: CodeContext) -> Tuple[float, Dict[str, Any]]:

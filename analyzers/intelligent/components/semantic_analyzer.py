@@ -6,8 +6,10 @@ from typing import Tuple, Dict, Any, List
 
 from .base_analyzer import BaseAnalyzer
 from ..models.analysis_models import CodeContext
-from ..utils.ml_utils import is_ml_available, get_tfidf_vectorizer
+from ..utils.ml_utils import is_ml_available
 from ..utils.text_utils import extract_keywords, clean_text, calculate_text_overlap
+from ..utils.embeddings import EmbeddingsManager
+from ..utils.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -177,10 +179,8 @@ class SemanticIntentAnalyzer(BaseAnalyzer):
     def __init__(self):
         self.intent_extractor = IntentExtractor()
         self.behavior_extractor = BehaviorExtractor()
-        self.vectorizer = None
-        
-        if is_ml_available():
-            self.vectorizer = get_tfidf_vectorizer()
+        self.embeddings_manager = EmbeddingsManager()
+        self.config_manager = ConfigManager()
     
     async def analyze(self, context: CodeContext) -> Tuple[float, Dict[str, Any]]:
         """Analyze semantic alignment between intent and behavior."""
@@ -198,46 +198,31 @@ class SemanticIntentAnalyzer(BaseAnalyzer):
         evidence['declared_intents'] = intents
         evidence['code_behaviors'] = behaviors
         
-        # Calculate alignment score
-        if is_ml_available() and intents and behaviors:
-            score = await self._ml_semantic_analysis(intents, behaviors, evidence)
+        # Calculate alignment score using frozen embeddings
+        if intents and behaviors:
+            score = await self._embeddings_semantic_analysis(intents, behaviors, evidence)
         else:
             score = self._fallback_semantic_analysis(intents, behaviors)
             
         evidence['alignment_score'] = score
         return score, evidence
     
-    async def _ml_semantic_analysis(self, intents: List[str], behaviors: List[str], 
-                                  evidence: Dict) -> float:
-        """ML-based semantic similarity analysis."""
+    async def _embeddings_semantic_analysis(self, intents: List[str], behaviors: List[str], 
+                                           evidence: Dict) -> float:
+        """Frozen embeddings-based semantic similarity analysis."""
         try:
-            all_texts = intents + behaviors
+            # Use frozen embeddings system (no runtime training)
+            max_similarity = self.embeddings_manager.calculate_similarity(intents, behaviors)
             
-            if len(all_texts) < 3:
-                return self._fallback_semantic_analysis(intents, behaviors)
+            # Find best semantic matches
+            matches = self.embeddings_manager.find_best_matches(intents, behaviors)
+            evidence['semantic_matches'] = matches
             
-            # Fit and transform texts
-            if not hasattr(self.vectorizer, 'vocabulary_') or not self.vectorizer.vocabulary_:
-                self.vectorizer.fit(all_texts)
-            
-            # Import here to avoid issues if ML not available
-            from sklearn.metrics.pairwise import cosine_similarity
-            
-            intent_vectors = self.vectorizer.transform(intents)
-            behavior_vectors = self.vectorizer.transform(behaviors)
-            
-            if intent_vectors.shape[0] > 0 and behavior_vectors.shape[0] > 0:
-                similarity_matrix = cosine_similarity(intent_vectors, behavior_vectors)
-                max_similarity = float(np.max(similarity_matrix))
-                
-                evidence['semantic_matches'] = self._find_best_matches(
-                    intents, behaviors, similarity_matrix
-                )
-                
-                return max_similarity
+            logger.debug(f"Embeddings analysis: max_similarity={max_similarity:.3f}, matches={len(matches)}")
+            return max_similarity
                 
         except Exception as e:
-            logger.debug(f"ML semantic analysis failed: {e}")
+            logger.debug(f"Embeddings semantic analysis failed: {e}")
             
         return self._fallback_semantic_analysis(intents, behaviors)
     
@@ -251,22 +236,3 @@ class SemanticIntentAnalyzer(BaseAnalyzer):
         behavior_text = ' '.join(behaviors)
         
         return calculate_text_overlap(intent_text, behavior_text)
-    
-    def _find_best_matches(self, intents: List[str], behaviors: List[str], 
-                          similarity_matrix: np.ndarray) -> List[Dict]:
-        """Find best semantic matches between intents and behaviors."""
-        matches = []
-        
-        for i, intent in enumerate(intents):
-            for j, behavior in enumerate(behaviors):
-                score = similarity_matrix[i, j]
-                if score > 0.3:  # Threshold for meaningful similarity
-                    matches.append({
-                        'intent': intent,
-                        'behavior': behavior,
-                        'similarity': float(score)
-                    })
-                    
-        # Sort by similarity and return top 5
-        matches.sort(key=lambda x: x['similarity'], reverse=True)
-        return matches[:5]

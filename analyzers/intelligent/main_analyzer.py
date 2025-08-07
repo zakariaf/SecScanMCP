@@ -11,6 +11,7 @@ from .components.ecosystem_analyzer import EcosystemIntelligenceAnalyzer
 from .components.anomaly_detector import AnomalyDetector
 from .services.risk_aggregator import RiskAggregator
 from .services.learning_system import LearningSystem
+from .utils.config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -128,15 +129,18 @@ class IntelligentContextAnalyzer:
     - Dependency injection for testability
     """
     
-    def __init__(self, model_path: str = "/tmp/security_ml_models"):
-        # Initialize analyzers
+    def __init__(self, model_path: str = "/tmp/security_ml_models", config_path: str = None):
+        # Initialize configuration
+        self.config_manager = ConfigManager(Path(config_path) if config_path else None)
+        
+        # Initialize analyzers with configuration
         self.semantic_analyzer = SemanticIntentAnalyzer()
         self.behavioral_analyzer = BehavioralPatternAnalyzer()
         self.ecosystem_analyzer = EcosystemIntelligenceAnalyzer()
-        self.anomaly_detector = AnomalyDetector()
+        self.anomaly_detector = AnomalyDetector(self.config_manager)
         
-        # Initialize services
-        self.risk_aggregator = RiskAggregator()
+        # Initialize services with configuration
+        self.risk_aggregator = RiskAggregator(self.config_manager)
         self.learning_system = LearningSystem(model_path)
         
         # Initialize utilities

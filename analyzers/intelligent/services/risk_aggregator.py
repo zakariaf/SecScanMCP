@@ -3,23 +3,18 @@
 import numpy as np
 from typing import Dict, Any, List
 from ..models.risk_models import RiskAssessment, ComponentScores
+from ..utils.config_manager import ConfigManager
 
 
 class ScoreWeighter:
     """Handles weighting of component scores."""
     
-    def __init__(self):
-        # Default weights based on reliability and importance
-        self.default_weights = {
-            'intent': 0.35,      # High weight - intent alignment crucial
-            'behavior': 0.25,    # Medium weight - patterns matter
-            'ecosystem': 0.25,   # Medium weight - peer comparison valuable
-            'anomaly': 0.15      # Lower weight - can have false positives
-        }
+    def __init__(self, config_manager: ConfigManager):
+        self.config_manager = config_manager
     
     def get_weights(self, context: Dict[str, Any] = None) -> Dict[str, float]:
-        """Get component weights, potentially adjusted by context."""
-        weights = self.default_weights.copy()
+        """Get component weights from configuration."""
+        weights = self.config_manager.get_weights()
         
         # Context-based weight adjustments could go here
         # For example, if we have high confidence in ecosystem data,
@@ -61,21 +56,18 @@ class ConfidenceCalculator:
 class RiskLevelClassifier:
     """Classifies risk level based on score and confidence."""
     
-    def __init__(self):
-        self.thresholds = {
-            'high_legitimacy': 0.75,
-            'medium_legitimacy': 0.55,
-            'high_confidence': 0.6,
-            'medium_confidence': 0.3
-        }
+    def __init__(self, config_manager: ConfigManager):
+        self.config_manager = config_manager
     
     def classify_risk(self, legitimacy_score: float, confidence: float) -> str:
         """Classify risk level based on legitimacy and confidence."""
-        if (legitimacy_score >= self.thresholds['high_legitimacy'] and 
-            confidence >= self.thresholds['high_confidence']):
+        thresholds = self.config_manager.get_thresholds()
+        
+        if (legitimacy_score >= thresholds['high_legitimacy'] and 
+            confidence >= thresholds['high_confidence']):
             return "low"
-        elif (legitimacy_score >= self.thresholds['medium_legitimacy'] and 
-              confidence >= self.thresholds['medium_confidence']):
+        elif (legitimacy_score >= thresholds['medium_legitimacy'] and 
+              confidence >= thresholds['medium_confidence']):
             return "medium"
         else:
             return "high"
@@ -88,10 +80,11 @@ class RiskLevelClassifier:
 class RiskAggregator:
     """Aggregates component scores into comprehensive risk assessment."""
     
-    def __init__(self):
-        self.weighter = ScoreWeighter()
+    def __init__(self, config_manager: ConfigManager = None):
+        self.config_manager = config_manager or ConfigManager()
+        self.weighter = ScoreWeighter(self.config_manager)
         self.confidence_calc = ConfidenceCalculator()
-        self.risk_classifier = RiskLevelClassifier()
+        self.risk_classifier = RiskLevelClassifier(self.config_manager)
     
     def aggregate_risk(self, component_scores: ComponentScores, 
                       context: Dict[str, Any] = None) -> RiskAssessment:

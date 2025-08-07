@@ -1,0 +1,106 @@
+# Default configuration for MCP Security Scanner
+# Following expert recommendations for externalized configuration
+
+# ML Model Configuration
+ml_models:
+  embeddings:
+    model_name: "all-MiniLM-L6-v2"
+    model_path: "models/embeddings/"
+    dimension: 384
+    max_seq_length: 512
+  
+  anomaly_detection:
+    contamination: 0.1
+    n_estimators: 100
+    random_state: 42
+  
+  clustering:
+    n_clusters: 20
+    random_state: 42
+
+# Risk Assessment Configuration
+risk_assessment:
+  weights:
+    intent: 0.35      # High weight - intent alignment crucial
+    behavior: 0.25    # Medium weight - patterns matter
+    ecosystem: 0.25   # Medium weight - peer comparison valuable
+    anomaly: 0.15     # Lower weight - can have false positives
+  
+  thresholds:
+    high_legitimacy: 0.75
+    medium_legitimacy: 0.55
+    high_confidence: 0.6
+    medium_confidence: 0.3
+  
+  anomaly_thresholds:
+    excessive_file_ops: 25
+    excessive_network_ops: 20
+    excessive_system_ops: 8
+    max_function_complexity: 15
+    max_avg_complexity: 8.0
+    max_dependencies: 50
+
+# Semantic Analysis Configuration
+semantic_analysis:
+  similarity_thresholds:
+    high_confidence: 0.85
+    medium_confidence: 0.65
+    low_confidence: 0.45
+  
+  storage_keywords:
+    - storage
+    - memory
+    - cache
+    - persist
+    - database
+    - save
+    - file
+    - data
+    - store
+    - backup
+    - archive
+    - repository
+    - vault
+    - buffer
+  
+  trusted_dependencies:
+    - mcp
+    - modelcontextprotocol
+    - fastapi
+    - requests
+    - numpy
+    - pandas
+    - flask
+    - express
+    - react
+    - typescript
+    - python
+
+# Database Configuration
+database:
+  type: "sqlite"  # Will migrate to postgresql
+  path: "/tmp/security_learning/feedback.db"
+  async_enabled: false  # Will enable with aiosqlite
+  connection_pool_size: 10
+  timeout: 30
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  structured: true
+  include_scan_id: true
+  format: "json"
+
+# Security Patterns
+security_patterns:
+  mcp_storage_patterns:
+    - "mcp.*memory"
+    - "mcp.*storage" 
+    - "memory.*server"
+    - "storage.*server"
+  
+  suspicious_patterns:
+    - "hack"
+    - "crack"
+    - "exploit"
+    - "backdoor"
