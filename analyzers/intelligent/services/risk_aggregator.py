@@ -4,6 +4,9 @@ import numpy as np
 from typing import Dict, Any, List
 from ..models.risk_models import RiskAssessment, ComponentScores
 from ..utils.config_manager import ConfigManager
+from ..utils.logging_utils import get_scan_logger
+
+logger = get_scan_logger(__name__)
 
 
 class ScoreWeighter:

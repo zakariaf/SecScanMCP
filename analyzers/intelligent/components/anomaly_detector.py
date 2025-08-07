@@ -1,6 +1,5 @@
 """Anomaly detection component."""
 
-import logging
 import numpy as np
 from typing import Tuple, Dict, Any, List
 
@@ -8,8 +7,9 @@ from .base_analyzer import BaseAnalyzer
 from ..models.analysis_models import CodeContext
 from ..utils.ml_utils import is_ml_available
 from ..utils.config_manager import ConfigManager
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class FeatureExtractor:
@@ -177,7 +177,8 @@ class MLAnomalyDetector:
                 n_estimators=100
             )
         except ImportError:
-            logger.warning("ML libraries not available for anomaly detection")
+            logger.warning("ML libraries not available for anomaly detection",
+                          component="anomaly_detector")
     
     def detect_ml_anomalies(self, context: CodeContext) -> Tuple[float, Dict]:
         """Detect anomalies using ML model."""
@@ -200,7 +201,9 @@ class MLAnomalyDetector:
             }
             
         except Exception as e:
-            logger.debug(f"ML anomaly detection failed: {e}")
+            logger.debug("ML anomaly detection failed",
+                        error=str(e),
+                        component="anomaly_detector")
             return 0.0, {'ml_available': True, 'error': str(e)}
     
     def _calculate_heuristic_anomaly_score(self, features: np.ndarray) -> float:

@@ -1,6 +1,5 @@
 """Semantic intent analysis component."""
 
-import logging
 import numpy as np
 from typing import Tuple, Dict, Any, List
 
@@ -10,8 +9,9 @@ from ..utils.ml_utils import is_ml_available
 from ..utils.text_utils import extract_keywords, clean_text, calculate_text_overlap
 from ..utils.embeddings import EmbeddingsManager
 from ..utils.config_manager import ConfigManager
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class IntentExtractor:
@@ -218,11 +218,16 @@ class SemanticIntentAnalyzer(BaseAnalyzer):
             matches = self.embeddings_manager.find_best_matches(intents, behaviors)
             evidence['semantic_matches'] = matches
             
-            logger.debug(f"Embeddings analysis: max_similarity={max_similarity:.3f}, matches={len(matches)}")
+            logger.debug("Embeddings analysis completed",
+                        max_similarity=max_similarity,
+                        matches_count=len(matches),
+                        component="semantic_analyzer")
             return max_similarity
                 
         except Exception as e:
-            logger.debug(f"Embeddings semantic analysis failed: {e}")
+            logger.debug("Embeddings semantic analysis failed",
+                        error=str(e),
+                        component="semantic_analyzer")
             
         return self._fallback_semantic_analysis(intents, behaviors)
     

@@ -1,6 +1,5 @@
 """Behavioral pattern analysis component."""
 
-import logging
 import numpy as np
 from typing import Tuple, Dict, Any, List
 from collections import defaultdict
@@ -8,8 +7,9 @@ from collections import defaultdict
 from .base_analyzer import BaseAnalyzer
 from ..models.analysis_models import CodeContext
 from ..utils.ml_utils import is_ml_available
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class BehavioralFingerprinter:

@@ -1,12 +1,12 @@
 """Ecosystem intelligence analysis component."""
 
-import logging
 from typing import Tuple, Dict, Any, List
 
 from .base_analyzer import BaseAnalyzer
 from ..models.analysis_models import CodeContext
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class ProjectSimilarityCalculator:

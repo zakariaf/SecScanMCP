@@ -3,15 +3,15 @@
 import asyncio
 import aiosqlite
 import json
-import logging
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from contextlib import asynccontextmanager
 
 from ..utils.config_manager import ConfigManager
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class AsyncDatabaseManager:
@@ -34,7 +34,9 @@ class AsyncDatabaseManager:
         try:
             yield self._connection
         except Exception as e:
-            logger.error(f"Database operation failed: {e}")
+            logger.error("Database operation failed",
+                           error=str(e),
+                           component="async_database")
             await self._connection.rollback()
             raise
     
@@ -88,7 +90,11 @@ class AsyncDatabaseManager:
                 VALUES (?, ?, ?, ?, ?)
             """, (code_hash, original, corrected, reason, confidence_adj))
             await conn.commit()
-            logger.debug(f"Stored feedback: {code_hash[:8]}... {original} -> {corrected}")
+            logger.debug("Stored feedback",
+                        code_hash=code_hash[:8],
+                        original=original,
+                        corrected=corrected,
+                        component="async_database")
     
     async def get_feedback_for_pattern(self, pattern_sig: str, limit: int = 100) -> List[Dict]:
         """Get feedback for similar patterns asynchronously."""
@@ -136,7 +142,9 @@ class AsyncDatabaseManager:
                 """, (pattern_sig, json.dumps(features), legitimacy, confidence))
             
             await conn.commit()
-            logger.debug(f"Updated pattern learning: {pattern_sig[:16]}...")
+            logger.debug("Updated pattern learning",
+                        pattern_signature=pattern_sig[:16],
+                        component="async_database")
     
     async def get_recent_feedback(self, days: int = 30, limit: int = 500) -> List[Dict]:
         """Get recent feedback for model updates."""
@@ -211,7 +219,10 @@ class AsyncDatabaseManager:
             
             await conn.commit()
             
-            logger.info(f"Cleaned up {deleted_feedback} old feedback entries and {deleted_patterns} low-verification patterns")
+            logger.info("Cleaned up old data",
+                       deleted_feedback=deleted_feedback,
+                       deleted_patterns=deleted_patterns,
+                       component="async_database")
             
             return {
                 'deleted_feedback': deleted_feedback,
@@ -237,7 +248,8 @@ class AsyncFeedbackCollector:
         """Start background feedback processing."""
         if self._processing_task is None:
             self._processing_task = asyncio.create_task(self._process_feedback_queue())
-            logger.info("Started async feedback processing")
+            logger.info("Started async feedback processing",
+                       component="async_feedback_collector")
     
     async def stop_processing(self):
         """Stop background feedback processing."""
@@ -248,7 +260,8 @@ class AsyncFeedbackCollector:
             except asyncio.CancelledError:
                 pass
             self._processing_task = None
-            logger.info("Stopped async feedback processing")
+            logger.info("Stopped async feedback processing",
+                       component="async_feedback_collector")
     
     async def submit_feedback(self, code_hash: str, original: str, corrected: str, reason: str):
         """Submit feedback for async processing."""
@@ -259,7 +272,9 @@ class AsyncFeedbackCollector:
             'reason': reason,
             'timestamp': datetime.now()
         })
-        logger.debug(f"Queued feedback: {code_hash[:8]}...")
+        logger.debug("Queued feedback",
+                    code_hash=code_hash[:8],
+                    component="async_feedback_collector")
     
     async def _process_feedback_queue(self):
         """Process feedback queue in background."""
@@ -285,10 +300,13 @@ class AsyncFeedbackCollector:
                     await self._process_feedback_batch(batch)
                     
             except asyncio.CancelledError:
-                logger.info("Feedback processing cancelled")
+                logger.info("Feedback processing cancelled",
+                           component="async_feedback_collector")
                 break
             except Exception as e:
-                logger.error(f"Error processing feedback: {e}")
+                logger.error("Error processing feedback",
+                            error=str(e),
+                            component="async_feedback_collector")
                 await asyncio.sleep(1)  # Brief pause before retrying
     
     async def _process_feedback_batch(self, batch: List[Dict]):
@@ -302,6 +320,11 @@ class AsyncFeedbackCollector:
                     item['reason']
                 )
             except Exception as e:
-                logger.error(f"Failed to store feedback {item['code_hash'][:8]}...: {e}")
+                logger.error("Failed to store feedback",
+                            code_hash=item['code_hash'][:8],
+                            error=str(e),
+                            component="async_feedback_collector")
         
-        logger.debug(f"Processed feedback batch of {len(batch)} items")
+        logger.debug("Processed feedback batch",
+                    batch_size=len(batch),
+                    component="async_feedback_collector")

@@ -1,17 +1,17 @@
 """Learning and feedback system with async operations."""
 
-import logging
 import hashlib
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from ..models.analysis_models import CodeContext, LegitimacyAnalysis
 from .async_database import AsyncDatabaseManager, AsyncFeedbackCollector
 from ..utils.config_manager import ConfigManager
+from ..utils.logging_utils import get_scan_logger
 
-logger = logging.getLogger(__name__)
+logger = get_scan_logger(__name__)
 
 
 class PatternAnalyzer:
@@ -120,7 +120,9 @@ class LearningSystem:
             pattern_sig, features, legitimacy_score, analysis.confidence_score
         )
         
-        logger.debug(f"Recorded analysis for pattern: {pattern_sig}")
+        logger.debug("Recorded analysis for pattern",
+                    pattern_signature=pattern_sig,
+                    component="learning_system")
     
     async def submit_feedback(self, code_hash: str, original_result: str, 
                             corrected_result: str, reason: str):
@@ -128,7 +130,11 @@ class LearningSystem:
         await self.feedback_collector.submit_feedback(
             code_hash, original_result, corrected_result, reason
         )
-        logger.info(f"Feedback submitted: {original_result} -> {corrected_result}")
+        logger.info("Feedback submitted",
+                   original_result=original_result,
+                   corrected_result=corrected_result,
+                   code_hash=code_hash[:8],
+                   component="learning_system")
     
     async def get_learning_stats(self) -> Dict[str, Any]:
         """Get learning system statistics."""
