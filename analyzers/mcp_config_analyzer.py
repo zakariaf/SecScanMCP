@@ -132,6 +132,54 @@ class MCPConfigAnalyzer(BaseAnalyzer):
 
         return findings
 
+    async def _analyze_mcp_servers(self, repo_path: str) -> List[Finding]:
+        """Analyze MCP server implementations in the repository"""
+        findings = []
+        
+        # Find embedded MCP servers
+        findings.extend(await self._find_embedded_mcp_servers(repo_path))
+        
+        # Look for package.json or setup.py that indicates MCP server
+        for pattern in ['**/package.json', '**/setup.py', '**/pyproject.toml']:
+            for manifest_file in Path(repo_path).rglob(pattern):
+                try:
+                    findings.extend(await self._analyze_server_manifest(manifest_file, repo_path))
+                except Exception as e:
+                    logger.debug(f"Error analyzing manifest {manifest_file}: {e}")
+        
+        return findings
+
+    async def _analyze_server_manifest(self, manifest_file: Path, repo_path: str) -> List[Finding]:
+        """Analyze package manifest for MCP server indicators"""
+        findings = []
+        
+        try:
+            with open(manifest_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # Check for MCP dependencies
+            mcp_indicators = [
+                'mcp', 'modelcontextprotocol', '@modelcontextprotocol',
+                'mcp-server', 'mcp-client'
+            ]
+            
+            if any(indicator in content.lower() for indicator in mcp_indicators):
+                findings.append(self.create_finding(
+                    vulnerability_type=VulnerabilityType.GENERIC,
+                    severity=SeverityLevel.INFO,
+                    confidence=0.8,
+                    title="MCP server dependency detected",
+                    description=f"Package manifest indicates MCP server functionality: {manifest_file.name}",
+                    location=str(manifest_file.relative_to(repo_path)),
+                    recommendation="Ensure MCP server follows security best practices",
+                    evidence={'manifest_type': manifest_file.suffix}
+                ))
+                
+        except Exception as e:
+            logger.debug(f"Error reading manifest {manifest_file}: {e}")
+            
+        return findings
+
     async def _analyze_config_file(self, config_file: Path, repo_path: str) -> List[Finding]:
         """Analyze individual MCP configuration file"""
         findings = []

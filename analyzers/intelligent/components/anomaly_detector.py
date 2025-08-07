@@ -182,14 +182,15 @@ class MLAnomalyDetector:
             features = self.feature_extractor.extract_features(context)
             features = features.reshape(1, -1)  # Single sample
             
-            # Note: In production, model would be pre-trained
-            # Here we use a simple heuristic-based score
+            # Use heuristic-based score since model is not pre-trained
+            # In production, would use: self.model.decision_function(features)
             anomaly_score = self._calculate_heuristic_anomaly_score(features[0])
             
             return anomaly_score, {
                 'ml_available': True,
                 'feature_vector': features[0].tolist(),
-                'anomaly_score': anomaly_score
+                'anomaly_score': anomaly_score,
+                'model_trained': False
             }
             
         except Exception as e:
