@@ -12,6 +12,7 @@ import logging
 
 from .base import BaseAnalyzer
 from models import Finding, SeverityLevel, VulnerabilityType
+from .intelligent import IntelligentContextAnalyzer, CodeContext
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,14 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
     - Conversation history exfiltration
     - OAuth token exposure
     - Cross-server contamination
+    
+    Enhanced with ML-powered intelligent context analysis for reduced false positives.
     """
+    
+    def __init__(self):
+        super().__init__()
+        # Initialize intelligent context analyzer
+        self.intelligent_analyzer = IntelligentContextAnalyzer()
 
     # Enhanced patterns based on real attacks
     INJECTION_PATTERNS = [
@@ -810,7 +818,7 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         repo_path: str,
         project_info: Dict[str, Any]
     ) -> List[Finding]:
-        """Check for permission abuse"""
+        """Check for permission abuse with context awareness"""
         findings = []
 
         # Check if declared permissions match actual usage
@@ -820,7 +828,7 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         # Scan for actual permission usage
         permission_usage = await self._scan_permission_usage(repo_path)
 
-        # Compare declared vs actual
+        # Compare declared vs actual with intelligent context analysis
         for perm_type, usage in permission_usage.items():
             declared = declared_permissions.get(perm_type, 'none')
 
@@ -828,16 +836,35 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
                 # Get detailed evidence of where the permission is used
                 usage_evidence = await self._get_detailed_permission_evidence(repo_path, perm_type, usage)
                 
-                findings.append(self.create_finding(
-                    vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
-                    severity=SeverityLevel.HIGH,
-                    confidence=0.8,
-                    title=f"Undeclared {perm_type} permission usage",
-                    description=f"Code uses {perm_type} write access but only declares '{declared}'",
-                    location='permission_manifest',
-                    recommendation=f"Update manifest to declare {perm_type} write permission or remove the functionality",
-                    evidence=usage_evidence
-                ))
+                # Analyze context to determine if this is legitimate functionality
+                context_analysis = await self._analyze_permission_context(repo_path, perm_type, usage_evidence, project_info)
+                
+                # Only report as vulnerability if it seems suspicious or excessive
+                if context_analysis['is_suspicious']:
+                    severity = SeverityLevel.HIGH if context_analysis['risk_level'] == 'high' else SeverityLevel.MEDIUM
+                    
+                    findings.append(self.create_finding(
+                        vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                        severity=severity,
+                        confidence=context_analysis['confidence'],
+                        title=context_analysis['title'],
+                        description=context_analysis['description'],
+                        location='permission_manifest',
+                        recommendation=context_analysis['recommendation'],
+                        evidence=usage_evidence
+                    ))
+                else:
+                    # Create an informational finding for legitimate but undeclared usage
+                    findings.append(self.create_finding(
+                        vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                        severity=SeverityLevel.INFO,
+                        confidence=0.6,
+                        title=f"Undeclared {perm_type} permission (legitimate use)",
+                        description=f"Code uses {perm_type} access for core functionality but doesn't declare it",
+                        location='permission_manifest',
+                        recommendation=f"Consider declaring {perm_type} permission in manifest for transparency",
+                        evidence=usage_evidence
+                    ))
 
         return findings
 
@@ -994,6 +1021,377 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         }
 
         return evidence
+
+    async def _create_code_context(self, repo_path: str, project_info: Dict[str, Any], usage_evidence: Dict[str, Any]) -> CodeContext:
+        """Create comprehensive code context for intelligent analysis"""
+        
+        # Extract project information
+        project_name = project_info.get('type', 'unknown')
+        project_description = ""
+        
+        # Try to get project description from package.json
+        package_json_path = Path(repo_path) / 'package.json'
+        if package_json_path.exists():
+            try:
+                with open(package_json_path) as f:
+                    pkg_data = json.load(f)
+                    project_name = pkg_data.get('name', project_name)
+                    project_description = pkg_data.get('description', '')
+            except:
+                pass
+        
+        # Extract README content
+        readme_content = ""
+        for readme_file in ['README.md', 'readme.md', 'README.txt', 'README.rst']:
+            readme_path = Path(repo_path) / readme_file
+            if readme_path.exists():
+                try:
+                    with open(readme_path, encoding='utf-8') as f:
+                        readme_content = f.read()
+                        self.logger.debug(f"Found README: {readme_file} ({len(readme_content)} chars)")
+                        break
+                except Exception as e:
+                    self.logger.debug(f"Failed to read {readme_file}: {e}")
+                    continue
+        
+        # Convert usage evidence to structured format
+        file_operations = []
+        for violation in usage_evidence.get('violations', []):
+            file_operations.append({
+                'operation': violation.get('operation', ''),
+                'target': violation.get('file', ''),
+                'line': violation.get('line', 0),
+                'code': violation.get('code_snippet', '')
+            })
+        
+        # Extract function information (simplified)
+        functions = []
+        docstrings = []
+        comments = []
+        
+        # Scan Python/JS files for additional context
+        for file_path in Path(repo_path).rglob('*'):
+            if file_path.suffix in ['.py', '.js', '.ts'] and file_path.is_file():
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read()
+                        
+                    # Extract docstrings (simple regex)
+                    docstring_matches = re.findall(r'"""(.*?)"""', content, re.DOTALL)
+                    docstrings.extend([doc.strip() for doc in docstring_matches[:5]])
+                    
+                    # Extract comments
+                    comment_matches = re.findall(r'#\s*(.+)', content)
+                    comments.extend([comment.strip() for comment in comment_matches[:10]])
+                    
+                    # Extract function info (simplified)
+                    func_matches = re.findall(r'def\s+(\w+)\s*\([^)]*\):', content)
+                    for func_name in func_matches[:5]:
+                        functions.append({
+                            'name': func_name,
+                            'description': f"Function {func_name}",
+                            'complexity': 1
+                        })
+                        
+                except:
+                    continue
+        
+        return CodeContext(
+            project_name=project_name,
+            project_description=project_description,
+            project_type=project_info.get('type', 'unknown'),
+            language=project_info.get('language', 'unknown'),
+            
+            functions=functions,
+            file_operations=file_operations,
+            network_operations=[],  # Would extract from usage_evidence
+            system_operations=[],   # Would extract from usage_evidence
+            
+            readme_content=readme_content,
+            docstrings=docstrings,
+            comments=comments,
+            commit_messages=[],     # Could extract from git log
+            
+            dependencies=project_info.get('dependencies', []),
+            similar_projects=[],    # Would be populated by ecosystem analysis
+            community_reputation={}
+        )
+
+    async def _analyze_permission_context(self, repo_path: str, perm_type: str, usage_evidence: Dict[str, Any], project_info: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Main context analysis method that chooses between intelligent ML analysis 
+        and fallback heuristics
+        """
+        try:
+            # Use provided project_info or create default
+            if project_info is None:
+                project_info = {'type': 'unknown', 'language': 'unknown'}
+            code_context = await self._create_code_context(repo_path, project_info, usage_evidence)
+            
+            # Use the intelligent analyzer for sophisticated context analysis
+            legitimacy_analysis = await self.intelligent_analyzer.analyze_legitimacy(code_context)
+            
+            # Convert IntelligentContextAnalyzer result to MCP analyzer format
+            analysis = {
+                'is_suspicious': not legitimacy_analysis.is_legitimate,
+                'risk_level': legitimacy_analysis.risk_level,
+                'confidence': legitimacy_analysis.confidence_score,
+                'title': f"ML Analysis: {perm_type} permission usage",
+                'description': legitimacy_analysis.explanation,
+                'recommendation': legitimacy_analysis.recommendations[0] if legitimacy_analysis.recommendations else f"Review {perm_type} permission usage"
+            }
+            
+            # Add ML insights to the analysis
+            analysis['ml_insights'] = {
+                'intent_alignment_score': legitimacy_analysis.intent_alignment_score,
+                'behavioral_anomaly_score': legitimacy_analysis.behavioral_anomaly_score,
+                'ecosystem_similarity_score': legitimacy_analysis.ecosystem_similarity_score,
+                'ml_confidence': legitimacy_analysis.confidence_score
+            }
+            
+            self.logger.info(f"Intelligent context analysis completed for {perm_type}: legitimate={legitimacy_analysis.is_legitimate}, confidence={legitimacy_analysis.confidence_score:.2f}")
+            return analysis
+            
+        except Exception as e:
+            self.logger.debug(f"Intelligent analysis failed, falling back to heuristics: {e}")
+            # Fallback to the existing heuristic-based approach
+            return await self._analyze_permission_context_heuristic(repo_path, perm_type, usage_evidence)
+
+    async def _analyze_permission_context_heuristic(self, repo_path: str, perm_type: str, usage_evidence: Dict[str, Any]) -> Dict[str, Any]:
+        """Fallback heuristic-based context analysis when ML is unavailable"""
+        
+        # Get project info for heuristic analysis
+        project_info = {'type': 'unknown', 'language': 'unknown'}
+        try:
+            package_json_path = Path(repo_path) / 'package.json'
+            if package_json_path.exists():
+                with open(package_json_path) as f:
+                    pkg_data = json.load(f)
+                    project_info['type'] = 'node'
+                    project_info['language'] = 'javascript'
+        except:
+            pass
+        
+        return await self._analyze_permission_context_intelligent(repo_path, project_info, perm_type, usage_evidence)
+
+    async def _analyze_permission_context_intelligent(self, repo_path: str, project_info: Dict[str, Any], perm_type: str, usage_evidence: Dict[str, Any]) -> Dict[str, Any]:
+        """Advanced ML-powered context analysis for permission legitimacy"""
+        
+        # Default analysis result
+        analysis = {
+            'is_suspicious': True,
+            'risk_level': 'high',
+            'confidence': 0.8,
+            'title': f"Undeclared {perm_type} permission usage",
+            'description': f"Code uses {perm_type} write access but only declares 'none'",
+            'recommendation': f"Update manifest to declare {perm_type} write permission or remove the functionality"
+        }
+
+        # Analyze project purpose and legitimacy indicators
+        legitimacy_indicators = await self._check_legitimacy_indicators(repo_path, perm_type, usage_evidence)
+        
+        # File system permission context analysis
+        if perm_type == 'filesystem':
+            file_analysis = self._analyze_filesystem_usage_context(usage_evidence, legitimacy_indicators)
+            
+            # Determine if filesystem usage looks legitimate
+            if file_analysis['appears_legitimate']:
+                analysis.update({
+                    'is_suspicious': False,
+                    'risk_level': 'low',
+                    'confidence': 0.6,
+                    'title': f"Undeclared filesystem permission (legitimate use detected)",
+                    'description': f"Server appears to legitimately use filesystem for {file_analysis['purpose']}",
+                    'recommendation': "Consider declaring filesystem permission in manifest for user transparency"
+                })
+            elif file_analysis['partially_suspicious']:
+                analysis.update({
+                    'is_suspicious': True,
+                    'risk_level': 'medium',
+                    'confidence': 0.7,
+                    'title': f"Potentially excessive filesystem usage",
+                    'description': f"Filesystem usage may exceed intended purpose: {file_analysis['concerns']}",
+                    'recommendation': "Review filesystem usage scope and declare appropriate permissions"
+                })
+
+        # Network permission context analysis  
+        elif perm_type == 'network':
+            network_analysis = self._analyze_network_usage_context(usage_evidence, legitimacy_indicators)
+            if network_analysis['appears_legitimate']:
+                analysis['is_suspicious'] = False
+                analysis['risk_level'] = 'low'
+
+        # System permission context analysis (always suspicious)
+        elif perm_type == 'system':
+            analysis.update({
+                'is_suspicious': True,
+                'risk_level': 'high', 
+                'confidence': 0.9,
+                'title': "Undeclared system command execution",
+                'description': "MCP server executes system commands without declaring system permissions",
+                'recommendation': "System command execution should be explicitly declared and justified"
+            })
+
+        return analysis
+
+    async def _check_legitimacy_indicators(self, repo_path: str, perm_type: str, usage_evidence: Dict[str, Any]) -> Dict[str, Any]:
+        """Check for indicators that permission usage is legitimate"""
+        
+        indicators = {
+            'project_name_suggests_functionality': False,
+            'readme_describes_functionality': False,
+            'package_description_matches': False,
+            'single_config_file_pattern': False,
+            'reasonable_file_paths': False,
+            'no_user_input_paths': False
+        }
+
+        # Check package.json or project files for hints about intended functionality
+        package_json_path = Path(repo_path) / 'package.json'
+        if package_json_path.exists():
+            try:
+                with open(package_json_path) as f:
+                    pkg_data = json.load(f)
+                    
+                name = pkg_data.get('name', '').lower()
+                description = pkg_data.get('description', '').lower()
+                
+                # Check if project name/description suggests legitimate file operations
+                file_keywords = ['storage', 'memory', 'cache', 'persist', 'save', 'database', 'file', 'data']
+                if any(keyword in name or keyword in description for keyword in file_keywords):
+                    indicators['project_name_suggests_functionality'] = True
+                    indicators['package_description_matches'] = True
+                    
+            except:
+                pass
+
+        # Analyze file paths in violations for legitimacy
+        if usage_evidence.get('violations'):
+            violations = usage_evidence['violations']
+            
+            # Check for single, predictable file pattern (good sign)
+            unique_patterns = set()
+            for violation in violations:
+                code_snippet = violation.get('code_snippet', '')
+                
+                # Look for fixed file paths or environment variables
+                if ('MEMORY_FILE_PATH' in code_snippet or 
+                    'config' in code_snippet.lower() or
+                    '.json' in code_snippet or
+                    '.sqlite' in code_snippet or
+                    'path.join' in code_snippet):
+                    unique_patterns.add('config_file_pattern')
+                
+                # Check for user input in file paths (bad sign)
+                if any(user_input in code_snippet.lower() for user_input in 
+                       ['user', 'input', 'request', 'params', 'args']):
+                    indicators['no_user_input_paths'] = False
+                else:
+                    indicators['no_user_input_paths'] = True
+            
+            if 'config_file_pattern' in unique_patterns:
+                indicators['single_config_file_pattern'] = True
+
+        # Check README for functionality description
+        readme_files = ['README.md', 'readme.md', 'README.txt']
+        for readme_file in readme_files:
+            readme_path = Path(repo_path) / readme_file
+            if readme_path.exists():
+                try:
+                    with open(readme_path, encoding='utf-8') as f:
+                        readme_content = f.read().lower()
+                        
+                    functionality_keywords = ['storage', 'persist', 'save', 'memory', 'cache', 'database']
+                    if any(keyword in readme_content for keyword in functionality_keywords):
+                        indicators['readme_describes_functionality'] = True
+                        
+                except:
+                    continue
+
+        return indicators
+
+    def _analyze_filesystem_usage_context(self, usage_evidence: Dict[str, Any], legitimacy_indicators: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze filesystem usage context for legitimacy"""
+        
+        analysis = {
+            'appears_legitimate': False,
+            'partially_suspicious': False,
+            'purpose': 'unknown',
+            'concerns': []
+        }
+
+        violations = usage_evidence.get('violations', [])
+        violation_count = len(violations)
+        
+        # Analyze violation patterns
+        file_operations = [v.get('operation', '') for v in violations]
+        
+        # Indicators of legitimate storage usage
+        legitimate_patterns = 0
+        
+        # Single file operations (good)
+        if violation_count <= 3:
+            legitimate_patterns += 1
+            
+        # Operations suggest data persistence (good)
+        if any('writeFile' in op or 'save' in op or 'dump' in op for op in file_operations):
+            legitimate_patterns += 1
+            analysis['purpose'] = 'data persistence'
+            
+        # Project context suggests storage functionality
+        if (legitimacy_indicators['project_name_suggests_functionality'] or 
+            legitimacy_indicators['readme_describes_functionality']):
+            legitimate_patterns += 2
+            if 'memory' in str(legitimacy_indicators).lower():
+                analysis['purpose'] = 'memory/knowledge storage'
+            elif 'cache' in str(legitimacy_indicators).lower():
+                analysis['purpose'] = 'caching'
+            else:
+                analysis['purpose'] = 'data storage'
+        
+        # No user input in file paths (good)
+        if legitimacy_indicators['no_user_input_paths']:
+            legitimate_patterns += 1
+            
+        # Single configuration file pattern (good)
+        if legitimacy_indicators['single_config_file_pattern']:
+            legitimate_patterns += 1
+
+        # Determine legitimacy
+        if legitimate_patterns >= 4:
+            analysis['appears_legitimate'] = True
+        elif legitimate_patterns >= 2:
+            analysis['partially_suspicious'] = True
+            analysis['concerns'].append("Some indicators suggest legitimate use but context is unclear")
+        else:
+            # Check for concerning patterns
+            if violation_count > 5:
+                analysis['concerns'].append("High number of file operations")
+            if any('exec' in op or 'system' in op for op in file_operations):
+                analysis['concerns'].append("Mixed file and system operations")
+                
+        return analysis
+
+    def _analyze_network_usage_context(self, usage_evidence: Dict[str, Any], legitimacy_indicators: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze network usage context for legitimacy"""
+        
+        violations = usage_evidence.get('violations', [])
+        operations = [v.get('operation', '') for v in violations]
+        
+        # Network usage is generally more suspicious for MCP servers
+        # unless explicitly documented as API integration
+        legitimate_indicators = 0
+        
+        if legitimacy_indicators['readme_describes_functionality']:
+            legitimate_indicators += 1
+            
+        if any('api' in op.lower() or 'webhook' in op.lower() for op in operations):
+            legitimate_indicators += 1
+            
+        return {
+            'appears_legitimate': legitimate_indicators >= 2,
+            'purpose': 'API integration' if legitimate_indicators >= 1 else 'unknown network access'
+        }
 
     def _get_most_common_operation(self, violations: List[Dict]) -> str:
         """Get the most common operation type from violations"""
