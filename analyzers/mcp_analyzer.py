@@ -205,6 +205,18 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         scope_findings = await self._analyze_permission_scope_violations(repo_path, project_info)
         findings.extend(scope_findings)
 
+        # Enhanced MCP protocol validation
+        protocol_findings = await self._validate_mcp_protocol(repo_path)
+        findings.extend(protocol_findings)
+
+        # Enhanced security risk assessment
+        security_risk_findings = []
+        security_risk_findings.extend(await self._check_capability_leakage(repo_path))
+        security_risk_findings.extend(await self._check_unauthorized_access(repo_path))
+        security_risk_findings.extend(await self._check_data_exposure(repo_path))
+        security_risk_findings.extend(await self._check_tool_abuse_potential(repo_path))
+        findings.extend(security_risk_findings)
+
         self.logger.info(f"MCP analyzer found {len(findings)} issues")
         return findings
 
@@ -1811,6 +1823,198 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
             except Exception as e:
                 self.logger.debug(f"Failed to analyze {file_path}: {e}")
 
+        return findings
+
+    async def _validate_mcp_protocol(self, repo_path: str) -> List[Finding]:
+        """Validate MCP protocol compliance"""
+        findings = []
+        
+        # Check for protocol compliance issues
+        # This validates against MCP specification
+        findings.extend(await self._check_json_rpc_compliance(repo_path))
+        
+        return findings
+
+    async def _check_json_rpc_compliance(self, repo_path: str) -> List[Finding]:
+        """Check JSON-RPC 2.0 compliance in MCP implementations"""
+        findings = []
+        
+        # Look for JSON-RPC message handling
+        jsonrpc_patterns = [
+            r'["\']jsonrpc["\']\\s*:\\s*["\']2\\.0["\']',
+            r'["\']method["\']',
+            r'["\']params["\']',
+            r'["\']id["\']'
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.{py,js,ts}'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                # Check if file handles JSON-RPC
+                if any(re.search(pattern, content, re.IGNORECASE) for pattern in jsonrpc_patterns):
+                    # Look for potential protocol violations
+                    if 'jsonrpc' in content.lower() and '2.0' not in content:
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.GENERIC,
+                            severity=SeverityLevel.MEDIUM,
+                            confidence=0.8,
+                            title="Potential JSON-RPC version mismatch",
+                            description="File handles JSON-RPC but may not specify version 2.0",
+                            location=str(file_path.relative_to(repo_path)),
+                            recommendation="Ensure JSON-RPC 2.0 compliance for MCP compatibility"
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking JSON-RPC compliance in {file_path}: {e}")
+        
+        return findings
+
+    async def _check_capability_leakage(self, repo_path: str) -> List[Finding]:
+        """Check for capability leakage in MCP implementation"""
+        findings = []
+        
+        # Look for overly broad capability exposure
+        capability_patterns = [
+            (r'capabilities.*\\[\\s*["\'].*["\']\\s*\\]', 'Broad capability exposure'),
+            (r'expose.*all.*capabilities', 'All capabilities exposed'),
+            (r'unrestricted.*access', 'Unrestricted access pattern')
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.{py,js,ts}'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                for pattern, description in capability_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\\n') + 1
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                            severity=SeverityLevel.MEDIUM,
+                            confidence=0.7,
+                            title=f"Potential capability leakage: {description}",
+                            description=f"MCP implementation may expose capabilities too broadly",
+                            location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                            recommendation="Implement principle of least privilege for MCP capabilities",
+                            evidence={'pattern': match.group(0)}
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking capability leakage in {file_path}: {e}")
+        
+        return findings
+
+    async def _check_unauthorized_access(self, repo_path: str) -> List[Finding]:
+        """Check for unauthorized access patterns"""
+        findings = []
+        
+        # Look for missing authorization checks
+        auth_patterns = [
+            r'@mcp\\.tool.*\\n(?!.*(?:auth|permission|check|validate))',
+            r'@mcp\\.resource.*\\n(?!.*(?:auth|permission|check|validate))',
+            r'def\\s+\\w+.*\\n\\s*""".*tool.*"""(?!.*auth)'
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                for pattern in auth_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\\n') + 1
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                            severity=SeverityLevel.MEDIUM,
+                            confidence=0.6,
+                            title="MCP tool/resource without authorization check",
+                            description="MCP tool or resource may lack proper authorization",
+                            location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                            recommendation="Add authorization checks to MCP tools and resources",
+                            evidence={'context': match.group(0)[:100]}
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking authorization in {file_path}: {e}")
+        
+        return findings
+
+    async def _check_data_exposure(self, repo_path: str) -> List[Finding]:
+        """Check for data exposure in MCP resources"""
+        findings = []
+        
+        # Look for potentially sensitive data exposure
+        exposure_patterns = [
+            (r'@mcp\\.resource.*\\n.*user.*data', 'User data exposure'),
+            (r'@mcp\\.resource.*\\n.*sensitive', 'Sensitive data exposure'),
+            (r'@mcp\\.resource.*\\n.*private', 'Private data exposure'),
+            (r'return.*user.*\\+.*secret', 'Data mixing with secrets')
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                for pattern, description in exposure_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\\n') + 1
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.DATA_EXPOSURE,
+                            severity=SeverityLevel.HIGH,
+                            confidence=0.7,
+                            title=f"Potential data exposure: {description}",
+                            description=f"MCP resource may expose sensitive data inappropriately",
+                            location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                            recommendation="Review and restrict data exposure in MCP resources",
+                            evidence={'pattern': match.group(0)[:100]}
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking data exposure in {file_path}: {e}")
+        
+        return findings
+
+    async def _check_tool_abuse_potential(self, repo_path: str) -> List[Finding]:
+        """Check for tool abuse potential"""
+        findings = []
+        
+        # Look for tools that could be abused
+        abuse_patterns = [
+            (r'@mcp\\.tool.*\\n.*delete.*file', 'File deletion capability'),
+            (r'@mcp\\.tool.*\\n.*network.*request', 'Network request capability'),
+            (r'@mcp\\.tool.*\\n.*database.*query', 'Database query capability'),
+            (r'@mcp\\.tool.*\\n.*admin.*privilege', 'Administrative privilege')
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                for pattern, description in abuse_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\\n') + 1
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
+                            severity=SeverityLevel.MEDIUM,
+                            confidence=0.7,
+                            title=f"Potential tool abuse: {description}",
+                            description=f"MCP tool with {description.lower()} could be abused",
+                            location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                            recommendation="Implement proper access controls and validation for powerful tools",
+                            evidence={'capability': description}
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking tool abuse in {file_path}: {e}")
+        
         return findings
 
     def _extract_function_content(self, content: str, func_start_pos: int) -> str:

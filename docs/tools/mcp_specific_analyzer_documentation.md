@@ -2,13 +2,19 @@
 
 ## Overview
 
-The **MCP-Specific Analyzer** provides targeted security analysis for Model Context Protocol (MCP) implementations, focusing on unique vulnerabilities specific to MCP architecture:
+The **MCP-Specific Analyzer** provides comprehensive targeted security analysis for Model Context Protocol (MCP) implementations, consolidating multiple specialized analyzers into a unified security assessment tool:
 
 - **Tool Poisoning Attack (TPA) Detection** - Identifies malicious tool descriptions and implementations
 - **Prompt Injection Analysis** - Detects injection attempts in descriptions and schemas  
 - **Permission Abuse Detection** - Finds undeclared or excessive permission usage
 - **Schema Injection Prevention** - Validates MCP schema definitions for security
+- **Protocol Compliance Validation** - Ensures JSON-RPC 2.0 and MCP specification compliance
+- **Capability Leakage Detection** - Identifies overly broad capability exposure
+- **Data Exposure Analysis** - Detects sensitive data exposure in MCP resources
+- **Tool Abuse Prevention** - Analyzes tools for potential abuse scenarios
 - **ML-Enhanced Analysis** - Uses Intelligent Context Analyzer for legitimacy assessment
+
+> **Note**: This analyzer consolidates functionality previously split across `mcp_analyzer.py` and `mcp_config_analyzer.py` for improved maintainability and comprehensive coverage.
 
 ## Architecture
 
