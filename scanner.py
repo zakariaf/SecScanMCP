@@ -29,6 +29,7 @@ from analyzers import (
 )
 from models import Finding, ScanResult
 from enhanced_scoring import EnhancedSecurityScorer
+from mcp_detector import MCPDetector
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class SecurityScanner:
         }
 
         self.enhanced_scorer = EnhancedSecurityScorer()
+        self.mcp_detector = MCPDetector()
 
     async def scan_repository(
         self,
@@ -205,71 +207,36 @@ class SecurityScanner:
             raise
 
     async def _analyze_project(self, repo_path: str) -> Dict[str, Any]:
-        """Detect project type and MCP configuration"""
-        project_info = {
-            'type': 'unknown',
-            'language': None,
-            'is_mcp': False,
-            'mcp_config': None,
-            'dependencies': []
-        }
-
-        # Check for MCP indicators
-        mcp_files = ['mcp.json', 'mcp.yaml', 'mcp.yml']
-        for mcp_file in mcp_files:
-            if (Path(repo_path) / mcp_file).exists():
-                project_info['is_mcp'] = True
-                # Load MCP configuration
-                try:
-                    with open(Path(repo_path) / mcp_file) as f:
-                        if mcp_file.endswith('.json'):
-                            project_info['mcp_config'] = json.load(f)
-                        else:
-                            import yaml
-                            project_info['mcp_config'] = yaml.safe_load(f)
-                except Exception as e:
-                    logger.warning(f"Failed to parse MCP config: {e}")
-                break
-
-        # Detect language and project type
-        if (Path(repo_path) / 'package.json').exists():
-            project_info['type'] = 'node'
-            project_info['language'] = 'javascript'
-            # Check for MCP in dependencies
-            try:
-                with open(Path(repo_path) / 'package.json') as f:
-                    pkg = json.load(f)
-                    deps = list(pkg.get('dependencies', {}).keys())
-                    deps.extend(pkg.get('devDependencies', {}).keys())
-                    project_info['dependencies'] = deps
-                    if any('mcp' in dep.lower() for dep in deps):
-                        project_info['is_mcp'] = True
-            except:
-                pass
-
-        elif (Path(repo_path) / 'requirements.txt').exists() or (Path(repo_path) / 'pyproject.toml').exists() or (Path(repo_path) / 'setup.py').exists():
-            project_info['type'] = 'python'
-            project_info['language'] = 'python'
-            # Check for MCP in Python files
-            for py_file in Path(repo_path).rglob('*.py'):
-                try:
-                    with open(py_file, 'r', encoding='utf-8', errors='ignore') as f:
-                        content = f.read()
-                        if 'import mcp' in content or 'from mcp' in content:
-                            project_info['is_mcp'] = True
-                            break
-                except:
-                    continue
-
-        elif (Path(repo_path) / 'go.mod').exists():
-            project_info['type'] = 'go'
-            project_info['language'] = 'go'
-
-        elif (Path(repo_path) / 'Cargo.toml').exists():
-            project_info['type'] = 'rust'
-            project_info['language'] = 'rust'
-
-        return project_info
+        """Detect project type and MCP configuration using dedicated MCP detector"""
+        try:
+            project_info = await self.mcp_detector.analyze_project(repo_path)
+            
+            # Log detection results
+            if project_info.get('is_mcp'):
+                confidence_explanation = self.mcp_detector.get_detection_confidence_explanation(project_info)
+                logger.info(f"MCP server detected: {confidence_explanation}")
+                
+                # Log detected packages if available
+                detected_packages = project_info.get('detected_packages', [])
+                if detected_packages:
+                    logger.info(f"Detected MCP packages: {detected_packages}")
+            else:
+                logger.info(f"Project type: {project_info['type']} ({project_info['language'] or 'unknown language'}), MCP: No")
+            
+            return project_info
+            
+        except Exception as e:
+            logger.error(f"Project analysis failed: {e}")
+            # Return minimal project info on failure
+            return {
+                'type': 'unknown',
+                'language': None,
+                'is_mcp': False,
+                'mcp_config': None,
+                'dependencies': [],
+                'detection_method': 'analysis_failed',
+                'confidence': 0.0
+            }
 
     async def _run_analyzers(
         self,
