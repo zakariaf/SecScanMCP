@@ -18,36 +18,45 @@ class ScanContextLogger:
         self.name = name
         self._logger = structlog.get_logger(name)
     
-    def _get_context(self) -> Dict[str, Any]:
-        """Get current logging context with scan ID."""
+    def _get_context(self, **kwargs) -> Dict[str, Any]:
+        """Get current logging context with scan ID, handling keyword conflicts."""
         context = {}
         
         scan_id = scan_id_context.get()
         if scan_id:
             context['scan_id'] = scan_id
-            
-        context['component'] = self.name
+        
+        # Use provided component or default to logger name
+        context['component'] = kwargs.pop('component', self.name)
+        
+        # Merge any additional context from kwargs
+        context.update(kwargs)
         return context
     
     def debug(self, msg: str, **kwargs):
         """Log debug message with context."""
-        self._logger.debug(msg, **self._get_context(), **kwargs)
+        context = self._get_context(**kwargs)
+        self._logger.debug(msg, **context)
     
     def info(self, msg: str, **kwargs):
         """Log info message with context."""
-        self._logger.info(msg, **self._get_context(), **kwargs)
+        context = self._get_context(**kwargs)
+        self._logger.info(msg, **context)
     
     def warning(self, msg: str, **kwargs):
         """Log warning message with context."""
-        self._logger.warning(msg, **self._get_context(), **kwargs)
+        context = self._get_context(**kwargs)
+        self._logger.warning(msg, **context)
     
     def error(self, msg: str, **kwargs):
         """Log error message with context."""
-        self._logger.error(msg, **self._get_context(), **kwargs)
+        context = self._get_context(**kwargs)
+        self._logger.error(msg, **context)
     
     def exception(self, msg: str, **kwargs):
         """Log exception with context."""
-        self._logger.exception(msg, **self._get_context(), **kwargs)
+        context = self._get_context(**kwargs)
+        self._logger.exception(msg, **context)
 
 
 def get_scan_logger(name: str) -> ScanContextLogger:

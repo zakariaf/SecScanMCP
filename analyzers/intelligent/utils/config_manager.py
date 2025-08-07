@@ -3,16 +3,16 @@
 import os
 import yaml
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 
 class MLModelsConfig(BaseModel):
     """ML models configuration."""
-    embeddings: Dict[str, any] = Field(default_factory=dict)
-    anomaly_detection: Dict[str, any] = Field(default_factory=dict)
-    clustering: Dict[str, any] = Field(default_factory=dict)
+    embeddings: Dict[str, Any] = Field(default_factory=dict)
+    anomaly_detection: Dict[str, Any] = Field(default_factory=dict)
+    clustering: Dict[str, Any] = Field(default_factory=dict)
 
 
 class RiskWeights(BaseModel):
@@ -164,7 +164,7 @@ class ConfigManager:
             'medium_confidence': thresholds.medium_confidence
         }
     
-    def get_anomaly_thresholds(self) -> Dict[str, any]:
+    def get_anomaly_thresholds(self) -> Dict[str, Any]:
         """Get anomaly detection thresholds."""
         settings = self.load_settings()
         thresholds = settings.risk_assessment.anomaly_thresholds
