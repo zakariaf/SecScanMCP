@@ -110,16 +110,70 @@ class SecurityScanner:
 
         return result
 
+    def _parse_github_url(self, url: str) -> Dict[str, str]:
+        """Parse GitHub URL to extract repo info and subdirectory path"""
+        # Handle different GitHub URL formats
+        patterns = [
+            # https://github.com/owner/repo/tree/branch/path/to/dir
+            r'github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.+)',
+            # https://github.com/owner/repo/tree/branch
+            r'github\.com/([^/]+)/([^/]+)/tree/([^/]+)/?$',
+            # https://github.com/owner/repo
+            r'github\.com/([^/]+)/([^/]+)/?$'
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, url)
+            if match:
+                groups = match.groups()
+                result = {
+                    'owner': groups[0],
+                    'repo': groups[1],
+                    'git_url': f"https://github.com/{groups[0]}/{groups[1]}.git"
+                }
+                
+                if len(groups) >= 3:
+                    result['branch'] = groups[2]
+                else:
+                    result['branch'] = 'main'
+                    
+                if len(groups) >= 4:
+                    result['subdirectory'] = groups[3]
+                else:
+                    result['subdirectory'] = None
+                    
+                return result
+        
+        # If not a GitHub URL, treat as regular git URL
+        # But if it contains github.com, it might be a malformed GitHub URL
+        if 'github.com' in url:
+            # This might be a GitHub URL that didn't match our patterns
+            # Log a warning and try to handle it as a regular repo
+            logger.warning(f"GitHub URL didn't match expected patterns: {url}")
+            
+        return {
+            'git_url': url,
+            'branch': 'main',
+            'subdirectory': None
+        }
+
     async def _clone_repository(self, repo_url: str, target_dir: str) -> str:
-        """Clone repository with security constraints"""
+        """Clone repository with security constraints and subdirectory support"""
         try:
+            # Parse URL to handle GitHub subdirectories
+            url_info = self._parse_github_url(repo_url)
+            git_url = url_info['git_url']
+            subdirectory = url_info.get('subdirectory')
+            branch = url_info.get('branch', 'main')
+            
             # Use sparse checkout for efficiency
             clone_cmd = [
                 'git', 'clone',
                 '--depth', '1',
                 '--single-branch',
+                '--branch', branch,
                 '--no-tags',
-                repo_url,
+                git_url,
                 target_dir
             ]
 
@@ -133,6 +187,15 @@ class SecurityScanner:
 
             if process.returncode != 0:
                 raise RuntimeError(f"Git clone failed: {stderr.decode()}")
+
+            # If subdirectory is specified, focus analysis on that directory
+            if subdirectory:
+                subdir_path = Path(target_dir) / subdirectory
+                if subdir_path.exists() and subdir_path.is_dir():
+                    logger.info(f"Focusing analysis on subdirectory: {subdirectory}")
+                    return str(subdir_path)
+                else:
+                    logger.warning(f"Subdirectory {subdirectory} not found, analyzing full repository")
 
             logger.info(f"Successfully cloned repository to {target_dir}")
             return target_dir
@@ -379,7 +442,11 @@ class SecurityScanner:
                 
                 unique_findings.append(best_finding)
 
-        logger.info(f"Deduplicated {total_before} findings down to {len(unique_findings)} ({(total_before-len(unique_findings))/total_before*100:.1f}% reduction)")
+        if total_before > 0:
+            reduction_percent = (total_before-len(unique_findings))/total_before*100
+            logger.info(f"Deduplicated {total_before} findings down to {len(unique_findings)} ({reduction_percent:.1f}% reduction)")
+        else:
+            logger.info(f"No findings to deduplicate (0 findings found)")
         return unique_findings
 
     def _extract_cve_from_title(self, title: str) -> str:
