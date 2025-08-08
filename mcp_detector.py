@@ -508,8 +508,50 @@ class MCPDetector:
 
     async def _detect_generic_project(self, repo_path: str, project_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Fallback detection for unknown project types"""
-        # If we haven't detected any specific project type, return unknown
+        # If we haven't detected any specific project type, try to detect by file extensions
         if project_info['type'] == 'unknown':
+            # Check for common language files
+            file_counts = {}
+            
+            for file_path in Path(repo_path).rglob('*'):
+                if file_path.is_file() and file_path.suffix:
+                    ext = file_path.suffix.lower()
+                    file_counts[ext] = file_counts.get(ext, 0) + 1
+            
+            # Language detection based on file extensions
+            if file_counts.get('.py', 0) > 0:
+                logger.info(f"Found {file_counts['.py']} Python files, treating as Python project")
+                return {
+                    'type': 'python',
+                    'language': 'python',
+                    'detection_method': 'file_extension_python',
+                    'confidence': 0.7
+                }
+            elif file_counts.get('.js', 0) > 0 or file_counts.get('.ts', 0) > 0:
+                logger.info(f"Found JavaScript/TypeScript files, treating as Node.js project")
+                return {
+                    'type': 'node',
+                    'language': 'javascript',
+                    'detection_method': 'file_extension_js',
+                    'confidence': 0.7
+                }
+            elif file_counts.get('.go', 0) > 0:
+                logger.info(f"Found Go files, treating as Go project")
+                return {
+                    'type': 'go',
+                    'language': 'go',
+                    'detection_method': 'file_extension_go',
+                    'confidence': 0.7
+                }
+            elif file_counts.get('.rs', 0) > 0:
+                logger.info(f"Found Rust files, treating as Rust project")
+                return {
+                    'type': 'rust',
+                    'language': 'rust',
+                    'detection_method': 'file_extension_rust',
+                    'confidence': 0.7
+                }
+            
             return {
                 'type': 'unknown',
                 'language': None,
