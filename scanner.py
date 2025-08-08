@@ -86,8 +86,9 @@ class SecurityScanner:
         # Calculate enhanced dual scores
         enhanced_scores = self.enhanced_scorer.calculate_both_scores(findings)
         
-        # Separate user-centric security issues
+        # Separate user-centric and developer-centric findings
         user_centric_findings = self._extract_user_centric_findings(findings)
+        developer_centric_findings = self._extract_developer_centric_findings(findings)
 
         # Build result
         result = ScanResult(
@@ -96,6 +97,7 @@ class SecurityScanner:
             is_mcp_server=project_info['is_mcp'],
             findings=findings,
             user_centric_findings=user_centric_findings,
+            developer_centric_findings=developer_centric_findings,
             security_score=enhanced_scores['user_safety']['score'],
             security_grade=enhanced_scores['user_safety']['grade'],
             enhanced_scores=enhanced_scores,
@@ -478,6 +480,26 @@ class SecurityScanner:
                 user_centric.append(finding)
         
         return user_centric
+    
+    def _extract_developer_centric_findings(self, findings: List[Finding]) -> List[Finding]:
+        """Extract findings that are developer-side security issues"""
+        # Import the categories from enhanced scoring
+        from enhanced_scoring import EnhancedSecurityScorer
+        
+        scorer = EnhancedSecurityScorer()
+        developer_centric = []
+        
+        for finding in findings:
+            if finding.confidence < 0.5:  # Skip low confidence
+                continue
+                
+            vuln_type = finding.vulnerability_type
+            
+            # Check if this is a developer-side issue
+            if vuln_type in scorer.DEVELOPER_CONCERNS:
+                developer_centric.append(finding)
+        
+        return developer_centric
     
     def _generate_summary(
         self,

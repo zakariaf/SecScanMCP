@@ -143,6 +143,7 @@ class ScanResult(BaseModel):
     # Findings
     findings: List[Finding]
     user_centric_findings: List[Finding] = Field(default_factory=list)
+    developer_centric_findings: List[Finding] = Field(default_factory=list)
     total_findings: int = 0
 
     # Enhanced Scoring (main scores)
