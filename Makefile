@@ -133,7 +133,7 @@ versions:
 
 # Show logs
 logs:
-	docker-compose logs -f scanner
+	docker compose logs -f scanner
 
 # Additional monitoring commands
 status:
