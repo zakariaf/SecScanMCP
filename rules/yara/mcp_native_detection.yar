@@ -5,49 +5,6 @@ Focus: Protocol-specific patterns and implementation vulnerabilities
 
 import "math"
 
-rule MCP_Server_Implementation_Detection
-{
-    meta:
-        description = "Detects MCP server implementations"
-        author = "Enhanced MCP Security Scanner"
-        severity = "info"
-        category = "mcp_detection"
-        confidence = "0.9"
-
-    strings:
-        // Python MCP patterns
-        $mcp_py1 = "from mcp import"
-        $mcp_py2 = "import mcp"
-        $mcp_py3 = "@mcp.tool"
-        $mcp_py4 = "@mcp.resource" 
-        $mcp_py5 = "@mcp.prompt"
-        $mcp_py6 = "FastMCP("
-        $mcp_py7 = "MCPServer("
-        
-        // JavaScript/TypeScript MCP patterns
-        $mcp_js1 = "from '@modelcontextprotocol"
-        $mcp_js2 = "require('@modelcontextprotocol"
-        $mcp_js3 = "createServer("
-        $mcp_js4 = ".tool("
-        $mcp_js5 = ".resource("
-        $mcp_js6 = ".prompt("
-        
-        // JSON-RPC MCP patterns
-        $jsonrpc1 = "\"jsonrpc\": \"2.0\""
-        $jsonrpc2 = "\"method\": \"initialize\""
-        $jsonrpc3 = "\"method\": \"tools/list\""
-        $jsonrpc4 = "\"method\": \"resources/list\""
-        
-        // MCP configuration patterns
-        $config1 = "mcpServers"
-        $config2 = "claude_desktop_config"
-        $config3 = "cursor_mcp_config"
-
-    condition:
-        any of ($mcp_py*) or any of ($mcp_js*) or 
-        (any of ($jsonrpc*) and any of ($config*))
-}
-
 rule MCP_Tool_Definition_Unsafe_Implementation
 {
     meta:
