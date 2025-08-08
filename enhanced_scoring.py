@@ -36,6 +36,8 @@ class EnhancedSecurityScorer:
         VulnerabilityType.TOOL_POISONING,
         VulnerabilityType.TOOL_MANIPULATION,
         VulnerabilityType.DATA_LEAKAGE,
+        VulnerabilityType.DATA_EXPOSURE,
+        VulnerabilityType.PRIVILEGE_ESCALATION,
         VulnerabilityType.MALWARE,
         VulnerabilityType.BACKDOOR,
     }
@@ -46,7 +48,7 @@ class EnhancedSecurityScorer:
         VulnerabilityType.OUTPUT_POISONING,
         VulnerabilityType.PERMISSION_ABUSE,
         VulnerabilityType.SCHEMA_INJECTION,
-        VulnerabilityType.HARDCODED_SECRET,  # If it exposes user data
+        VulnerabilityType.MCP_SPECIFIC,
     }
 
     # Indirect user impact vulnerabilities (Medium)
@@ -54,11 +56,23 @@ class EnhancedSecurityScorer:
         VulnerabilityType.SQL_INJECTION,
         VulnerabilityType.SSRF,
         VulnerabilityType.XSS,
+        VulnerabilityType.XXE,
         VulnerabilityType.WEAK_CRYPTO,
         VulnerabilityType.INSECURE_CONFIGURATION,
         VulnerabilityType.BEHAVIORAL_ANOMALY,
         VulnerabilityType.NETWORK_SECURITY,
         VulnerabilityType.RESOURCE_ABUSE,
+    }
+    
+    # Developer-side security issues (not exploitable through MCP)
+    DEVELOPER_CONCERNS = {
+        VulnerabilityType.HARDCODED_SECRET,
+        VulnerabilityType.VULNERABLE_DEPENDENCY,
+        VulnerabilityType.OUTDATED_DEPENDENCY,
+        VulnerabilityType.LICENSE_VIOLATION,
+        VulnerabilityType.API_KEY_EXPOSURE,
+        VulnerabilityType.MISSING_SECURITY_HEADERS,
+        VulnerabilityType.GENERIC,
     }
 
     # User impact penalties by category
@@ -68,23 +82,28 @@ class EnhancedSecurityScorer:
         (VulnerabilityType.CODE_INJECTION, SeverityLevel.CRITICAL): 25,
         (VulnerabilityType.PATH_TRAVERSAL, SeverityLevel.CRITICAL): 25,
         (VulnerabilityType.TOOL_POISONING, SeverityLevel.CRITICAL): 25,
+        (VulnerabilityType.PRIVILEGE_ESCALATION, SeverityLevel.CRITICAL): 25,
         (VulnerabilityType.MALWARE, SeverityLevel.CRITICAL): 50,  # Automatic fail
         (VulnerabilityType.BACKDOOR, SeverityLevel.CRITICAL): 50,  # Automatic fail
         (VulnerabilityType.DATA_LEAKAGE, SeverityLevel.CRITICAL): 20,
+        (VulnerabilityType.DATA_EXPOSURE, SeverityLevel.CRITICAL): 20,
         
         # High severity MCP-related
         (VulnerabilityType.PROMPT_INJECTION, SeverityLevel.HIGH): 10,
         (VulnerabilityType.OUTPUT_POISONING, SeverityLevel.HIGH): 10,
         (VulnerabilityType.PERMISSION_ABUSE, SeverityLevel.HIGH): 10,
+        (VulnerabilityType.MCP_SPECIFIC, SeverityLevel.HIGH): 10,
         (VulnerabilityType.HARDCODED_SECRET, SeverityLevel.HIGH): 8,
         
         # Medium severity indirect impact
         (VulnerabilityType.SQL_INJECTION, SeverityLevel.MEDIUM): 5,
+        (VulnerabilityType.XXE, SeverityLevel.MEDIUM): 5,
         (VulnerabilityType.BEHAVIORAL_ANOMALY, SeverityLevel.MEDIUM): 3,
         (VulnerabilityType.RESOURCE_ABUSE, SeverityLevel.MEDIUM): 3,
         
         # Low severity
         (VulnerabilityType.INSECURE_CONFIGURATION, SeverityLevel.LOW): 2,
+        (VulnerabilityType.MISSING_SECURITY_HEADERS, SeverityLevel.LOW): 1,
         (VulnerabilityType.VULNERABLE_DEPENDENCY, SeverityLevel.LOW): 1,
     }
 
