@@ -1,8 +1,8 @@
-# Intelligent Context Analyzer - ML-Powered Legitimacy Assessment
+# Intelligent Context Analyzer - ML-Powered False Positive Reduction
 
 ## Overview
 
-The **Intelligent Context Analyzer** provides advanced machine learning-based security analysis that goes beyond simple pattern matching to assess the legitimacy of code behavior through contextual understanding:
+The **Intelligent Context Analyzer** is a **false positive reduction system** that provides ML-based legitimacy assessment for suspicious patterns found by other security tools. It does NOT find new vulnerabilities but determines if detected patterns are legitimate based on contextual analysis:
 
 - **Semantic Intent Analysis** using sentence transformers (all-MiniLM-L6-v2)
 - **Behavioral Pattern Recognition** with heuristic scoring systems
@@ -157,19 +157,24 @@ curl -X POST http://localhost:8000/scan \
   }'
 ```
 
-Response includes intelligent analysis results:
+**Note**: Intelligent analysis results are embedded within MCP-specific findings, not as separate output:
 
 ```json
 {
-  "intelligent_analysis": {
-    "is_legitimate": true,
-    "confidence_score": 0.95,
-    "risk_level": "low",
-    "explanation": "Analysis indicates legitimate functionality (confidence: 95.0%). Strong alignment between declared intent and actual behavior.",
-    "intent_alignment_score": 0.89,
-    "behavioral_anomaly_score": 0.12,
-    "ecosystem_similarity_score": 0.91
-  }
+  "findings": [
+    {
+      "vulnerability_type": "permission_abuse",
+      "tool": "mcpspecific",
+      "evidence": {
+        "ml_insights": {
+          "intent_alignment_score": 0.89,
+          "behavioral_anomaly_score": 0.12,
+          "ecosystem_similarity_score": 0.91,
+          "ml_confidence": 0.95
+        }
+      }
+    }
+  ]
 }
 ```
 
@@ -271,13 +276,20 @@ print('Model loaded successfully')
 
 ## Integration with Other Analyzers
 
-The Intelligent Analyzer complements static analysis tools:
+**IMPORTANT**: The Intelligent Analyzer is a **false positive reduction system**, not a vulnerability detector:
 
-1. **Static analyzers** (Bandit, CodeQL) find potential vulnerabilities
-2. **Intelligent analyzer** assesses whether patterns represent legitimate functionality
-3. **Enhanced scoring** uses intelligent analysis to reduce false positives
+1. **Other analyzers** (Bandit, CodeQL, YARA, MCP analyzer) find potential vulnerabilities
+2. **Intelligent analyzer** assesses whether those patterns represent legitimate functionality
+3. **Used ONLY within MCP analyzer** for permission context analysis - does not produce standalone findings
+4. **Enhanced scoring** uses intelligent analysis to reduce false positives in scoring
 
-Example: A file write operation might trigger static analysis warnings, but the intelligent analyzer can determine it's legitimate configuration storage for an MCP server.
+**Current Integration**:
+- Integrated into `analyzers/mcp_analyzer.py` only
+- Provides context for permission usage analysis
+- Does NOT create `BEHAVIORAL_ANOMALY` vulnerability findings
+- Does NOT run as standalone analyzer in scanner pipeline
+
+Example: When MCP analyzer finds `subprocess.run()` usage, the intelligent analyzer determines if it's legitimate system administration vs malicious code execution.
 
 ## Future Enhancements
 
