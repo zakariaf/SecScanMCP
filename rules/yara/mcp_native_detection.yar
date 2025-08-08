@@ -5,6 +5,52 @@ Focus: Protocol-specific patterns and implementation vulnerabilities
 
 import "math"
 
+rule MCP_Tool_Poisoning_Advanced
+{
+    meta:
+        description = "Advanced detection of MCP tool poisoning attacks"
+        author = "Enhanced MCP Security Scanner"
+        severity = "critical"
+        category = "tool_poisoning"
+        confidence = "0.9"
+        reference = "CVE-2025-49596"
+
+    strings:
+        // Tool decorators
+        $tool_def1 = /@mcp\.tool\s*\(/
+        $tool_def2 = /@\w+\.tool\s*\(/
+        $tool_def3 = /\.tool\s*\(\s*name\s*=\s*["'][^"']+["']/
+        
+        // Hidden instruction markers - DVMCP patterns
+        $hidden1 = /<HIDDEN>/
+        $hidden2 = /<SECRET>/
+        $hidden3 = /<IMPORTANT>/
+        $hidden4 = /\{INSTRUCTION:/
+        $hidden5 = /SYSTEM\s*:/
+        $hidden6 = /ALWAYS\s*:/
+        
+        // Advanced poisoning patterns
+        $poison1 = /you\s+must\s+(?:first\s+)?(?:access|read|retrieve)/
+        $poison2 = /do\s+not\s+(?:mention|tell|say|reveal)/
+        $poison3 = /ignore\s+(?:all\s+)?previous\s+instructions/
+        $poison4 = /override[_-]auth[_-]protocol/
+        $poison5 = /get_secrets\s*\(\s*\)/
+        
+        // Resource access commands in tool descriptions
+        $resource1 = /system:\/\/[a-zA-Z_]+/
+        $resource2 = /internal:\/\/[a-zA-Z_]+/
+        $resource3 = /admin:\/\/[a-zA-Z_]+/
+        $resource4 = /confidential[^"']*/
+        $resource5 = /secret[^"']*/
+
+    condition:
+        any of ($tool_def*) and (
+            any of ($hidden*) or 
+            any of ($poison*) or 
+            any of ($resource*)
+        )
+}
+
 rule MCP_Tool_Definition_Unsafe_Implementation
 {
     meta:
@@ -213,9 +259,11 @@ rule MCP_Prompt_Template_Injection
         
         // Injection patterns in prompts
         $inject1 = /return\s+f["'][^"']*<IMPORTANT>[^"']*["']/
-        $inject2 = /return\s+f["'][^"']*SYSTEM:[^"']*["']/
-        $inject3 = /return\s+f["'][^"']*ignore previous[^"']*["']/
-        $inject4 = /return\s+f["'][^"']*\{INSTRUCTION:[^"']*["']/
+        $inject2 = /return\s+f["'][^"']*<HIDDEN>[^"']*["']/
+        $inject3 = /return\s+f["'][^"']*<SECRET>[^"']*["']/
+        $inject4 = /return\s+f["'][^"']*SYSTEM:[^"']*["']/
+        $inject5 = /return\s+f["'][^"']*ignore previous[^"']*["']/
+        $inject6 = /return\s+f["'][^"']*\{INSTRUCTION:[^"']*["']/
         
         // Unsanitized user input in prompts
         $unsafe_prompt1 = /return\s+f["'][^"']*\{user_input\}[^"']*["']/
