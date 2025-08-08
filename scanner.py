@@ -166,29 +166,48 @@ class SecurityScanner:
             url_info = self._parse_github_url(repo_url)
             git_url = url_info['git_url']
             subdirectory = url_info.get('subdirectory')
-            branch = url_info.get('branch', 'main')
+            specified_branch = url_info.get('branch') if 'tree/' in repo_url else None
             
-            # Use sparse checkout for efficiency
-            clone_cmd = [
-                'git', 'clone',
-                '--depth', '1',
-                '--single-branch',
-                '--branch', branch,
-                '--no-tags',
-                git_url,
-                target_dir
-            ]
+            # Try to clone with specified branch first, then fallback to common alternatives
+            if specified_branch:
+                branches_to_try = [specified_branch]
+            else:
+                branches_to_try = ['main', 'master']
+            
+            last_error = None
+            for attempt_branch in branches_to_try:
+                # Use sparse checkout for efficiency
+                clone_cmd = [
+                    'git', 'clone',
+                    '--depth', '1',
+                    '--single-branch',
+                    '--branch', attempt_branch,
+                    '--no-tags',
+                    git_url,
+                    target_dir
+                ]
 
-            process = await asyncio.create_subprocess_exec(
-                *clone_cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
+                process = await asyncio.create_subprocess_exec(
+                    *clone_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
 
-            stdout, stderr = await process.communicate()
+                stdout, stderr = await process.communicate()
 
-            if process.returncode != 0:
-                raise RuntimeError(f"Git clone failed: {stderr.decode()}")
+                if process.returncode == 0:
+                    logger.info(f"Successfully cloned repository using branch '{attempt_branch}'")
+                    break
+                else:
+                    last_error = stderr.decode()
+                    logger.debug(f"Clone failed with branch '{attempt_branch}': {last_error}")
+                    # Clean up failed attempt
+                    if Path(target_dir).exists():
+                        import shutil
+                        shutil.rmtree(target_dir, ignore_errors=True)
+            else:
+                # All branches failed
+                raise RuntimeError(f"Git clone failed with all attempted branches {branches_to_try}. Last error: {last_error}")
 
             # If subdirectory is specified, focus analysis on that directory
             if subdirectory:
