@@ -47,7 +47,7 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
             'cve': 'Related to MCP Tool Poisoning Attacks'
         },
         {
-            'pattern': r'(?i)(\{INSTRUCTION:|<IMPORTANT>|SYSTEM\s*:|{{SYSTEM|ALWAYS:)',
+            'pattern': r'(?i)(\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\s*:|{{SYSTEM|ALWAYS:)',
             'severity': SeverityLevel.CRITICAL,
             'title': 'Tool Poisoning: Hidden directive markers',
             'cve': 'Invariant Labs TPA'
@@ -215,6 +215,8 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         security_risk_findings.extend(await self._check_unauthorized_access(repo_path))
         security_risk_findings.extend(await self._check_data_exposure(repo_path))
         security_risk_findings.extend(await self._check_tool_abuse_potential(repo_path))
+        security_risk_findings.extend(await self._check_dangerous_resource_patterns(repo_path))
+        security_risk_findings.extend(await self._check_tool_shadowing_risks(repo_path))
         findings.extend(security_risk_findings)
 
         self.logger.info(f"MCP analyzer found {len(findings)} issues")
@@ -2054,3 +2056,192 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
                 function_lines.append(line)
         
         return '\n'.join(function_lines)
+
+    async def _check_dangerous_resource_patterns(self, repo_path: str) -> List[Finding]:
+        """Check for dangerous resource URI patterns like system://, internal:// etc."""
+        findings = []
+        
+        # Dangerous resource URI patterns
+        dangerous_patterns = [
+            (r'@\w*\.resource\(["\']system://[^"\']*["\']', 'system://', 'System resource access'),
+            (r'@\w*\.resource\(["\']internal://[^"\']*["\']', 'internal://', 'Internal resource access'),  
+            (r'@\w*\.resource\(["\']admin://[^"\']*["\']', 'admin://', 'Admin resource access'),
+            (r'@\w*\.resource\(["\']secret://[^"\']*["\']', 'secret://', 'Secret resource access'),
+            (r'@\w*\.resource\(["\']credential://[^"\']*["\']', 'credential://', 'Credential resource access'),
+            (r'@\w*\.resource\(["\']config://[^"\']*["\']', 'config://', 'Configuration resource access'),
+            (r'@\w*\.resource\([^"\']*listed=False', 'listed=False', 'Hidden resource'),
+        ]
+        
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                for pattern, uri_scheme, description in dangerous_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\n') + 1
+                        
+                        # Get context around the match
+                        lines = content.split('\n')
+                        context_start = max(0, line_num - 3)
+                        context_end = min(len(lines), line_num + 3)
+                        context = '\n'.join(lines[context_start:context_end])
+                        
+                        severity = SeverityLevel.CRITICAL if uri_scheme.startswith(('system://', 'admin://', 'secret://')) else SeverityLevel.HIGH
+                        
+                        findings.append(self.create_finding(
+                            vulnerability_type=VulnerabilityType.DATA_LEAKAGE,
+                            severity=severity,
+                            confidence=0.9,
+                            title=f"Dangerous resource pattern: {description}",
+                            description=f"MCP resource uses potentially dangerous URI pattern '{uri_scheme}' that may expose sensitive data",
+                            location=f"{file_path.relative_to(repo_path)}:{line_num}",
+                            recommendation=f"Avoid exposing {description.lower()} through MCP resources. Use proper access controls and data sanitization.",
+                            evidence={
+                                'uri_pattern': uri_scheme,
+                                'resource_type': description,
+                                'context': context
+                            }
+                        ))
+                        
+            except Exception as e:
+                logger.debug(f"Error checking resource patterns in {file_path}: {e}")
+        
+        return findings
+
+    async def _check_tool_shadowing_risks(self, repo_path: str) -> List[Finding]:
+        """Check for potential tool shadowing vulnerabilities"""
+        findings = []
+        
+        # Track tool names across files and servers
+        tool_definitions = {}
+        server_tools = {}
+        
+        for file_path in Path(repo_path).rglob('*.py'):
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                
+                # Find MCP tool definitions
+                tool_patterns = [
+                    r'@\w*\.tool\(\s*(?:name\s*=\s*["\']([^"\']+)["\'])?.*?\)\s*\ndef\s+(\w+)',
+                    r'@\w*\.tool\(\)\s*\ndef\s+(\w+)',
+                ]
+                
+                for pattern in tool_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE | re.DOTALL)
+                    for match in matches:
+                        if len(match.groups()) == 2:  # name and function
+                            tool_name = match.group(1) if match.group(1) else match.group(2)
+                            func_name = match.group(2)
+                        else:  # just function name
+                            tool_name = func_name = match.group(1)
+                        
+                        line_num = content[:match.start()].count('\n') + 1
+                        
+                        # Track tool definition
+                        tool_key = tool_name.lower()
+                        if tool_key not in tool_definitions:
+                            tool_definitions[tool_key] = []
+                        
+                        tool_definitions[tool_key].append({
+                            'name': tool_name,
+                            'function': func_name, 
+                            'file': str(file_path.relative_to(repo_path)),
+                            'line': line_num,
+                            'context': content[max(0, match.start()-100):match.end()+100]
+                        })
+                
+                # Check for multiple server instances
+                server_patterns = [
+                    r'(\w+)\s*=\s*FastMCP\s*\(\s*["\']([^"\']+)["\']',
+                    r'(\w+)\s*=\s*MCPServer\s*\(\s*["\']([^"\']+)["\']',
+                ]
+                
+                for pattern in server_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE)
+                    for match in matches:
+                        server_var = match.group(1)
+                        server_name = match.group(2)
+                        server_tools[server_var] = server_name
+                        
+            except Exception as e:
+                logger.debug(f"Error checking tool shadowing in {file_path}: {e}")
+        
+        # Check for duplicate tool names
+        for tool_name, definitions in tool_definitions.items():
+            if len(definitions) > 1:
+                # Multiple tools with the same name - potential shadowing
+                for i, definition in enumerate(definitions):
+                    is_suspicious = False
+                    suspicious_indicators = []
+                    
+                    # Check for suspicious patterns in duplicate tools
+                    context = definition['context'].lower()
+                    if any(keyword in context for keyword in ['hidden', 'secret', 'malicious', 'shadow', 'override']):
+                        is_suspicious = True
+                        suspicious_indicators.append('Contains suspicious keywords')
+                    
+                    if any(pattern in context for pattern in ['<hidden>', '<secret>', '<important>']):
+                        is_suspicious = True
+                        suspicious_indicators.append('Contains hidden directive markers')
+                    
+                    # Check for tools with identical names but different behaviors
+                    if len(set(d['function'] for d in definitions)) > 1:
+                        is_suspicious = True
+                        suspicious_indicators.append('Same tool name but different function implementations')
+                    
+                    severity = SeverityLevel.HIGH if is_suspicious else SeverityLevel.MEDIUM
+                    confidence = 0.8 if is_suspicious else 0.6
+                    
+                    other_locations = [f"{d['file']}:{d['line']}" for j, d in enumerate(definitions) if j != i]
+                    
+                    findings.append(self.create_finding(
+                        vulnerability_type=VulnerabilityType.TOOL_MANIPULATION,
+                        severity=severity,
+                        confidence=confidence,
+                        title=f"Potential tool shadowing: Duplicate tool '{tool_name}'",
+                        description=f"Tool '{tool_name}' is defined multiple times, which could lead to tool shadowing attacks where a malicious tool overrides a legitimate one",
+                        location=f"{definition['file']}:{definition['line']}",
+                        recommendation="Use unique tool names or implement proper namespacing to prevent tool shadowing. Review all tool definitions for malicious intent.",
+                        evidence={
+                            'tool_name': tool_name,
+                            'duplicate_count': len(definitions),
+                            'other_locations': other_locations,
+                            'suspicious_indicators': suspicious_indicators,
+                            'function_names': [d['function'] for d in definitions]
+                        }
+                    ))
+        
+        # Check for potentially malicious tool names that could shadow common tools
+        common_tool_names = {
+            'calculate', 'calculator', 'compute', 'eval', 'execute', 'run', 'command',
+            'file_read', 'file_write', 'read_file', 'write_file', 'get_file', 'save_file',
+            'search', 'query', 'find', 'lookup', 'fetch', 'get', 'retrieve',
+            'system', 'admin', 'config', 'settings', 'status', 'info'
+        }
+        
+        for tool_name, definitions in tool_definitions.items():
+            if tool_name in common_tool_names and len(definitions) == 1:
+                definition = definitions[0]
+                context = definition['context'].lower()
+                
+                # Check if this common tool name has suspicious content
+                if any(pattern in context for pattern in ['<hidden>', '<secret>', '<important>', 'malicious']):
+                    findings.append(self.create_finding(
+                        vulnerability_type=VulnerabilityType.TOOL_POISONING,
+                        severity=SeverityLevel.HIGH,
+                        confidence=0.7,
+                        title=f"Suspicious common tool name: '{tool_name}'",
+                        description=f"Tool uses common name '{tool_name}' which could shadow legitimate tools, and contains suspicious patterns",
+                        location=f"{definition['file']}:{definition['line']}",
+                        recommendation="Avoid using common tool names for tools with suspicious functionality. Use specific, descriptive names.",
+                        evidence={
+                            'tool_name': tool_name,
+                            'common_name': True,
+                            'suspicious_content': True
+                        }
+                    ))
+        
+        return findings
