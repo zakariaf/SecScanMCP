@@ -10,7 +10,7 @@ from .grype_analyzer import GrypeAnalyzer
 from .syft_analyzer import SyftAnalyzer
 from .trufflehog_analyzer import TruffleHogAnalyzer
 from .mcp import MCPSpecificAnalyzer
-from .dynamic_analyzer import DynamicAnalyzer
+from .dynamic import DynamicAnalyzer  # Updated to use refactored module
 
 from .security_tools.clamav_analyzer import ClamAVAnalyzer
 from .security_tools.yara_analyzer import YARAAnalyzer
