@@ -137,7 +137,7 @@ class SecurityScanner:
                 if len(groups) >= 3:
                     result['branch'] = groups[2]
                 else:
-                    result['branch'] = 'main'
+                    result['branch'] = None  # Let git determine the default branch
                     
                 if len(groups) >= 4:
                     result['subdirectory'] = groups[3]
@@ -155,7 +155,7 @@ class SecurityScanner:
             
         return {
             'git_url': url,
-            'branch': 'main',
+            'branch': None,  # Let git determine the default branch
             'subdirectory': None
         }
 
@@ -168,46 +168,87 @@ class SecurityScanner:
             subdirectory = url_info.get('subdirectory')
             specified_branch = url_info.get('branch') if 'tree/' in repo_url else None
             
-            # Try to clone with specified branch first, then fallback to common alternatives
-            if specified_branch:
-                branches_to_try = [specified_branch]
-            else:
-                branches_to_try = ['main', 'master']
-            
-            last_error = None
-            for attempt_branch in branches_to_try:
-                # Use sparse checkout for efficiency
+            # If no branch specified, use repository's default branch
+            if not specified_branch:
+                # Clone without specifying branch - git will use the repo's default
                 clone_cmd = [
                     'git', 'clone',
                     '--depth', '1',
                     '--single-branch',
-                    '--branch', attempt_branch,
                     '--no-tags',
                     git_url,
                     target_dir
                 ]
-
+                
                 process = await asyncio.create_subprocess_exec(
                     *clone_cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
-
+                
                 stdout, stderr = await process.communicate()
-
+                
                 if process.returncode == 0:
-                    logger.info(f"Successfully cloned repository using branch '{attempt_branch}'")
-                    break
+                    logger.info(f"Successfully cloned repository using default branch")
                 else:
-                    last_error = stderr.decode()
-                    logger.debug(f"Clone failed with branch '{attempt_branch}': {last_error}")
+                    error_msg = stderr.decode()
+                    raise RuntimeError(f"Git clone failed: {error_msg}")
+            else:
+                # Branch specified in URL - try that specific branch
+                clone_cmd = [
+                    'git', 'clone',
+                    '--depth', '1',
+                    '--single-branch',
+                    '--branch', specified_branch,
+                    '--no-tags',
+                    git_url,
+                    target_dir
+                ]
+                
+                process = await asyncio.create_subprocess_exec(
+                    *clone_cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                
+                stdout, stderr = await process.communicate()
+                
+                if process.returncode == 0:
+                    logger.info(f"Successfully cloned repository using branch '{specified_branch}'")
+                else:
+                    error_msg = stderr.decode()
+                    # If specified branch fails, try without branch as fallback
+                    logger.warning(f"Clone failed with branch '{specified_branch}': {error_msg}")
+                    logger.info("Attempting to clone with repository's default branch as fallback")
+                    
                     # Clean up failed attempt
                     if Path(target_dir).exists():
                         import shutil
                         shutil.rmtree(target_dir, ignore_errors=True)
-            else:
-                # All branches failed
-                raise RuntimeError(f"Git clone failed with all attempted branches {branches_to_try}. Last error: {last_error}")
+                    
+                    # Try without specifying branch
+                    clone_cmd = [
+                        'git', 'clone',
+                        '--depth', '1',
+                        '--single-branch',
+                        '--no-tags',
+                        git_url,
+                        target_dir
+                    ]
+                    
+                    process = await asyncio.create_subprocess_exec(
+                        *clone_cmd,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    
+                    stdout, stderr = await process.communicate()
+                    
+                    if process.returncode == 0:
+                        logger.info(f"Successfully cloned repository using default branch (fallback)")
+                    else:
+                        last_error = stderr.decode()
+                        raise RuntimeError(f"Git clone failed with specified branch '{specified_branch}' and default branch. Last error: {last_error}")
 
             # If subdirectory is specified, focus analysis on that directory
             if subdirectory:
