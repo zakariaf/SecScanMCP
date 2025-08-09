@@ -69,6 +69,20 @@ class PackService:
         """Get local MCP suite path for language"""
         return self.local_suite_for_lang.get(language)
     
+    def get_official_pack_for_download(self, language: str) -> str:
+        """Get official queries pack name for download (not analysis suite)"""
+        # For download purpose, use the queries pack not the all pack
+        pack_mapping = {
+            "javascript": "codeql/javascript-queries",
+            "python": "codeql/python-queries", 
+            "java": "codeql/java-queries",
+            "go": "codeql/go-queries",
+            "cpp": "codeql/cpp-queries",
+            "csharp": "codeql/csharp-queries",
+            "ruby": "codeql/ruby-queries",
+        }
+        return pack_mapping.get(language, "")
+    
     async def _setup_javascript_pack(self, packs_root: Path):
         """Setup JavaScript MCP security pack"""
         js_pack_path = self.RULES_ROOT

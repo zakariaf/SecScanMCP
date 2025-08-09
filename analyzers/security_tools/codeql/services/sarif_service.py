@@ -229,9 +229,14 @@ class SarifService:
         for tag in properties.get("tags", []) or []:
             if isinstance(tag, str) and tag.upper().startswith("CWE-"):
                 try:
-                    cwe_num = tag.split("-", 1)[1]
+                    cwe_num = tag.upper().split("CWE-")[1]
                     refs.append(f"https://cwe.mitre.org/data/definitions/{cwe_num}.html")
-                except (IndexError, ValueError):
+                except Exception:
                     pass
+        
+        # Add CodeQL query help URL
+        rule_id = rule.get("id", "") or ""
+        if rule_id:
+            refs.append(f"https://codeql.github.com/codeql-query-help/{rule_id}/")
         
         return refs

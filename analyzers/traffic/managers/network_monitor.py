@@ -49,7 +49,8 @@ class NetworkMonitor:
                 result = await self._exec_in_container("netstat -tuln")
                 if result:
                     connections = self._parse_netstat_output(result)
-                    yield from connections
+                    for connection in connections:
+                        yield connection
                 
                 await asyncio.sleep(2)
                 
@@ -64,7 +65,8 @@ class NetworkMonitor:
                 result = await self._exec_in_container("ss -u")
                 if result:
                     queries = self._parse_dns_activity(result)
-                    yield from queries
+                    for query in queries:
+                        yield query
                 
                 await asyncio.sleep(3)
                 
@@ -80,7 +82,8 @@ class NetworkMonitor:
                 result = await self._exec_in_container(cmd)
                 if result:
                     processes = self._parse_network_processes(result)
-                    yield from processes
+                    for process in processes:
+                        yield process
                 
                 await asyncio.sleep(3)
                 
@@ -96,7 +99,8 @@ class NetworkMonitor:
                 result = await self._exec_in_container(cmd)
                 if result:
                     operations = self._parse_file_operations(result)
-                    yield from operations
+                    for operation in operations:
+                        yield operation
                 
                 await asyncio.sleep(4)
                 

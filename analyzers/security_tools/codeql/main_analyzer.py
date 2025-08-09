@@ -29,12 +29,18 @@ class CodeQLAnalyzer(BaseAnalyzer):
         self.language_service = LanguageService(self)
         self.pack_service = PackService(self.cli_service)
         self.sarif_service = SarifService(self)
+        
+        # Initialize CLI and validate
+        self.cli_service.discover_cli()
+        self.cli_service.validate_cli()
+        
+        # Instance variables from original
+        self.scan_options: Dict[str, Any] = {}
         self._search_path = ""
     
     def set_options(self, options: Dict[str, Any]):
         """Set analysis options"""
-        # Options can be passed through to services if needed
-        pass
+        self.scan_options = options or {}
     
     async def analyze(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
         """Run CodeQL semantic analysis on the repository"""
@@ -95,7 +101,7 @@ class CodeQLAnalyzer(BaseAnalyzer):
         codeql_pkg_cache = Path.home() / ".codeql" / "packages"
         self._search_path = f"{local_packs_root}:{codeql_pkg_cache}"
         
-        # Pre-download official packs
+        # Pre-download official packs  
         await self._download_official_packs(languages)
     
     async def _download_official_packs(self, languages: List[str]):
@@ -103,9 +109,8 @@ class CodeQLAnalyzer(BaseAnalyzer):
         to_download = []
         
         for lang in languages:
-            official_suite = self.pack_service.get_official_suite_for_language(lang)
-            if official_suite and ":" in official_suite:
-                pack_name = official_suite.split(":")[0]
+            pack_name = self.pack_service.get_official_pack_for_download(lang)
+            if pack_name:
                 to_download.append(pack_name)
         
         if to_download:
