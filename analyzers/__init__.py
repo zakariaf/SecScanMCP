@@ -9,7 +9,7 @@ from .trivy_analyzer import TrivyAnalyzer
 from .grype_analyzer import GrypeAnalyzer
 from .syft_analyzer import SyftAnalyzer
 from .trufflehog_analyzer import TruffleHogAnalyzer
-from .mcp_analyzer import MCPSpecificAnalyzer
+from .mcp import MCPSpecificAnalyzer
 from .dynamic_analyzer import DynamicAnalyzer
 
 from .security_tools.clamav_analyzer import ClamAVAnalyzer
