@@ -96,7 +96,7 @@ class RuleService:
         return []
     
     def _get_mcp_rules(self) -> str:
-        """Get MCP-specific custom rules"""
+        """Get MCP-specific custom rules - complete set from original"""
         return """rules:
   - id: mcp-prompt-injection-basic
     patterns:
@@ -110,31 +110,102 @@ class RuleService:
           - pattern: |
               "system mode"
           - pattern: |
-              "admin override"
-    message: "Potential prompt injection attempt detected"
-    severity: HIGH
-    languages: [python, javascript, typescript, json, yaml]
-    
-  - id: mcp-tool-poisoning-attempt
+              "admin mode"
+          - pattern: |
+              "IMPORTANT:"
+          - pattern: |
+              "<IMPORTANT>"
+    message: Potential prompt injection pattern detected in MCP tool
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-77: Improper Neutralization of Special Elements used in a Command"
+      confidence: medium
+
+  - id: mcp-tool-poisoning
     patterns:
       - pattern-either:
           - pattern: |
-              tool_name = "$MALICIOUS"
+              "before you do anything"
           - pattern: |
-              "executable": "$SUSPICIOUS_PATH"
+              "override all"
           - pattern: |
-              subprocess.call([$USER_INPUT])
-    message: "Potential tool poisoning attack detected"
-    severity: CRITICAL
+              "instead of"
+          - pattern: |
+              "you are now"
+          - pattern: |
+              "privileged mode"
+    message: MCP tool poisoning attack pattern detected
+    languages: [generic]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-94: Improper Control of Generation of Code"
+      confidence: high
+
+  - id: mcp-hardcoded-oauth-token
+    patterns:
+      - pattern-either:
+          - pattern: |
+              oauth_token = "$TOKEN"
+          - pattern: |
+              "oauth_token": "$TOKEN"
+          - pattern: |
+              access_token = "$TOKEN"
+          - pattern: |
+              "access_token": "$TOKEN"
+      - metavariable-regex:
+          metavariable: $TOKEN
+          regex: "[a-zA-Z0-9]{20,}"
+    message: Hardcoded OAuth token detected in MCP server
+    languages: [python, javascript, typescript]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      confidence: high
+
+  - id: mcp-command-injection-risk
+    patterns:
+      - pattern-either:
+          - pattern: |
+              os.system($CMD)
+          - pattern: |
+              subprocess.run($CMD, shell=True)
+          - pattern: |
+              exec($CMD)
+          - pattern: |
+              eval($CMD)
+      - pattern-inside: |
+          @tool
+          def $FUNC(...):
+            ...
+    message: Command injection risk in MCP tool function
     languages: [python]
-    
-  - id: mcp-config-injection
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-78: Improper Neutralization of Special Elements used in an OS Command"
+      confidence: high
+
+  - id: mcp-unsafe-file-operations
     patterns:
       - pattern-either:
           - pattern: |
-              config["$KEY"] = $USER_INPUT
+              open($FILE)
           - pattern: |
-              settings.$ATTR = $UNTRUSTED
-    message: "Configuration injection vulnerability"
-    severity: HIGH
-    languages: [python, javascript, typescript]"""
+              fs.readFileSync($FILE)
+          - pattern: |
+              fs.writeFileSync($FILE, ...)
+      - pattern-inside: |
+          @tool
+          def $FUNC(...):
+            ...
+    message: Unsafe file operation in MCP tool without path validation
+    languages: [python, javascript]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-22: Improper Limitation of a Pathname to a Restricted Directory"
+      confidence: medium"""

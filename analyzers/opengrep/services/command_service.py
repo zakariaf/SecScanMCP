@@ -45,12 +45,14 @@ class CommandService:
         full_cmd = cmd + [
             '--config', ruleset,
             '--json',
+            '--quiet',
+            '--disable-version-check',
             '--no-git-ignore',
             '--timeout', '300'
         ]
         
         if ignore_file:
-            full_cmd.extend(['--exclude-file', ignore_file])
+            full_cmd.extend(['--exclude-rule', ignore_file])
         
         full_cmd.append(repo_path)
         
@@ -67,12 +69,14 @@ class CommandService:
         full_cmd = cmd + [
             '--config', rules_file,
             '--json',
+            '--quiet',
+            '--disable-version-check',
             '--no-git-ignore',
             '--timeout', '300'
         ]
         
         if ignore_file:
-            full_cmd.extend(['--exclude-file', ignore_file])
+            full_cmd.extend(['--exclude-rule', ignore_file])
         
         full_cmd.append(repo_path)
         
