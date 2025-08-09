@@ -1,6 +1,7 @@
 """Network monitoring manager for traffic analysis."""
 
 import asyncio
+import time
 import logging
 from typing import Dict, List, Any, Optional
 
@@ -123,72 +124,109 @@ class NetworkMonitor:
         """Parse netstat output into connection objects."""
         connections = []
         
-        for line in output.strip().split('\n'):
-            if line.startswith(('tcp', 'udp')):
+        for line in output.split('\n'):
+            if 'ESTABLISHED' in line or 'LISTEN' in line:
                 parts = line.split()
                 if len(parts) >= 4:
-                    connections.append({
+                    connection = {
                         'protocol': parts[0],
                         'local_address': parts[3],
-                        'foreign_address': parts[4] if len(parts) > 4 else '',
-                        'state': parts[5] if len(parts) > 5 else '',
-                        'raw_line': line
-                    })
+                        'remote_address': parts[4] if len(parts) > 4 else 'N/A',
+                        'state': parts[5] if len(parts) > 5 else 'UNKNOWN',
+                        'timestamp': time.time()
+                    }
+                    connections.append(connection)
         
         return connections
     
     def _parse_dns_activity(self, output: str) -> List[Dict[str, Any]]:
-        """Parse DNS activity from ss output."""
-        queries = []
+        """Parse DNS-related network activity."""
+        dns_queries = []
         
-        for line in output.strip().split('\n'):
-            if ':53' in line or ':domain' in line:
-                parts = line.split()
-                if len(parts) >= 2:
-                    queries.append({
-                        'query': line,
-                        'timestamp': asyncio.get_event_loop().time(),
-                        'raw_line': line
-                    })
+        # Look for DNS-related connections (port 53)
+        for line in output.split('\n'):
+            if ':53' in line or 'domain' in line:
+                query = {
+                    'query': line.strip(),
+                    'timestamp': time.time(),
+                    'suspicious': self._is_suspicious_dns(line)
+                }
+                dns_queries.append(query)
         
-        return queries
+        return dns_queries
     
     def _parse_network_processes(self, output: str) -> List[Dict[str, Any]]:
-        """Parse network processes from ps output."""
+        """Parse network-related processes."""
         processes = []
         
-        for line in output.strip().split('\n'):
-            if any(cmd in line for cmd in ['curl', 'wget', 'nc', 'socat']):
-                parts = line.split(None, 10)
-                if len(parts) >= 11:
-                    processes.append({
+        for line in output.split('\n'):
+            if line.strip() and not line.startswith('grep'):
+                parts = line.split()
+                if len(parts) >= 10:
+                    process = {
                         'pid': parts[1],
-                        'command': parts[10],
                         'user': parts[0],
-                        'timestamp': asyncio.get_event_loop().time(),
-                        'raw_line': line
-                    })
+                        'command': ' '.join(parts[10:]),
+                        'timestamp': time.time(),
+                        'suspicious': self._is_suspicious_network_process(' '.join(parts[10:]))
+                    }
+                    processes.append(process)
         
         return processes
     
     def _parse_file_operations(self, output: str) -> List[Dict[str, Any]]:
-        """Parse file operations from lsof output."""
+        """Parse file operations that might indicate data staging."""
         operations = []
         
-        for line in output.strip().split('\n')[1:]:  # Skip header
-            parts = line.split()
-            if len(parts) >= 8:
-                operations.append({
-                    'command': parts[0],
-                    'pid': parts[1],
-                    'user': parts[2],
-                    'fd': parts[3],
-                    'type': parts[4],
-                    'device': parts[5],
-                    'node': parts[7],
-                    'name': ' '.join(parts[8:]) if len(parts) > 8 else '',
-                    'timestamp': asyncio.get_event_loop().time(),
-                    'raw_line': line
-                })
+        for line in output.split('\n'):
+            if line.strip():
+                operation = {
+                    'operation': line.strip(),
+                    'timestamp': time.time(),
+                    'suspicious': self._is_suspicious_file_operation(line)
+                }
+                operations.append(operation)
         
         return operations
+    
+    def _is_suspicious_dns(self, query: str) -> bool:
+        """Check if DNS query is suspicious."""
+        # Look for DNS tunneling indicators
+        indicators = [
+            len(query) > 100,  # Unusually long queries
+            query.count('.') > 5,  # Many subdomains
+            'base64' in query.lower(),
+            'data' in query.lower(),
+            'exfil' in query.lower()
+        ]
+        return any(indicators)
+    
+    def _is_suspicious_network_process(self, command: str) -> bool:
+        """Check if network process is suspicious."""
+        import re
+        suspicious_indicators = [
+            'curl.*attacker',
+            'wget.*evil',
+            'nc.*-e',  # Netcat with command execution
+            'telnet.*4444',  # Common backdoor port
+            'ssh.*-R',  # SSH reverse tunnel
+            'python.*-c.*socket',  # Python socket programming
+            'node.*-e.*net',  # Node.js networking
+        ]
+        
+        for indicator in suspicious_indicators:
+            if re.search(indicator, command, re.IGNORECASE):
+                return True
+        
+        return False
+    
+    def _is_suspicious_file_operation(self, operation: str) -> bool:
+        """Check if file operation indicates data staging."""
+        staging_indicators = [
+            '/tmp/',  # Temporary directory usage
+            '.tar', '.zip', '.gz',  # Archive creation
+            'passwd', 'shadow', 'hosts',  # System files
+            '.env', 'config',  # Configuration files
+        ]
+        
+        return any(indicator in operation.lower() for indicator in staging_indicators)

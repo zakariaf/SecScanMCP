@@ -73,98 +73,170 @@ class TrafficAnalyzer:
     async def _process_monitoring_data(self):
         """Process data from network monitor."""
         try:
-            # Collect data from monitoring streams
-            async for connections in self.network_monitor._monitor_connections():
-                if not self.monitoring:
-                    break
-                
-                for connection in connections:
-                    await self._analyze_connection(connection)
+            # Create monitoring tasks that run concurrently
+            tasks = [
+                asyncio.create_task(self._monitor_and_analyze_connections()),
+                asyncio.create_task(self._monitor_and_analyze_dns()),
+                asyncio.create_task(self._monitor_and_analyze_processes()),
+                asyncio.create_task(self._monitor_and_analyze_files()),
+            ]
             
-            async for dns_queries in self.network_monitor._monitor_dns_queries():
-                if not self.monitoring:
-                    break
-                
-                for query in dns_queries:
-                    await self._analyze_dns_query(query)
-            
-            async for processes in self.network_monitor._monitor_processes():
-                if not self.monitoring:
-                    break
-                
-                for process in processes:
-                    await self._analyze_network_process(process)
+            # Run monitoring tasks concurrently
+            await asyncio.gather(*tasks, return_exceptions=True)
             
         except Exception as e:
             self.logger.error(f"Data processing failed: {e}")
     
+    async def _monitor_and_analyze_connections(self):
+        """Monitor and analyze network connections."""
+        while self.monitoring:
+            try:
+                # Use netstat to check active connections
+                result = await self.network_monitor._exec_in_container("netstat -tuln")
+                if result:
+                    connections = self.network_monitor._parse_netstat_output(result)
+                    for conn in connections:
+                        await self._analyze_connection(conn)
+                
+                await asyncio.sleep(2)  # Check every 2 seconds
+                
+            except Exception as e:
+                self.logger.debug(f"Connection monitoring error: {e}")
+                await asyncio.sleep(5)
+    
+    async def _monitor_and_analyze_dns(self):
+        """Monitor and analyze DNS queries."""
+        while self.monitoring:
+            try:
+                # Monitor DNS-related system calls
+                result = await self.network_monitor._exec_in_container("ss -u")
+                if result:
+                    dns_activity = self.network_monitor._parse_dns_activity(result)
+                    for query in dns_activity:
+                        await self._analyze_dns_query(query)
+                
+                await asyncio.sleep(1)  # Check frequently for DNS
+                
+            except Exception as e:
+                self.logger.debug(f"DNS monitoring error: {e}")
+                await asyncio.sleep(3)
+    
+    async def _monitor_and_analyze_processes(self):
+        """Monitor and analyze network processes."""
+        while self.monitoring:
+            try:
+                # Check for processes making network calls
+                result = await self.network_monitor._exec_in_container("ps aux | grep -E '(curl|wget|nc|netcat|telnet|ssh|ftp)'")
+                if result:
+                    network_processes = self.network_monitor._parse_network_processes(result)
+                    for process in network_processes:
+                        await self._analyze_network_process(process)
+                
+                await asyncio.sleep(3)
+                
+            except Exception as e:
+                self.logger.debug(f"Process monitoring error: {e}")
+                await asyncio.sleep(5)
+    
+    async def _monitor_and_analyze_files(self):
+        """Monitor and analyze file operations."""
+        while self.monitoring:
+            try:
+                # Monitor for file operations that might indicate data staging
+                result = await self.network_monitor._exec_in_container("lsof -i")
+                if result:
+                    file_operations = self.network_monitor._parse_file_operations(result)
+                    for operation in file_operations:
+                        await self._analyze_file_operation(operation)
+                
+                await asyncio.sleep(4)
+                
+            except Exception as e:
+                self.logger.debug(f"File monitoring error: {e}")
+                await asyncio.sleep(5)
+    
     async def _analyze_connection(self, connection: Dict[str, Any]):
-        """Analyze network connection."""
+        """Analyze a network connection for suspicious activity."""
         try:
-            # Threat detection
+            remote_addr = connection.get('remote_address', '')
+            
+            # Check for connections to suspicious destinations
             is_suspicious = self.threat_detection.analyze_connection(connection)
             
-            # Create network event
-            event = NetworkEvent(
-                timestamp=time.time(),
-                event_type="connection",
-                source=connection.get('local_address', ''),
-                destination=connection.get('foreign_address', ''),
-                protocol=connection.get('protocol', ''),
-                suspicious=is_suspicious
-            )
-            
-            self.network_events.append(event)
+            if is_suspicious:
+                event = NetworkEvent(
+                    timestamp=connection['timestamp'],
+                    event_type='suspicious_connection',
+                    source=connection.get('local_address', ''),
+                    destination=remote_addr,
+                    protocol=connection.get('protocol', ''),
+                    suspicious=True
+                )
+                self.network_events.append(event)
+                self.logger.warning(f"Suspicious connection detected: {remote_addr}")
             
         except Exception as e:
             self.logger.debug(f"Connection analysis error: {e}")
     
     async def _analyze_dns_query(self, query: Dict[str, Any]):
-        """Analyze DNS query."""
+        """Analyze DNS query for potential data exfiltration."""
         try:
-            # Threat detection
-            is_suspicious = self.threat_detection.analyze_dns_query(query)
+            query_text = query.get('query', '')
             
-            # Store query
-            self.dns_queries.append({
-                **query,
-                'suspicious': is_suspicious
-            })
+            # Check for DNS tunneling patterns
+            if self._detect_dns_tunneling(query_text):
+                self.dns_queries.append({
+                    **query,
+                    'exfiltration_method': ExfiltrationMethod.DNS,
+                    'confidence': 0.8
+                })
+                self.logger.warning(f"Potential DNS tunneling detected: {query_text}")
             
-            # Create network event if suspicious
-            if is_suspicious:
-                event = NetworkEvent(
-                    timestamp=query.get('timestamp', time.time()),
-                    event_type="dns_query",
-                    source="container",
-                    destination=query.get('query', ''),
-                    protocol="DNS",
-                    suspicious=True
-                )
-                self.network_events.append(event)
+            # Store all DNS queries
+            self.dns_queries.append(query)
             
         except Exception as e:
             self.logger.debug(f"DNS analysis error: {e}")
     
     async def _analyze_network_process(self, process: Dict[str, Any]):
-        """Analyze network process."""
+        """Analyze network process for malicious activity."""
         try:
-            # Threat detection
-            is_suspicious = self.threat_detection.analyze_network_process(process)
+            command = process.get('command', '')
             
-            if is_suspicious:
+            # Check for data exfiltration commands
+            exfil_indicators = self._detect_exfiltration_commands(command)
+            if exfil_indicators:
                 event = NetworkEvent(
-                    timestamp=process.get('timestamp', time.time()),
-                    event_type="network_process",
-                    source=process.get('user', ''),
-                    destination=process.get('command', ''),
-                    protocol="PROCESS",
-                    suspicious=True
+                    timestamp=process['timestamp'],
+                    event_type='data_exfiltration_attempt',
+                    source='container_process',
+                    destination='external',
+                    protocol='process',
+                    data=command,
+                    suspicious=True,
+                    exfiltration_method=exfil_indicators['method']
                 )
                 self.network_events.append(event)
+                self.logger.warning(f"Data exfiltration attempt detected: {command}")
             
         except Exception as e:
             self.logger.debug(f"Process analysis error: {e}")
+    
+    async def _analyze_file_operation(self, operation: Dict[str, Any]):
+        """Analyze file operation for data staging."""
+        try:
+            op_text = operation.get('operation', '')
+            
+            # Check for suspicious file access patterns
+            if self._is_data_staging_operation(op_text):
+                self.data_transfers.append({
+                    **operation,
+                    'type': 'data_staging',
+                    'confidence': 0.6
+                })
+        
+        except Exception as e:
+            self.logger.debug(f"File operation analysis error: {e}")
     
     def get_traffic_summary(self) -> Dict[str, Any]:
         """Get comprehensive traffic analysis summary."""
@@ -229,6 +301,17 @@ class TrafficAnalyzer:
                     'description': f"Data exfiltration via {event.exfiltration_method.value}",
                     'severity': 'high',
                     'method': event.exfiltration_method.value
+                })
+        
+        # Add suspicious DNS queries
+        for query in self.dns_queries:
+            if query.get('suspicious'):
+                activities.append({
+                    'type': 'dns_query',
+                    'timestamp': query['timestamp'],
+                    'description': f"Suspicious DNS query: {query['query']}",
+                    'severity': 'medium',
+                    'data': query['query']
                 })
         
         # Sort by timestamp (most recent first)
@@ -306,6 +389,68 @@ class TrafficAnalyzer:
             self.logger.error(f"Exfiltration analysis failed: {e}")
         
         return findings
+    
+    def _detect_dns_tunneling(self, query: str) -> bool:
+        """Detect DNS tunneling patterns."""
+        # DNS tunneling typically involves:
+        # 1. Long subdomain names
+        # 2. Base64-encoded data in subdomains
+        # 3. High frequency of queries to same domain
+        
+        subdomains = query.split('.')
+        for subdomain in subdomains:
+            if len(subdomain) > 20:  # Unusually long subdomain
+                import re
+                if re.match(r'^[A-Za-z0-9+/]+=*$', subdomain):  # Base64 pattern
+                    return True
+        
+        return False
+    
+    def _detect_exfiltration_commands(self, command: str) -> Dict[str, Any]:
+        """Detect data exfiltration commands."""
+        import re
+        exfiltration_patterns = {
+            ExfiltrationMethod.HTTP: [
+                r'curl.*-X POST.*-d',  # HTTP POST with data
+                r'wget.*--post-data',  # wget POST
+                r'python.*requests\.post',  # Python requests
+            ],
+            ExfiltrationMethod.DNS: [
+                r'nslookup.*\$\(',  # DNS with command substitution
+                r'dig.*@.*\$\(',  # dig with data
+            ],
+            ExfiltrationMethod.EMAIL: [
+                r'mail.*-s.*<',  # mail command with file
+                r'sendmail.*<',  # sendmail with file
+            ],
+            ExfiltrationMethod.FTP: [
+                r'ftp.*put',  # FTP upload
+                r'sftp.*put',  # SFTP upload
+            ]
+        }
+        
+        for method, patterns in exfiltration_patterns.items():
+            for pattern in patterns:
+                if re.search(pattern, command, re.IGNORECASE):
+                    return {
+                        'method': method,
+                        'confidence': 0.9,
+                        'pattern': pattern
+                    }
+        
+        return None
+    
+    def _is_data_staging_operation(self, operation: str) -> bool:
+        """Check if operation indicates data staging for exfiltration."""
+        import re
+        staging_patterns = [
+            r'cp.*/(etc|home|var).*tmp',  # Copying sensitive files to temp
+            r'tar.*/(etc|home|var)',  # Archiving sensitive directories
+            r'find.*passwd.*-exec',  # Finding and processing password files
+            r'grep.*-r.*password',  # Searching for passwords
+        ]
+        
+        return any(re.search(pattern, operation, re.IGNORECASE) for pattern in staging_patterns)
     
     def _calculate_current_metrics(self) -> Dict[str, Any]:
         """Calculate current traffic metrics."""

@@ -120,13 +120,16 @@ class DataLeakageDetector:
         if not data:
             return 0.0
         
-        counts = Counter(data)
+        # Count character frequencies
+        frequencies = Counter(data)
+        
+        # Calculate entropy
         entropy = 0.0
         length = len(data)
-        
-        for count in counts.values():
+        for count in frequencies.values():
             probability = count / length
-            entropy -= probability * math.log2(probability)
+            if probability > 0:
+                entropy -= probability * math.log2(probability)
         
         return entropy
     
