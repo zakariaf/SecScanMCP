@@ -12,6 +12,13 @@ from analyzers.intelligent import IntelligentContextAnalyzer
 
 from .services.config_analyzer import ConfigAnalyzer
 from .services.code_analyzer import CodeAnalyzer
+from .services.token_security_service import TokenSecurityService
+from .services.rug_pull_service import RugPullService
+from .services.command_injection_service import CommandInjectionService
+from .services.cross_server_service import CrossServerService
+from .services.output_poisoning_service import OutputPoisoningService
+from .services.advanced_prompt_injection_service import AdvancedPromptInjectionService
+from .services.capability_abuse_service import CapabilityAbuseService
 from .detectors.injection_detector import InjectionDetector
 from .detectors.permission_detector import PermissionDetector
 
@@ -31,11 +38,22 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
     
     def __init__(self):
         super().__init__()
-        # Initialize services
+        # Initialize core services
         self.config_analyzer = ConfigAnalyzer()
         self.code_analyzer = CodeAnalyzer()
         self.injection_detector = InjectionDetector()
         self.permission_detector = PermissionDetector()
+        
+        # Initialize advanced security services
+        self.token_security = TokenSecurityService()
+        self.rug_pull_service = RugPullService()
+        self.command_injection = CommandInjectionService()
+        self.cross_server = CrossServerService()
+        self.output_poisoning = OutputPoisoningService()
+        self.prompt_injection = AdvancedPromptInjectionService()
+        self.capability_abuse = CapabilityAbuseService()
+        
+        # Initialize intelligent analyzer
         self.intelligent_analyzer = IntelligentContextAnalyzer()
     
     def is_applicable(self, project_info: Dict[str, Any]) -> bool:
@@ -56,11 +74,18 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         findings = []
         repo = Path(repo_path)
         
-        # Analyze MCP configuration files
+        # Core analysis (existing)
         findings.extend(self._analyze_configs(repo))
-        
-        # Analyze Python source code
         findings.extend(self._analyze_source_code(repo))
+        
+        # Advanced security analysis
+        findings.extend(await self._analyze_token_security(repo_path))
+        findings.extend(await self._analyze_rug_pull_risks(repo_path))
+        findings.extend(await self._analyze_command_injection(repo_path))
+        findings.extend(await self._analyze_cross_server_risks(repo_path))
+        findings.extend(await self._analyze_output_poisoning(repo_path))
+        findings.extend(await self._analyze_prompt_injection(repo_path))
+        findings.extend(await self._analyze_capability_abuse(repo_path))
         
         # Apply intelligent context filtering
         findings = self._apply_intelligent_filtering(findings, repo_path)
@@ -162,3 +187,47 @@ class MCPSpecificAnalyzer(BaseAnalyzer):
         # For now, return original finding
         # TODO: Integrate with intelligent analyzer
         return finding
+    
+    # Advanced security analysis methods
+    
+    async def _analyze_token_security(self, repo_path: str) -> List[Finding]:
+        """Analyze OAuth token and credential security."""
+        return await self.token_security.analyze_oauth_exposure(repo_path)
+    
+    async def _analyze_rug_pull_risks(self, repo_path: str) -> List[Finding]:
+        """Analyze for rug pull vulnerabilities."""
+        return await self.rug_pull_service.analyze_rug_pull_vulnerabilities(repo_path)
+    
+    async def _analyze_command_injection(self, repo_path: str) -> List[Finding]:
+        """Analyze for command injection vulnerabilities."""
+        return await self.command_injection.analyze_command_injection(repo_path)
+    
+    async def _analyze_cross_server_risks(self, repo_path: str) -> List[Finding]:
+        """Analyze cross-server contamination risks."""
+        return await self.cross_server.analyze_cross_server_risks(repo_path)
+    
+    async def _analyze_output_poisoning(self, repo_path: str) -> List[Finding]:
+        """Analyze for output poisoning vulnerabilities."""
+        return await self.output_poisoning.analyze_output_poisoning(repo_path)
+    
+    async def _analyze_prompt_injection(self, repo_path: str) -> List[Finding]:
+        """Analyze for advanced prompt injection."""
+        findings = []
+        findings.extend(
+            await self.prompt_injection.analyze_resource_prompt_injection(repo_path)
+        )
+        findings.extend(
+            await self.prompt_injection.analyze_indirect_prompt_injection(repo_path)
+        )
+        return findings
+    
+    async def _analyze_capability_abuse(self, repo_path: str) -> List[Finding]:
+        """Analyze for capability abuse and tool misuse."""
+        findings = []
+        findings.extend(
+            await self.capability_abuse.check_capability_leakage(repo_path)
+        )
+        findings.extend(
+            await self.capability_abuse.check_tool_abuse_potential(repo_path)
+        )
+        return findings
