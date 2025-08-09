@@ -9,15 +9,25 @@ from enum import Enum
 from ..categories.prompt_injection import PromptInjectionPayloads
 from ..categories.command_injection import CommandInjectionPayloads
 from ..categories.path_traversal import PathTraversalPayloads
+from ..categories.code_injection import CodeInjectionPayloads
+from ..categories.sql_injection import SQLInjectionPayloads
+from ..categories.xss import XSSPayloads
+from ..categories.tool_manipulation import ToolManipulationPayloads
+from ..categories.data_exfiltration import DataExfiltrationPayloads
+from ..categories.privilege_escalation import PrivilegeEscalationPayloads
 
 
 class PayloadCategory(Enum):
-    """Payload categories."""
+    """Payload categories - ALL 9 CATEGORIES."""
     PROMPT_INJECTION = "prompt_injection"
-    COMMAND_INJECTION = "command_injection"
+    COMMAND_INJECTION = "command_injection" 
     PATH_TRAVERSAL = "path_traversal"
     CODE_INJECTION = "code_injection"
     SQL_INJECTION = "sql_injection"
+    XSS = "xss"
+    TOOL_MANIPULATION = "tool_manipulation"
+    DATA_EXFILTRATION = "data_exfiltration"
+    PRIVILEGE_ESCALATION = "privilege_escalation"
 
 
 class PayloadGenerator:
@@ -28,6 +38,12 @@ class PayloadGenerator:
             PayloadCategory.PROMPT_INJECTION: PromptInjectionPayloads,
             PayloadCategory.COMMAND_INJECTION: CommandInjectionPayloads,
             PayloadCategory.PATH_TRAVERSAL: PathTraversalPayloads,
+            PayloadCategory.CODE_INJECTION: CodeInjectionPayloads,
+            PayloadCategory.SQL_INJECTION: SQLInjectionPayloads,
+            PayloadCategory.XSS: XSSPayloads,
+            PayloadCategory.TOOL_MANIPULATION: ToolManipulationPayloads,
+            PayloadCategory.DATA_EXFILTRATION: DataExfiltrationPayloads,
+            PayloadCategory.PRIVILEGE_ESCALATION: PrivilegeEscalationPayloads,
         }
     
     def get_payloads_by_category(self, category: PayloadCategory) -> List[Dict[str, Any]]:
