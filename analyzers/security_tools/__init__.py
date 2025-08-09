@@ -2,7 +2,7 @@
 Military-grade security tools for enhanced detection capabilities
 """
 
-from .clamav_analyzer import ClamAVAnalyzer
+from .clamav import ClamAVAnalyzer
 from .yara_analyzer import YARAAnalyzer
 from .codeql import CodeQLAnalyzer
 
