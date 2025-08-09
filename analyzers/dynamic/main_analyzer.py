@@ -32,6 +32,15 @@ class DynamicAnalyzer(BaseAnalyzer):
     def __init__(self):
         super().__init__()
         
+        # Analysis session state
+        self.session = {
+            'start_time': None,
+            'container_id': None,
+            'mcp_client': None,
+            'findings': [],
+            'metrics_history': []
+        }
+        
         # Initialize managers
         self.docker_manager = DockerManager()
         self.connection_manager = MCPConnectionManager()
@@ -42,13 +51,9 @@ class DynamicAnalyzer(BaseAnalyzer):
         self.behavioral_analysis = BehavioralAnalysisService()
         self.performance_monitoring = PerformanceMonitoringService()
         
-        # Analysis session state
-        self.session = {
-            'start_time': None,
-            'container_id': None,
-            'mcp_client': None,
-            'findings': []
-        }
+        # Pass session reference to services
+        self.traffic_analysis.analysis_session = self.session
+        self.behavioral_analysis.analysis_session = self.session
     
     def is_applicable(self, project_info: Dict[str, Any]) -> bool:
         """Check if dynamic analysis should be performed."""
@@ -117,9 +122,14 @@ class DynamicAnalyzer(BaseAnalyzer):
             
         except Exception as e:
             logger.error(f"Dynamic analysis failed: {e}")
+            await self._handle_analysis_failure(e)
         
         finally:
             await self._cleanup()
+        
+        # Generate analysis summary
+        summary = self._generate_analysis_summary(findings)
+        logger.info(summary)
         
         logger.info(f"Dynamic analysis completed with {len(findings)} findings")
         return findings
@@ -169,22 +179,45 @@ class DynamicAnalyzer(BaseAnalyzer):
     
     async def _run_traffic_analysis(self) -> List[Finding]:
         """Run network traffic analysis."""
-        if not self.session['container_id']:
-            return []
+        findings = []
         
-        return await self.traffic_analysis.analyze_traffic(
+        if not self.session['container_id']:
+            return findings
+        
+        # Standard traffic analysis
+        findings.extend(await self.traffic_analysis.analyze_traffic(
             self.session['container_id']
-        )
+        ))
+        
+        # Advanced network traffic analysis
+        findings.extend(await self.traffic_analysis.analyze_network_traffic())
+        
+        # Data exfiltration detection
+        findings.extend(await self.traffic_analysis.detect_data_exfiltration())
+        
+        return findings
     
     async def _run_behavioral_analysis(self) -> List[Finding]:
         """Run behavioral anomaly detection."""
-        if not self.session['mcp_client']:
-            return []
+        findings = []
         
-        return await self.behavioral_analysis.analyze_behavior(
+        if not self.session['mcp_client']:
+            return findings
+        
+        # Standard behavioral analysis
+        findings.extend(await self.behavioral_analysis.analyze_behavior(
             self.session['mcp_client'],
             self.session['container_id']
-        )
+        ))
+        
+        # ML-based anomaly detection using metrics history
+        metrics_history = self.session.get('metrics_history', [])
+        if metrics_history:
+            findings.extend(await self.behavioral_analysis.run_ml_anomaly_detection(
+                metrics_history
+            ))
+        
+        return findings
     
     async def _run_performance_analysis(self) -> List[Finding]:
         """Run performance monitoring analysis."""
@@ -209,3 +242,105 @@ class DynamicAnalyzer(BaseAnalyzer):
                 )
         except Exception as e:
             logger.error(f"Cleanup failed: {e}")
+    
+    async def _handle_analysis_failure(self, error: Exception):
+        """Handle analysis failure with proper cleanup and logging"""
+        try:
+            logger.error(f"🚨 Dynamic analysis failed: {error}")
+            logger.error(f"Error type: {type(error).__name__}")
+            
+            # Attempt emergency cleanup
+            if self.session.get('container_id'):
+                try:
+                    await self.docker_manager.cleanup_container(
+                        self.session['container_id']
+                    )
+                    logger.info("Emergency container cleanup completed")
+                except Exception as cleanup_error:
+                    logger.error(f"Emergency cleanup failed: {cleanup_error}")
+            
+            # Log session state for debugging
+            logger.debug(f"Session state at failure: {self.session}")
+            
+        except Exception as e:
+            logger.error(f"Error handler failed: {e}")
+    
+    def _generate_analysis_summary(self, findings: List[Finding]) -> str:
+        """Generate a comprehensive summary of analysis results"""
+        try:
+            if not findings:
+                return "🟢 Dynamic analysis completed - No security issues detected"
+            
+            # Count findings by severity
+            severity_counts = {}
+            vuln_type_counts = {}
+            
+            for finding in findings:
+                severity = finding.severity.value
+                vuln_type = finding.vulnerability_type.value
+                
+                severity_counts[severity] = severity_counts.get(severity, 0) + 1
+                vuln_type_counts[vuln_type] = vuln_type_counts.get(vuln_type, 0) + 1
+            
+            # Build summary
+            summary_parts = ["📊 Dynamic Analysis Summary:"]
+            
+            # Severity breakdown
+            if severity_counts:
+                summary_parts.append("🎯 Severity Distribution:")
+                for severity in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
+                    count = severity_counts.get(severity, 0)
+                    if count > 0:
+                        emoji = {'CRITICAL': '🔴', 'HIGH': '🟠', 'MEDIUM': '🟡', 'LOW': '🔵'}.get(severity, '⚪')
+                        summary_parts.append(f"  {emoji} {severity}: {count}")
+            
+            # Top vulnerability types
+            if vuln_type_counts:
+                top_vulns = sorted(vuln_type_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+                summary_parts.append("🚨 Top Vulnerability Types:")
+                for vuln_type, count in top_vulns:
+                    summary_parts.append(f"  • {vuln_type}: {count}")
+            
+            # Analysis phases completed
+            analysis_duration = None
+            if self.session.get('start_time'):
+                analysis_duration = time.time() - self.session['start_time']
+                summary_parts.append(f"⏱️ Analysis Duration: {analysis_duration:.1f}s")
+            
+            # Recommendations
+            critical_high = severity_counts.get('CRITICAL', 0) + severity_counts.get('HIGH', 0)
+            if critical_high > 0:
+                summary_parts.append(f"⚠️ IMMEDIATE ACTION REQUIRED: {critical_high} critical/high severity issues found")
+            
+            return "\n".join(summary_parts)
+            
+        except Exception as e:
+            logger.error(f"Failed to generate analysis summary: {e}")
+            return f"📊 Dynamic analysis completed with {len(findings)} findings"
+    
+    def _calculate_cpu_percent(self, stats: Dict[str, Any]) -> float:
+        """Calculate CPU percentage from Docker stats"""
+        try:
+            cpu_stats = stats.get('cpu_stats', {})
+            precpu_stats = stats.get('precpu_stats', {})
+            
+            cpu_usage = cpu_stats.get('cpu_usage', {}).get('total_usage', 0)
+            precpu_usage = precpu_stats.get('cpu_usage', {}).get('total_usage', 0)
+            
+            system_usage = cpu_stats.get('system_cpu_usage', 0)
+            presystem_usage = precpu_stats.get('system_cpu_usage', 0)
+            
+            cpu_count = cpu_stats.get('online_cpus', 1)
+            
+            cpu_delta = cpu_usage - precpu_usage
+            system_delta = system_usage - presystem_usage
+            
+            if system_delta > 0 and cpu_delta > 0:
+                cpu_percent = (cpu_delta / system_delta) * cpu_count * 100.0
+                return min(cpu_percent, 100.0)  # Cap at 100%
+            
+            return 0.0
+            
+        except Exception as e:
+            logger.debug(f"CPU calculation error: {e}")
+            return 0.0
