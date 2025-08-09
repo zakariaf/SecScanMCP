@@ -65,7 +65,7 @@ class ScanningService:
                 result = await self._scan_stream(f, str(file_path))
             
             if result and result[0] == 'FOUND':
-                return self._create_malware_finding(
+                return await self._create_malware_finding(
                     file_path, repo_path, result[1], file_hash
                 )
                 
@@ -139,14 +139,21 @@ class ScanningService:
         
         return None
     
-    def _create_malware_finding(self, file_path: Path, repo_path: str, 
-                               malware_name: str, file_hash: str) -> Finding:
+    async def _create_malware_finding(self, file_path: Path, repo_path: str, 
+                                     malware_name: str, file_hash: str) -> Finding:
         """Create Finding object for detected malware"""
         severity = self._determine_severity(malware_name)
         
         # Import here to avoid circular import
         from analyzers.base import BaseAnalyzer
         base = BaseAnalyzer()
+        
+        # Get ClamAV version for evidence
+        signature_version = "unknown"
+        try:
+            signature_version = await self.connection_service.get_version()
+        except Exception:
+            pass
         
         return base.create_finding(
             vulnerability_type=VulnerabilityType.MALWARE,
@@ -164,7 +171,8 @@ class ScanningService:
                 'malware_name': malware_name,
                 'file_hash': file_hash,
                 'file_size': file_path.stat().st_size,
-                'detection_engine': 'ClamAV'
+                'detection_engine': 'ClamAV',
+                'signature_version': signature_version
             }
         )
     

@@ -41,6 +41,8 @@ class TrivyAnalyzer(BaseAnalyzer):
                     # Parse scan results into findings
                     findings = self.result_parser.parse_results(results, repo_path)
                 
+        except FileNotFoundError:
+            logger.warning("Trivy not found, skipping Trivy analysis")
         except Exception as e:
             logger.error(f"Trivy analysis failed: {e}")
         

@@ -23,6 +23,8 @@ class ScanningService:
     
     async def scan_repository(self, repo_path: str, output_file: str) -> Optional[Dict[str, Any]]:
         """Scan repository with Trivy and return results"""
+        ignore_file = None
+        
         try:
             # Create ignore file for filtering
             ignore_file = self._create_ignore_file(repo_path)
@@ -38,6 +40,15 @@ class ScanningService:
             
         except Exception as e:
             logger.error(f"Trivy scan failed: {e}")
+        
+        finally:
+            # Clean up ignore file
+            if ignore_file and Path(ignore_file).exists():
+                try:
+                    Path(ignore_file).unlink()
+                    logger.debug(f"Cleaned up ignore file: {ignore_file}")
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup ignore file: {e}")
         
         return None
     
@@ -101,41 +112,15 @@ class ScanningService:
             return None
     
     def _create_ignore_file(self, repo_path: str) -> Optional[str]:
-        """Create ignore file for Trivy to skip certain paths"""
-        ignore_patterns = [
-            # Version control
-            '.git/**',
-            '.svn/**',
-            '.hg/**',
-            
-            # Build artifacts
-            'node_modules/**',
-            'target/**',
-            'build/**',
-            'dist/**',
-            '*.log',
-            
-            # Package manager files that might have false positives
-            'package-lock.json',
-            'yarn.lock',
-            'Pipfile.lock',
-            'poetry.lock',
-            'composer.lock',
-            
-            # Documentation and configs that rarely have vulns
-            '*.md',
-            '*.txt',
-            '*.rst',
-            '*.yml',
-            '*.yaml',
-            '*.toml',
-            'LICENSE*',
-            'README*',
-            '.gitignore',
-            '.dockerignore'
-        ]
-        
+        """Create ignore file using base analyzer patterns"""
         try:
+            # Import here to avoid circular dependency
+            from analyzers.base import BaseAnalyzer
+            from analyzers.utils.ignore_patterns import IgnorePatterns
+            
+            # Use centralized ignore patterns from base analyzer
+            ignore_patterns = IgnorePatterns.create_gitignore_style_list("TrivyAnalyzer")
+            
             ignore_file = tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.trivyignore')
             for pattern in ignore_patterns:
                 ignore_file.write(f"{pattern}\n")
