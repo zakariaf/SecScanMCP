@@ -4,7 +4,7 @@ Security analyzers for various vulnerability types
 
 from .base import BaseAnalyzer
 from .bandit_analyzer import BanditAnalyzer
-from .opengrep_analyzer import OpenGrepAnalyzer  # Open-source static analysis
+from .opengrep import OpenGrepAnalyzer  # Updated to use refactored module
 from .trivy_analyzer import TrivyAnalyzer
 from .grype_analyzer import GrypeAnalyzer
 from .syft_analyzer import SyftAnalyzer
