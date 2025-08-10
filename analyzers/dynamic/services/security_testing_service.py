@@ -165,21 +165,18 @@ class SecurityTestingService:
                         evidence={'payload': payload, 'response': str(result)[:200]}
                     ))
                     
-                    except Exception as e:
-                        # Tool errors might indicate vulnerability
-                        if self._is_vulnerability_error(str(e)):
-                            findings.append(Finding(
-                                title=f"Tool Error Vulnerability: {tool_name}",
-                                description=f"Tool produces error revealing system information",
-                                severity=SeverityLevel.MEDIUM,
-                                vulnerability_type=VulnerabilityType.INFORMATION_DISCLOSURE,
-                                location=f"tool:{tool_name}",
-                                confidence=0.6,
-                                evidence={'error': str(e)[:200]}
-                            ))
-        
-        except Exception as e:
-            logger.error(f"Tool manipulation testing failed: {e}")
+            except Exception as e:
+                # Tool errors might indicate vulnerability
+                if self._is_vulnerability_error(str(e)):
+                    findings.append(Finding(
+                        title=f"Tool Error Vulnerability: {tool_name}",
+                        description=f"Tool produces error revealing system information",
+                        severity=SeverityLevel.MEDIUM,
+                        vulnerability_type=VulnerabilityType.INFORMATION_DISCLOSURE,
+                        location=f"tool:{tool_name}",
+                        confidence=0.6,
+                        evidence={'error': str(e)[:200]}
+                    ))
         
         return findings
     
