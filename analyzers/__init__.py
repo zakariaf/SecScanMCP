@@ -6,7 +6,7 @@ from .base import BaseAnalyzer
 from .bandit_analyzer import BanditAnalyzer
 from .opengrep import OpenGrepAnalyzer  # Updated to use refactored module
 from .trivy import TrivyAnalyzer
-from .grype_analyzer import GrypeAnalyzer
+from .grype import GrypeAnalyzer
 from .syft import SyftAnalyzer
 from .trufflehog_analyzer import TruffleHogAnalyzer
 from .mcp import MCPSpecificAnalyzer
