@@ -71,7 +71,7 @@ async def test_dynamic_analyzer_integration():
         # Test 3: Test MCP Client capabilities
         print("\n🔗 Test 3: MCP Client Components")
         try:
-            from analyzers.mcp_client import MCPClient, MCPTransport
+            from analyzers.dynamic.utils.mcp_client import MCPClient, MCPTransport
             print("✅ MCP Client import successful")
             
             # Test transport types

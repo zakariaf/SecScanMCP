@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from typing import Optional, Dict, Any
+from ..utils.mcp_client import MCPClient, MCPTransport
 
 logger = logging.getLogger(__name__)
 
@@ -94,15 +95,48 @@ class MCPConnectionManager:
                                 runtime_info: Dict[str, Any]):
         """Create MCP client for communication."""
         try:
-            # For now, return a mock client
-            # In real implementation, this would create appropriate transport
+            # Determine transport type
             transport_type = runtime_info.get('transport', 'stdio')
             
+            # Use real MCPClient if available, fallback to mock for testing
+            if transport_type == 'stdio':
+                transport = MCPTransport.STDIO
+            elif transport_type == 'websocket':
+                transport = MCPTransport.WEBSOCKET
+            elif transport_type == 'sse':
+                transport = MCPTransport.SSE
+            else:
+                # Fallback to mock for unsupported transports
+                logger.info(f"Using mock client for transport: {transport_type}")
+                client = MockMCPClient(
+                    container=container,
+                    transport=transport_type
+                )
+                await client.initialize()
+                return client
+            
+            # Create real MCP client
+            client = MCPClient(transport=transport)
+            
+            # Configure based on runtime info
+            if transport == MCPTransport.WEBSOCKET:
+                client.websocket_url = f"ws://localhost:{runtime_info.get('port', 8080)}"
+            elif transport == MCPTransport.SSE:
+                client.sse_url = f"http://localhost:{runtime_info.get('port', 8080)}/sse"
+            
+            # Initialize connection
+            await client.connect()
+            
+            logger.info(f"Real MCP client connected via {transport_type}")
+            return client
+            
+        except ImportError:
+            # If MCPClient not available, use mock
+            logger.warning("MCPClient not available, using mock")
             client = MockMCPClient(
                 container=container,
-                transport=transport_type
+                transport=runtime_info.get('transport', 'stdio')
             )
-            
             await client.initialize()
             return client
             
@@ -139,7 +173,11 @@ class MCPConnectionManager:
 
 
 class MockMCPClient:
-    """Mock MCP client for testing purposes."""
+    """Mock MCP client for testing purposes.
+    
+    This is used as a fallback when the real MCPClient is not available
+    or for testing scenarios where a full MCP connection is not needed.
+    """
     
     def __init__(self, container, transport: str):
         self.container = container

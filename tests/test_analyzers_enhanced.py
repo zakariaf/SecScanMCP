@@ -254,7 +254,7 @@ def test_mcp_client():
     print("=" * 40)
     
     try:
-        from analyzers.mcp_client import MCPTransport, MCPSecurityTester
+        from analyzers.dynamic.utils.mcp_client import MCPTransport, MCPSecurityTester
         
         # Test transport enumeration
         transports = [MCPTransport.STDIO, MCPTransport.SSE, MCPTransport.WEBSOCKET]

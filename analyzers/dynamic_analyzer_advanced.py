@@ -9,7 +9,7 @@ import json
 import time
 from typing import List, Dict, Any, Optional
 import logging
-from .mcp_client import MCPClient, MCPTransport
+from .dynamic.utils.mcp_client import MCPClient, MCPTransport
 from .payloads.generators.payload_generator import PayloadCategory
 from models import Finding, SeverityLevel, VulnerabilityType
 
