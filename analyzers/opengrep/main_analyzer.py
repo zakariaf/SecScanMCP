@@ -30,6 +30,7 @@ class OpenGrepAnalyzer(BaseAnalyzer):
     async def analyze(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
         """Run OpenGrep analysis on the repository"""
         findings = []
+        ignore_file = None
         
         try:
             self.log_scan_summary(repo_path)
