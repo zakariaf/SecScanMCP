@@ -3,7 +3,7 @@ Security analyzers for various vulnerability types
 """
 
 from .base import BaseAnalyzer
-from .bandit_analyzer import BanditAnalyzer
+from .bandit import BanditAnalyzer
 from .opengrep import OpenGrepAnalyzer  # Updated to use refactored module
 from .trivy import TrivyAnalyzer
 from .grype import GrypeAnalyzer
