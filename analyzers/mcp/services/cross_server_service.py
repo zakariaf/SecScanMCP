@@ -142,6 +142,8 @@ class CrossServerService:
                 severity=SeverityLevel.HIGH,
                 vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                 location=location,
+                recommendation="Isolate server environments to prevent cross-contamination.",
+                tool="mcp_cross_server",
                 confidence=0.8
             ))
         
@@ -154,6 +156,8 @@ class CrossServerService:
                 severity=SeverityLevel.MEDIUM,
                 vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                 location=location,
+                recommendation="Ensure each server has unique configuration to prevent shared vulnerabilities.",
+                tool="mcp_cross_server",
                 confidence=0.7
             ))
         
@@ -214,6 +218,8 @@ class CrossServerService:
                         severity=risk_info['severity'],
                         vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                         location=location,
+                        recommendation="Isolate server resources to prevent cross-contamination.",
+                        tool="mcp_cross_server",
                         confidence=0.6
                     ))
         
@@ -254,6 +260,8 @@ class CrossServerService:
                             severity=SeverityLevel.MEDIUM,
                             vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                             location=str(file_path),
+                            recommendation="Implement proper isolation between servers to prevent cross-contamination.",
+                            tool="mcp_cross_server",
                             confidence=0.5
                         ))
                         break
@@ -278,6 +286,8 @@ class CrossServerService:
                     severity=SeverityLevel.MEDIUM,
                     vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                     location=str(repo / shared_file),
+                    recommendation="Isolate server resources to prevent shared file vulnerabilities.",
+                    tool="mcp_cross_server",
                     confidence=0.6
                 ))
         

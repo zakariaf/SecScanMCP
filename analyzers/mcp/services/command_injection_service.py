@@ -111,7 +111,9 @@ class CommandInjectionService:
                     severity=pattern_info['severity'],
                     vulnerability_type=VulnerabilityType.COMMAND_INJECTION,
                     location=str(file_path),
-                    code_snippet=self._extract_context(content, match.start()),
+                    recommendation="Sanitize user input before passing to system commands. Use parameterized commands or allowlists.",
+                    evidence={'code_snippet': self._extract_context(content, match.start())},
+                    tool="mcp_command_injection",
                     confidence=0.85
                 ))
         
@@ -142,7 +144,9 @@ class CommandInjectionService:
                             severity=SeverityLevel.HIGH,
                             vulnerability_type=VulnerabilityType.COMMAND_INJECTION,
                             location=f"{file_path}:{line_no}",
-                            code_snippet=self._extract_node_context(content, node),
+                            recommendation="Sanitize user input before passing to system commands. Use parameterized commands or allowlists.",
+                            evidence={'code_snippet': self._extract_node_context(content, node)},
+                            tool="mcp_command_injection",
                             confidence=0.9
                         ))
                 

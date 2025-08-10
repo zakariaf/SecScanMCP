@@ -21,7 +21,7 @@ class ComponentService:
     BINARY_TYPES = {'binary', 'executable', 'archive'}
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def analyze_components(self, sbom: Dict[str, Any], repo_path: str) -> List[Finding]:
         """Analyze components for potential issues"""
@@ -86,7 +86,7 @@ class ComponentService:
         findings = []
         
         for binary in binary_packages:
-            findings.append(self.base_analyzer.create_finding(
+            findings.append(Finding(
                 vulnerability_type=VulnerabilityType.GENERIC,
                 severity=SeverityLevel.MEDIUM,
                 confidence=0.8,
@@ -110,7 +110,7 @@ class ComponentService:
         for pkg_name, versions in duplicate_packages.items():
             unique_versions = set(versions)
             if len(unique_versions) > 1:  # Multiple different versions
-                findings.append(self.base_analyzer.create_finding(
+                findings.append(Finding(
                     vulnerability_type=VulnerabilityType.GENERIC,
                     severity=SeverityLevel.LOW,
                     confidence=1.0,
@@ -130,7 +130,7 @@ class ComponentService:
         """Create findings for packages with unknown versions (if significant)"""
         # Only create finding if there are many unknown packages
         if len(unknown_packages) > 5:
-            return [self.base_analyzer.create_finding(
+            return [Finding(
                 vulnerability_type=VulnerabilityType.GENERIC,
                 severity=SeverityLevel.LOW,
                 confidence=0.8,

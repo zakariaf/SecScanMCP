@@ -20,7 +20,7 @@ class FindingService:
     
     def __init__(self):
         # Use BaseAnalyzer for finding creation
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def convert_match_to_finding(self, match: Any, file_path: Path, 
                                  repo_root: Path) -> Optional[Finding]:
@@ -34,7 +34,7 @@ class FindingService:
             location = self._build_location(relative_path, matched_strings)
             
             # Build finding
-            return self.base_analyzer.create_finding(
+            return Finding(
                 vulnerability_type=self._determine_vuln_type(meta),
                 severity=self._determine_severity(meta),
                 confidence=float(meta.get('confidence', 0.8)),
@@ -46,7 +46,8 @@ class FindingService:
                     'Review the detected pattern and take appropriate action'
                 ),
                 references=self._extract_references(meta),
-                evidence=self._build_evidence(match, meta, matched_strings)
+                evidence=self._build_evidence(match, meta, matched_strings),
+                tool="yara"
             )
             
         except Exception as e:

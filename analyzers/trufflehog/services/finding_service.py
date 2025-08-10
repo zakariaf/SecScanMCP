@@ -31,7 +31,7 @@ class FindingService:
     }
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def convert_to_finding(self, trufflehog_result: Dict[str, Any], repo_path: str) -> Finding:
         """Convert TruffleHog result to our Finding model with secret masking"""
@@ -54,7 +54,7 @@ class FindingService:
         references = self._get_references()
         evidence = self._build_evidence(trufflehog_result, detector_name, detector_type)
         
-        return self.base_analyzer.create_finding(
+        return Finding(
             vulnerability_type=vuln_type,
             severity=severity,
             confidence=confidence,

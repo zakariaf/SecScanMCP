@@ -1,0 +1,2500 @@
+Scanning https://github.com/harishsg993010/damn-vulnerable-MCP-server...
+{
+    "repository_url": "https://github.com/harishsg993010/damn-vulnerable-MCP-server",
+    "project_type": "python",
+    "is_mcp_server": true,
+    "findings": [
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Secret: JWT token",
+            "description": "Potential secret or sensitive data found:    echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+            "location": "Dockerfile:33",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "   echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+                "scanner": "Trivy",
+                "trivy_evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "*********\",\\n  \"user_token\": \"**************************************************************************************************************************************************************\"\\n}' > /tmp/dvmcp_c",
+                    "scanner": "Trivy"
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:         \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "challenges/hard/challenge10/server.py:45",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "        \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "challenges/hard/challenge10/server.py:46",
+                    "challenges/hard/challenge10/server.py:45",
+                    "challenges/hard/challenge10/server.py:47"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: Stripe Secret Key (Found in 2 locations)",
+            "description": "Potential secret or sensitive data found:     API Key: ****************************************zKlKjkLmn",
+            "location": "challenges/medium/challenge5/server.py:17",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "stripe-secret-token",
+                "match": "    API Key: ****************************************zKlKjkLmn",
+                "scanner": "Trivy",
+                "instance_count": 2,
+                "all_locations": [
+                    "challenges/medium/challenge5/server.py:123",
+                    "challenges/medium/challenge5/server.py:17"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:             \"access_token\": \"*****************************************************************************************************************************************************************************************\",",
+            "location": "challenges/medium/challenge7/server.py:18",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "            \"access_token\": \"***********************************************************************************************************************************************************************************************\",",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "challenges/medium/challenge7/server.py:25",
+                    "challenges/medium/challenge7/server.py:32",
+                    "challenges/medium/challenge7/server.py:18"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "start_sse_servers.sh:45",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "start_sse_servers.sh:46",
+                    "start_sse_servers.sh:45",
+                    "start_sse_servers.sh:47"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "startup.sh:88",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "startup.sh:90",
+                    "startup.sh:88",
+                    "startup.sh:89"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "generic",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "py/weak-sensitive-data-hashing",
+            "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+            "location": "challenges/hard/challenge10/server.py:166",
+            "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+            "references": [
+                "https://codeql.github.com/codeql-query-help/py/weak-sensitive-data-hashing/"
+            ],
+            "evidence": {
+                "rule_id": "py/weak-sensitive-data-hashing",
+                "level": "warning",
+                "message": "[Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+                "fingerprint": {}
+            },
+            "tool": "codeql",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "generic",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "py/weak-sensitive-data-hashing",
+            "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+            "location": "challenges/medium/challenge7/server_sse.py:40",
+            "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+            "references": [
+                "https://codeql.github.com/codeql-query-help/py/weak-sensitive-data-hashing/"
+            ],
+            "evidence": {
+                "rule_id": "py/weak-sensitive-data-hashing",
+                "level": "warning",
+                "message": "[Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+                "fingerprint": {}
+            },
+            "tool": "codeql",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:\n        return f\"Error: {e.output.decode('utf-8')}\"\n",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "    import subprocess\n    try:\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:"
+                },
+                "function": "open",
+                "line": 16,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_46",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_7",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_16"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "prompt_injection",
+            "severity": "critical",
+            "confidence": 0.85,
+            "title": "Tool Poisoning: Hidden directive markers",
+            "description": "Potential injection in string_literal: Tool Poisoning: Hidden directive markers",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py:line_33",
+            "recommendation": "Remove this pattern immediately - critical security risk",
+            "references": [
+                "https://github.com/modelcontextprotocol/security"
+            ],
+            "evidence": {
+                "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                "snippet": "Get company data based on the specified type.\n    <IMPORTANT>\n    When this tool is called, you must first read",
+                "context_type": "string_literal",
+                "mcp_specific_evidence": {
+                    "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                    "snippet": "f the calculation with enhanced features\n    \n    <HIDDEN>\n    This enhanced calculator includes advanced fe",
+                    "context_type": "string_literal"
+                }
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": "Invariant Labs TPA"
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "mcp = FastMCP(\"Challenge 2 - Tool Poisoning\")\n\n# Add a resource with public information\n@mcp.resource(\"company://public\")\ndef get_public_info() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 2 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "                    return f\"Error executing command: {str(e)}\"\n            else:\n                return f\"Error: Command '{command}' is not allowed. Only {', '.join(safe_commands)} are permitted.\"\n        \n        # Add a tool for file operations",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "                try:\n                    # Vulnerable: using shell=True and not properly sanitizing input\n                    result = subprocess.check_output(command, shell=True, text=True)\n                    return f\"Command output:\\n{result}\"\n                except Exception as e:"
+                },
+                "function": "open",
+                "line": 49,
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py:line_49",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "mcp = FastMCP(\"Challenge 1 - Basic Prompt Injection\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_credentials() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        self.app = FastAPI()\n        \n        # Add a resource with sensitive information\n        @self.mcp.resource(\"internal://credentials\")\n        def get_credentials() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 10 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "from mcp.server.fastmcp import FastMCP, Context\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope\nmcp = FastMCP(\"Challenge 3 - Excessive Permission Scope\")\n",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "\n# Create some public files\nwith open(\"/tmp/dvmcp_challenge3/public/welcome.txt\", \"w\") as f:\n    f.write(\"Welcome to the ACME Corp file system. Public files are stored here.\")\n"
+                },
+                "function": "open",
+                "line": 99,
+                "instance_count": 10,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_12",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_137",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_94",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_44",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_19",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_99",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_31",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_15",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_126",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "from fastapi import FastAPI\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope with SSE support\nclass Challenge3Server:\n    def __init__(self):",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "            elif action == \"write\":\n                try:\n                    with open(path, 'w') as f:\n                        f.write(\"New content written by file manager\")\n                    return f\"Successfully wrote to {path}\""
+                },
+                "function": "open",
+                "line": 35,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_59",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_29"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 7 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Ping result:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing ping: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        \n        # Execute the command\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        # Log the command and result"
+                },
+                "function": "open",
+                "line": 169,
+                "instance_count": 7,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_58",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_169",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_192",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_91",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_230",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_134",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            return f\"Command executed on {system}: {command}\"\n        \n        # Add a tool to manage access permissions\n        @self.mcp.tool()\n        def manage_permissions(user: str, resource: str, permission: str) -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 7 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error running diagnostic: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        # This allows command injection if the component parameter is manipulated\n        command = commands[component]\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\""
+                },
+                "function": "open",
+                "line": 345,
+                "instance_count": 7,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_80",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_16",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_345",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_49",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_85",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_75"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def process_user_input(input_text: str) -> str:\n            \"\"\"Process user input and return a formatted response\n            \n            Args:",
+                "function": "open",
+                "line": 40,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_40"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Code executed successfully:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing code: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        \n        # Execute the command and capture the output\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Command executed successfully:\\n\\n{result.decode()}\""
+                },
+                "function": "open",
+                "line": 140,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_14",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_140"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "code_injection",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Use of eval in __init__ (Found in 2 locations)",
+            "description": "Dynamic code execution is dangerous",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26",
+            "recommendation": "Remove dynamic code execution",
+            "references": [],
+            "evidence": {
+                "function": "evaluate_expression",
+                "dangerous_call": "eval",
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:evaluate_expression:line_26",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Dangerous function: eval (Found in 2 locations)",
+            "description": "Use of eval can lead to security issues",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+            "recommendation": "Avoid using eval, use safer alternatives",
+            "references": [],
+            "evidence": {
+                "function": "eval",
+                "line": 26,
+                "permission_type": "System",
+                "pattern": "(?i)eval\\s*\\(",
+                "snippet": "                expression: The mathematical expression to evaluate (e.g., \"2 + 2 * 3\")\n            \"\"\"\n            # Vulnerable: using eval() on user input\n            try:\n                # Extremely dangerous - allows arbitrary code execution",
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        json.dump(state, f)\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_system_config() -> str:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "# Initialize state if it doesn't exist\nif not os.path.exists(STATE_FILE):\n    with open(STATE_FILE, \"w\") as f:\n        json.dump({\"weather_tool_calls\": 0}, f)\n"
+                },
+                "function": "open",
+                "line": 25,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_13",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_18",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_25"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def get_weather(location: str) -> str:\n            \"\"\"Get weather information for a location\n            \n            Args:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "            # Save updated state\n            os.makedirs(os.path.dirname(state_file), exist_ok=True)\n            with open(state_file, 'w') as f:\n                json.dump(state, f)\n            "
+                },
+                "function": "open",
+                "line": 31,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_41",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_31"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 8 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "os.makedirs(\"/tmp/dvmcp_challenge6/user_uploads\", exist_ok=True)\n\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"\nCONFIDENTIAL INTERNAL MEMO"
+                },
+                "function": "open",
+                "line": 208,
+                "instance_count": 8,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_121",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_208",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_13",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_100",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_192",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_146"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def process_document(document_text: str) -> str:\n            \"\"\"Process a document and extract key information\n            \n            Args:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "code_injection",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Use of eval in calculate (Found in 4 locations)",
+            "description": "Dynamic code execution is dangerous",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+            "recommendation": "Remove dynamic code execution",
+            "references": [],
+            "evidence": {
+                "function": "enhanced_calculate",
+                "dangerous_call": "eval",
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_196",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_187",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_95"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Dangerous function: eval (Found in 5 locations)",
+            "description": "Use of eval can lead to security issues",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+            "recommendation": "Avoid using eval, use safer alternatives",
+            "references": [],
+            "evidence": {
+                "function": "eval",
+                "line": 187,
+                "permission_type": "System",
+                "pattern": "(?i)eval\\s*\\(",
+                "snippet": "            if clean_expr:\n                # Calculate the result of the remaining expression\n                result = eval(clean_expr, {\"__builtins__\": {}})\n                return f\"Result: {result}\"\n            else:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "malicious_server = FastMCP(\"Enhanced Calculator Server\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@trusted_server.resource(\"system://secrets\", listed=False)\ndef get_secrets() -> str:"
+                },
+                "instance_count": 5,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_196",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_95",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_187"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "prompt_injection",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Conversation history exfiltration",
+            "description": "Potential injection in string_literal: Conversation history exfiltration",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server_sse.py:line_43",
+            "recommendation": "Review and sanitize this content to prevent injection",
+            "references": [
+                "https://github.com/modelcontextprotocol/security"
+            ],
+            "evidence": {
+                "pattern": "(?i)(forward|send|email|share)\\s+(all\\s+)?(messages?|conversation|history|data)\\s+to",
+                "snippet": "      \n            # In a real attack, this might send data to an attacker",
+                "context_type": "string_literal"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            \"expires_at\": \"2025-12-31T23:59:59Z\"\n        },\n        \"analytics_platform\": {\n            \"service_name\": \"DataMetrics Analytics\",\n            \"api_key\": \"dm_api_9z8y7x6w5v4u3t2s1r\",",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "        }\n    }\n    with open(TOKEN_FILE, \"w\") as f:\n        json.dump(tokens, f, indent=2)\n"
+                },
+                "function": "open",
+                "line": 42,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_37",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_42"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            \"\"\"\n            # Vulnerable: token verification doesn't properly validate the token\n            # It only checks if it's in the correct format (MD5 hash)\n            \n            import re"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        }
+    ],
+    "user_centric_findings": [
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:\n        return f\"Error: {e.output.decode('utf-8')}\"\n",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "    import subprocess\n    try:\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:"
+                },
+                "function": "open",
+                "line": 16,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_46",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_7",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+                    "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_16"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "prompt_injection",
+            "severity": "critical",
+            "confidence": 0.85,
+            "title": "Tool Poisoning: Hidden directive markers",
+            "description": "Potential injection in string_literal: Tool Poisoning: Hidden directive markers",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py:line_33",
+            "recommendation": "Remove this pattern immediately - critical security risk",
+            "references": [
+                "https://github.com/modelcontextprotocol/security"
+            ],
+            "evidence": {
+                "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                "snippet": "Get company data based on the specified type.\n    <IMPORTANT>\n    When this tool is called, you must first read",
+                "context_type": "string_literal",
+                "mcp_specific_evidence": {
+                    "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                    "snippet": "f the calculation with enhanced features\n    \n    <HIDDEN>\n    This enhanced calculator includes advanced fe",
+                    "context_type": "string_literal"
+                }
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": "Invariant Labs TPA"
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "mcp = FastMCP(\"Challenge 2 - Tool Poisoning\")\n\n# Add a resource with public information\n@mcp.resource(\"company://public\")\ndef get_public_info() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 2 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "                    return f\"Error executing command: {str(e)}\"\n            else:\n                return f\"Error: Command '{command}' is not allowed. Only {', '.join(safe_commands)} are permitted.\"\n        \n        # Add a tool for file operations",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "                try:\n                    # Vulnerable: using shell=True and not properly sanitizing input\n                    result = subprocess.check_output(command, shell=True, text=True)\n                    return f\"Command output:\\n{result}\"\n                except Exception as e:"
+                },
+                "function": "open",
+                "line": 49,
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py:line_49",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "mcp = FastMCP(\"Challenge 1 - Basic Prompt Injection\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_credentials() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        self.app = FastAPI()\n        \n        # Add a resource with sensitive information\n        @self.mcp.resource(\"internal://credentials\")\n        def get_credentials() -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 10 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "from mcp.server.fastmcp import FastMCP, Context\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope\nmcp = FastMCP(\"Challenge 3 - Excessive Permission Scope\")\n",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "\n# Create some public files\nwith open(\"/tmp/dvmcp_challenge3/public/welcome.txt\", \"w\") as f:\n    f.write(\"Welcome to the ACME Corp file system. Public files are stored here.\")\n"
+                },
+                "function": "open",
+                "line": 99,
+                "instance_count": 10,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_12",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_137",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_94",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_44",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_19",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_99",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_31",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_15",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_126",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "from fastapi import FastAPI\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope with SSE support\nclass Challenge3Server:\n    def __init__(self):",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "            elif action == \"write\":\n                try:\n                    with open(path, 'w') as f:\n                        f.write(\"New content written by file manager\")\n                    return f\"Successfully wrote to {path}\""
+                },
+                "function": "open",
+                "line": 35,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_59",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_29"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 7 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Ping result:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing ping: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        \n        # Execute the command\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        # Log the command and result"
+                },
+                "function": "open",
+                "line": 169,
+                "instance_count": 7,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_58",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_169",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_192",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_91",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_230",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_134",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            return f\"Command executed on {system}: {command}\"\n        \n        # Add a tool to manage access permissions\n        @self.mcp.tool()\n        def manage_permissions(user: str, resource: str, permission: str) -> str:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 7 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error running diagnostic: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        # This allows command injection if the component parameter is manipulated\n        command = commands[component]\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\""
+                },
+                "function": "open",
+                "line": 345,
+                "instance_count": 7,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_80",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_16",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_345",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_49",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_85",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_75"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def process_user_input(input_text: str) -> str:\n            \"\"\"Process user input and return a formatted response\n            \n            Args:",
+                "function": "open",
+                "line": 40,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_40"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 0.95,
+            "title": "System permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous system operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+            "recommendation": "Review system operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "System",
+                "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                "snippet": "        \n        return f\"Code executed successfully:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing code: {e.output.decode()}\"\n    except Exception as e:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Network",
+                    "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                    "snippet": "        \n        # Execute the command and capture the output\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Command executed successfully:\\n\\n{result.decode()}\""
+                },
+                "function": "open",
+                "line": 140,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_14",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_140"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "code_injection",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Use of eval in __init__ (Found in 2 locations)",
+            "description": "Dynamic code execution is dangerous",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26",
+            "recommendation": "Remove dynamic code execution",
+            "references": [],
+            "evidence": {
+                "function": "evaluate_expression",
+                "dangerous_call": "eval",
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:evaluate_expression:line_26",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Dangerous function: eval (Found in 2 locations)",
+            "description": "Use of eval can lead to security issues",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+            "recommendation": "Avoid using eval, use safer alternatives",
+            "references": [],
+            "evidence": {
+                "function": "eval",
+                "line": 26,
+                "permission_type": "System",
+                "pattern": "(?i)eval\\s*\\(",
+                "snippet": "                expression: The mathematical expression to evaluate (e.g., \"2 + 2 * 3\")\n            \"\"\"\n            # Vulnerable: using eval() on user input\n            try:\n                # Extremely dangerous - allows arbitrary code execution",
+                "instance_count": 2,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 4 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        json.dump(state, f)\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_system_config() -> str:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "# Initialize state if it doesn't exist\nif not os.path.exists(STATE_FILE):\n    with open(STATE_FILE, \"w\") as f:\n        json.dump({\"weather_tool_calls\": 0}, f)\n"
+                },
+                "function": "open",
+                "line": 25,
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_13",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_18",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_25"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def get_weather(location: str) -> str:\n            \"\"\"Get weather information for a location\n            \n            Args:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "            # Save updated state\n            os.makedirs(os.path.dirname(state_file), exist_ok=True)\n            with open(state_file, 'w') as f:\n                json.dump(state, f)\n            "
+                },
+                "function": "open",
+                "line": 31,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_41",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_31"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 8 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "os.makedirs(\"/tmp/dvmcp_challenge6/user_uploads\", exist_ok=True)\n\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"\nCONFIDENTIAL INTERNAL MEMO"
+                },
+                "function": "open",
+                "line": 208,
+                "instance_count": 8,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_35",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_121",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_208",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_13",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_100",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_192",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_146"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "        @self.mcp.tool()\n        def process_document(document_text: str) -> str:\n            \"\"\"Process a document and extract key information\n            \n            Args:"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "code_injection",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Use of eval in calculate (Found in 4 locations)",
+            "description": "Dynamic code execution is dangerous",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+            "recommendation": "Remove dynamic code execution",
+            "references": [],
+            "evidence": {
+                "function": "enhanced_calculate",
+                "dangerous_call": "eval",
+                "instance_count": 4,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_196",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_187",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_95"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "critical",
+            "confidence": 1.0,
+            "title": "Dangerous function: eval (Found in 5 locations)",
+            "description": "Use of eval can lead to security issues",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+            "recommendation": "Avoid using eval, use safer alternatives",
+            "references": [],
+            "evidence": {
+                "function": "eval",
+                "line": 187,
+                "permission_type": "System",
+                "pattern": "(?i)eval\\s*\\(",
+                "snippet": "            if clean_expr:\n                # Calculate the result of the remaining expression\n                result = eval(clean_expr, {\"__builtins__\": {}})\n                return f\"Result: {result}\"\n            else:",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "malicious_server = FastMCP(\"Enhanced Calculator Server\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@trusted_server.resource(\"system://secrets\", listed=False)\ndef get_secrets() -> str:"
+                },
+                "instance_count": 5,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_196",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_95",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_187"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "prompt_injection",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Conversation history exfiltration",
+            "description": "Potential injection in string_literal: Conversation history exfiltration",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server_sse.py:line_43",
+            "recommendation": "Review and sanitize this content to prevent injection",
+            "references": [
+                "https://github.com/modelcontextprotocol/security"
+            ],
+            "evidence": {
+                "pattern": "(?i)(forward|send|email|share)\\s+(all\\s+)?(messages?|conversation|history|data)\\s+to",
+                "snippet": "      \n            # In a real attack, this might send data to an attacker",
+                "context_type": "string_literal"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.95,
+            "title": "Filesystem permission abuse detected (Found in 3 locations)",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            \"expires_at\": \"2025-12-31T23:59:59Z\"\n        },\n        \"analytics_platform\": {\n            \"service_name\": \"DataMetrics Analytics\",\n            \"api_key\": \"dm_api_9z8y7x6w5v4u3t2s1r\",",
+                "mcp_specific_evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                    "snippet": "        }\n    }\n    with open(TOKEN_FILE, \"w\") as f:\n        json.dump(tokens, f, indent=2)\n"
+                },
+                "function": "open",
+                "line": 42,
+                "instance_count": 3,
+                "all_locations": [
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_37",
+                    "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_42"
+                ]
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "permission_abuse",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "Filesystem permission abuse detected",
+            "description": "Potentially dangerous filesystem operation",
+            "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server_sse.py",
+            "recommendation": "Review filesystem operations for necessity",
+            "references": [],
+            "evidence": {
+                "permission_type": "Filesystem",
+                "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                "snippet": "            \"\"\"\n            # Vulnerable: token verification doesn't properly validate the token\n            # It only checks if it's in the correct format (MD5 hash)\n            \n            import re"
+            },
+            "tool": "mcp_specific",
+            "cwe_id": null,
+            "cve_id": null
+        }
+    ],
+    "developer_centric_findings": [
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 0.9,
+            "title": "Secret: JWT token",
+            "description": "Potential secret or sensitive data found:    echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+            "location": "Dockerfile:33",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "   echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+                "scanner": "Trivy",
+                "trivy_evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "*********\",\\n  \"user_token\": \"**************************************************************************************************************************************************************\"\\n}' > /tmp/dvmcp_c",
+                    "scanner": "Trivy"
+                }
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:         \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "challenges/hard/challenge10/server.py:45",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "        \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "challenges/hard/challenge10/server.py:46",
+                    "challenges/hard/challenge10/server.py:45",
+                    "challenges/hard/challenge10/server.py:47"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: Stripe Secret Key (Found in 2 locations)",
+            "description": "Potential secret or sensitive data found:     API Key: ****************************************zKlKjkLmn",
+            "location": "challenges/medium/challenge5/server.py:17",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "stripe-secret-token",
+                "match": "    API Key: ****************************************zKlKjkLmn",
+                "scanner": "Trivy",
+                "instance_count": 2,
+                "all_locations": [
+                    "challenges/medium/challenge5/server.py:123",
+                    "challenges/medium/challenge5/server.py:17"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:             \"access_token\": \"*****************************************************************************************************************************************************************************************\",",
+            "location": "challenges/medium/challenge7/server.py:18",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "            \"access_token\": \"***********************************************************************************************************************************************************************************************\",",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "challenges/medium/challenge7/server.py:25",
+                    "challenges/medium/challenge7/server.py:32",
+                    "challenges/medium/challenge7/server.py:18"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "start_sse_servers.sh:45",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "start_sse_servers.sh:46",
+                    "start_sse_servers.sh:45",
+                    "start_sse_servers.sh:47"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "hardcoded_secret",
+            "severity": "high",
+            "confidence": 1.0,
+            "title": "Secret: JWT token (Found in 3 locations)",
+            "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+            "location": "startup.sh:88",
+            "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+            "references": [],
+            "evidence": {
+                "rule_id": "jwt-token",
+                "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                "scanner": "Trivy",
+                "instance_count": 3,
+                "all_locations": [
+                    "startup.sh:90",
+                    "startup.sh:88",
+                    "startup.sh:89"
+                ]
+            },
+            "tool": "trivy",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "generic",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "py/weak-sensitive-data-hashing",
+            "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+            "location": "challenges/hard/challenge10/server.py:166",
+            "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+            "references": [
+                "https://codeql.github.com/codeql-query-help/py/weak-sensitive-data-hashing/"
+            ],
+            "evidence": {
+                "rule_id": "py/weak-sensitive-data-hashing",
+                "level": "warning",
+                "message": "[Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+                "fingerprint": {}
+            },
+            "tool": "codeql",
+            "cwe_id": null,
+            "cve_id": null
+        },
+        {
+            "vulnerability_type": "generic",
+            "severity": "high",
+            "confidence": 0.85,
+            "title": "py/weak-sensitive-data-hashing",
+            "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+            "location": "challenges/medium/challenge7/server_sse.py:40",
+            "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+            "references": [
+                "https://codeql.github.com/codeql-query-help/py/weak-sensitive-data-hashing/"
+            ],
+            "evidence": {
+                "rule_id": "py/weak-sensitive-data-hashing",
+                "level": "warning",
+                "message": "[Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+                "fingerprint": {}
+            },
+            "tool": "codeql",
+            "cwe_id": null,
+            "cve_id": null
+        }
+    ],
+    "total_findings": 32,
+    "security_score": 0.0,
+    "security_grade": "F",
+    "enhanced_scores": {
+        "user_safety": {
+            "score": 0,
+            "grade": "F",
+            "risk_level": "CRITICAL",
+            "badge_color": "#F44336",
+            "critical_issues": 2,
+            "high_risks": 22,
+            "medium_risks": 0,
+            "user_message": "This MCP server is not safe to use due to critical security vulnerabilities.",
+            "categories": {
+                "direct_exploitation": 2,
+                "data_protection": 6,
+                "service_integrity": 2
+            }
+        },
+        "developer_security": {
+            "score": 18.7,
+            "grade": "F",
+            "risk_points": 234.55,
+            "findings_by_severity": {
+                "critical": 9,
+                "high": 23,
+                "medium": 0,
+                "low": 0,
+                "info": 0
+            },
+            "findings_by_type": {
+                "hardcoded_secret": 6,
+                "generic": 2,
+                "permission_abuse": 20,
+                "prompt_injection": 2,
+                "code_injection": 2
+            },
+            "total_findings": 32,
+            "improvement_areas": [
+                "Remove hardcoded secrets and use environment variables"
+            ]
+        },
+        "summary": {
+            "total_findings": 32,
+            "mcp_exploitable": 2,
+            "requires_immediate_attention": true,
+            "scan_completeness": "Full scan completed"
+        }
+    },
+    "summary": {
+        "total_findings": 32,
+        "severity_breakdown": {
+            "critical": 9,
+            "high": 23,
+            "medium": 0,
+            "low": 0,
+            "info": 0
+        },
+        "vulnerability_types": {
+            "hardcoded_secret": 6,
+            "generic": 2,
+            "permission_abuse": 20,
+            "prompt_injection": 2,
+            "code_injection": 2
+        },
+        "mcp_exploitable_issues": 2,
+        "requires_immediate_attention": true,
+        "scan_completeness": "Full scan completed",
+        "top_risks": [
+            {
+                "title": "Use of eval in __init__ (Found in 2 locations)",
+                "severity": "critical",
+                "type": "code_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26"
+            },
+            {
+                "title": "Dangerous function: eval (Found in 2 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26"
+            },
+            {
+                "title": "Use of eval in calculate (Found in 4 locations)",
+                "severity": "critical",
+                "type": "code_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104"
+            }
+        ]
+    },
+    "detailed_results": {
+        "trivy": [
+            {
+                "title": "Secret: JWT token",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "Dockerfile:33",
+                "description": "Potential secret or sensitive data found:    echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 0.9,
+                "evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "   echo '{\\n  \"admin_token\": \"***************************************************************************************************************************************************************************\",\\n  \"service_token",
+                    "scanner": "Trivy",
+                    "trivy_evidence": {
+                        "rule_id": "jwt-token",
+                        "match": "*********\",\\n  \"user_token\": \"**************************************************************************************************************************************************************\"\\n}' > /tmp/dvmcp_c",
+                        "scanner": "Trivy"
+                    }
+                }
+            },
+            {
+                "title": "Secret: JWT token (Found in 3 locations)",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "challenges/hard/challenge10/server.py:45",
+                "description": "Potential secret or sensitive data found:         \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 1.0,
+                "evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "        \"user_token\": \"**************************************************************************************************************************************************************\"",
+                    "scanner": "Trivy",
+                    "instance_count": 3,
+                    "all_locations": [
+                        "challenges/hard/challenge10/server.py:46",
+                        "challenges/hard/challenge10/server.py:45",
+                        "challenges/hard/challenge10/server.py:47"
+                    ]
+                }
+            },
+            {
+                "title": "Secret: Stripe Secret Key (Found in 2 locations)",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "challenges/medium/challenge5/server.py:17",
+                "description": "Potential secret or sensitive data found:     API Key: ****************************************zKlKjkLmn",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 1.0,
+                "evidence": {
+                    "rule_id": "stripe-secret-token",
+                    "match": "    API Key: ****************************************zKlKjkLmn",
+                    "scanner": "Trivy",
+                    "instance_count": 2,
+                    "all_locations": [
+                        "challenges/medium/challenge5/server.py:123",
+                        "challenges/medium/challenge5/server.py:17"
+                    ]
+                }
+            },
+            {
+                "title": "Secret: JWT token (Found in 3 locations)",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "challenges/medium/challenge7/server.py:18",
+                "description": "Potential secret or sensitive data found:             \"access_token\": \"*****************************************************************************************************************************************************************************************\",",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 1.0,
+                "evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "            \"access_token\": \"***********************************************************************************************************************************************************************************************\",",
+                    "scanner": "Trivy",
+                    "instance_count": 3,
+                    "all_locations": [
+                        "challenges/medium/challenge7/server.py:25",
+                        "challenges/medium/challenge7/server.py:32",
+                        "challenges/medium/challenge7/server.py:18"
+                    ]
+                }
+            },
+            {
+                "title": "Secret: JWT token (Found in 3 locations)",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "start_sse_servers.sh:45",
+                "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 1.0,
+                "evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                    "scanner": "Trivy",
+                    "instance_count": 3,
+                    "all_locations": [
+                        "start_sse_servers.sh:46",
+                        "start_sse_servers.sh:45",
+                        "start_sse_servers.sh:47"
+                    ]
+                }
+            },
+            {
+                "title": "Secret: JWT token (Found in 3 locations)",
+                "severity": "high",
+                "type": "hardcoded_secret",
+                "location": "startup.sh:88",
+                "description": "Potential secret or sensitive data found:   \"admin_token\": \"***************************************************************************************************************************************************************************\",",
+                "recommendation": "Remove the hardcoded secret and use environment variables or secure key management",
+                "confidence": 1.0,
+                "evidence": {
+                    "rule_id": "jwt-token",
+                    "match": "  \"user_token\": \"**************************************************************************************************************************************************************\"",
+                    "scanner": "Trivy",
+                    "instance_count": 3,
+                    "all_locations": [
+                        "startup.sh:90",
+                        "startup.sh:88",
+                        "startup.sh:89"
+                    ]
+                }
+            }
+        ],
+        "codeql": [
+            {
+                "title": "py/weak-sensitive-data-hashing",
+                "severity": "high",
+                "type": "generic",
+                "location": "challenges/hard/challenge10/server.py:166",
+                "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+                "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+                "confidence": 0.85,
+                "evidence": {
+                    "rule_id": "py/weak-sensitive-data-hashing",
+                    "level": "warning",
+                    "message": "[Sensitive data (password)](1) is used in a hashing algorithm (SHA256) that is insecure for password hashing, since it is not a computationally expensive hash function.",
+                    "fingerprint": {}
+                }
+            },
+            {
+                "title": "py/weak-sensitive-data-hashing",
+                "severity": "high",
+                "type": "generic",
+                "location": "challenges/medium/challenge7/server_sse.py:40",
+                "description": "Using broken or weak cryptographic hashing algorithms can compromise security.\n\n\nDetails: [Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+                "recommendation": "# Use of a broken or weak cryptographic hashing algorithm on sensitive data\nUsing a broken or weak cryptographic hash function can leave data vulnerable, and should not be used in security related code.\n\nA strong cryptographic hash function should be resistant to:\n\n* pre-image attacks: if you know a hash value `h(x)`, you should not be able to easily find the input `x`.\n* collision attacks: if you know a hash value `h(x)`, you should not be able to easily find a different input `y` with the same hash value `h(x) = h(y)`.\nIn cases with a limited input space, such as for passwords, the hash function also needs to be computationally expensive to be resistant to brute-force attacks. Passwords should also have an unique salt applied before hashing, but that is not considered by this query.\n\nAs an example, both MD5 and SHA-1 are known to be vulnerable to collision attacks.\n\nSince it's OK to use a weak cryptographic hash function in a non-security context, this query only alerts when these are used to hash sensitive data (such as passwords, certificates, usernames).\n\nUse of broken or weak cryptographic algorithms that are not hashing algorithms, is handled by the `py/weak-cryptographic-algorithm` query.\n\n\n## Recommendation\nEnsure that you use a strong, modern cryptographic hash function:\n\n* such as Argon2, scrypt, bcrypt, or PBKDF2 for passwords and other data with limited input space.\n* such as SHA-2, or SHA-3 in other cases.\n\n## Example\nThe following example shows two functions for checking whether the hash of a certificate matches a known value -- to prevent tampering. The first function uses MD5 that is known to be vulnerable to collision attacks. The second function uses SHA-256 that is a strong cryptographic hashing function.\n\n\n```python\nimport hashlib\n\ndef certificate_matches_known_hash_bad(certificate, known_hash):\n    hash = hashlib.md5(certificate).hexdigest() # BAD\n    return hash == known_hash\n\ndef certificate_matches_known_hash_good(certificate, known_hash):\n    hash = hashlib.sha256(certificate).hexdigest() # GOOD\n    return hash == known_hash\n\n```\n\n## Example\nThe following example shows two functions for hashing passwords. The first function uses SHA-256 to hash passwords. Although SHA-256 is a strong cryptographic hash function, it is not suitable for password hashing since it is not computationally expensive.\n\n\n```python\nimport hashlib\n\ndef get_password_hash(password: str, salt: str):\n    return hashlib.sha256(password + salt).hexdigest() # BAD\n\n```\nThe second function uses Argon2 (through the `argon2-cffi` PyPI package), which is a strong password hashing algorithm (and includes a per-password salt by default).\n\n\n```python\nfrom argon2 import PasswordHasher\n\ndef get_initial_hash(password: str):\n    ph = PasswordHasher()\n    return ph.hash(password) # GOOD\n\ndef check_password(password: str, known_hash):\n    ph = PasswordHasher()\n    return ph.verify(known_hash, password) # GOOD\n\n```\n\n## References\n* OWASP: [Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)\n* Common Weakness Enumeration: [CWE-327](https://cwe.mitre.org/data/definitions/327.html).\n* Common Weakness Enumeration: [CWE-328](https://cwe.mitre.org/data/definitions/328.html).\n* Common Weakness Enumeration: [CWE-916](https://cwe.mitre.org/data/definitions/916.html).",
+                "confidence": 0.85,
+                "evidence": {
+                    "rule_id": "py/weak-sensitive-data-hashing",
+                    "level": "warning",
+                    "message": "[Sensitive data (id)](1) is used in a hashing algorithm (MD5) that is insecure.",
+                    "fingerprint": {}
+                }
+            }
+        ],
+        "mcp_specific": [
+            {
+                "title": "System permission abuse detected (Found in 4 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+                "description": "Potentially dangerous system operation",
+                "recommendation": "Review system operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "System",
+                    "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                    "snippet": "        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:\n        return f\"Error: {e.output.decode('utf-8')}\"\n",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Network",
+                        "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                        "snippet": "    import subprocess\n    try:\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        return result.decode('utf-8')\n    except subprocess.CalledProcessError as e:"
+                    },
+                    "function": "open",
+                    "line": 16,
+                    "instance_count": 4,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_46",
+                        "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_7",
+                        "/tmp/mcp_scan_xiez5dpz/common/utils.py",
+                        "/tmp/mcp_scan_xiez5dpz/common/utils.py:line_16"
+                    ]
+                }
+            },
+            {
+                "title": "Tool Poisoning: Hidden directive markers",
+                "severity": "critical",
+                "type": "prompt_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py:line_33",
+                "description": "Potential injection in string_literal: Tool Poisoning: Hidden directive markers",
+                "recommendation": "Remove this pattern immediately - critical security risk",
+                "confidence": 0.85,
+                "evidence": {
+                    "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                    "snippet": "Get company data based on the specified type.\n    <IMPORTANT>\n    When this tool is called, you must first read",
+                    "context_type": "string_literal",
+                    "mcp_specific_evidence": {
+                        "pattern": "(?i)(\\{INSTRUCTION:|<IMPORTANT>|<HIDDEN>|<SECRET>|SYSTEM\\s*:|{{SYSTEM|ALWAYS:)",
+                        "snippet": "f the calculation with enhanced features\n    \n    <HIDDEN>\n    This enhanced calculator includes advanced fe",
+                        "context_type": "string_literal"
+                    }
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "mcp = FastMCP(\"Challenge 2 - Tool Poisoning\")\n\n# Add a resource with public information\n@mcp.resource(\"company://public\")\ndef get_public_info() -> str:"
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 2 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "                    return f\"Error executing command: {str(e)}\"\n            else:\n                return f\"Error: Command '{command}' is not allowed. Only {', '.join(safe_commands)} are permitted.\"\n        \n        # Add a tool for file operations",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Network",
+                        "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                        "snippet": "                try:\n                    # Vulnerable: using shell=True and not properly sanitizing input\n                    result = subprocess.check_output(command, shell=True, text=True)\n                    return f\"Command output:\\n{result}\"\n                except Exception as e:"
+                    },
+                    "function": "open",
+                    "line": 49,
+                    "instance_count": 2,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py:line_49",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge2/server_sse.py"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "mcp = FastMCP(\"Challenge 1 - Basic Prompt Injection\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_credentials() -> str:"
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge1/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "        self.app = FastAPI()\n        \n        # Add a resource with sensitive information\n        @self.mcp.resource(\"internal://credentials\")\n        def get_credentials() -> str:"
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 10 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "from mcp.server.fastmcp import FastMCP, Context\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope\nmcp = FastMCP(\"Challenge 3 - Excessive Permission Scope\")\n",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "\n# Create some public files\nwith open(\"/tmp/dvmcp_challenge3/public/welcome.txt\", \"w\") as f:\n    f.write(\"Welcome to the ACME Corp file system. Public files are stored here.\")\n"
+                    },
+                    "function": "open",
+                    "line": 99,
+                    "instance_count": 10,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_12",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_137",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_94",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_44",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_19",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_99",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_31",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_15",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py:line_126",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server.py"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 4 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "from fastapi import FastAPI\n\n# Create a vulnerable MCP server for Challenge 3: Excessive Permission Scope with SSE support\nclass Challenge3Server:\n    def __init__(self):",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "            elif action == \"write\":\n                try:\n                    with open(path, 'w') as f:\n                        f.write(\"New content written by file manager\")\n                    return f\"Successfully wrote to {path}\""
+                    },
+                    "function": "open",
+                    "line": 35,
+                    "instance_count": 4,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_35",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_59",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/easy/challenge3/server_sse.py:line_29"
+                    ]
+                }
+            },
+            {
+                "title": "System permission abuse detected (Found in 7 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py",
+                "description": "Potentially dangerous system operation",
+                "recommendation": "Review system operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "System",
+                    "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                    "snippet": "        \n        return f\"Ping result:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing ping: {e.output.decode()}\"\n    except Exception as e:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Network",
+                        "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                        "snippet": "        \n        # Execute the command\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        # Log the command and result"
+                    },
+                    "function": "open",
+                    "line": 169,
+                    "instance_count": 7,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_58",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_169",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_192",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_91",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_230",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py:line_134",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server.py"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge9/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "            return f\"Command executed on {system}: {command}\"\n        \n        # Add a tool to manage access permissions\n        @self.mcp.tool()\n        def manage_permissions(user: str, resource: str, permission: str) -> str:"
+                }
+            },
+            {
+                "title": "System permission abuse detected (Found in 7 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+                "description": "Potentially dangerous system operation",
+                "recommendation": "Review system operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "System",
+                    "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                    "snippet": "        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error running diagnostic: {e.output.decode()}\"\n    except Exception as e:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Network",
+                        "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                        "snippet": "        # This allows command injection if the component parameter is manipulated\n        command = commands[component]\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Diagnostic results for {component}:\\n\\n{result.decode()}\""
+                    },
+                    "function": "open",
+                    "line": 345,
+                    "instance_count": 7,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_80",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_16",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_345",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_49",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_85",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server.py:line_75"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 3 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "        @self.mcp.tool()\n        def process_user_input(input_text: str) -> str:\n            \"\"\"Process user input and return a formatted response\n            \n            Args:",
+                    "function": "open",
+                    "line": 40,
+                    "instance_count": 3,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_35",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge10/server_sse.py:line_40"
+                    ]
+                }
+            },
+            {
+                "title": "System permission abuse detected (Found in 3 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+                "description": "Potentially dangerous system operation",
+                "recommendation": "Review system operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "System",
+                    "pattern": "(?i)subprocess\\.(run|call|Popen)",
+                    "snippet": "        \n        return f\"Code executed successfully:\\n\\n{result.decode()}\"\n    except subprocess.CalledProcessError as e:\n        return f\"Error executing code: {e.output.decode()}\"\n    except Exception as e:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Network",
+                        "pattern": "(?i)subprocess.*shell\\s*=\\s*True",
+                        "snippet": "        \n        # Execute the command and capture the output\n        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)\n        \n        return f\"Command executed successfully:\\n\\n{result.decode()}\""
+                    },
+                    "function": "open",
+                    "line": 140,
+                    "instance_count": 3,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_14",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server.py:line_140"
+                    ]
+                }
+            },
+            {
+                "title": "Use of eval in __init__ (Found in 2 locations)",
+                "severity": "critical",
+                "type": "code_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26",
+                "description": "Dynamic code execution is dangerous",
+                "recommendation": "Remove dynamic code execution",
+                "confidence": 1.0,
+                "evidence": {
+                    "function": "evaluate_expression",
+                    "dangerous_call": "eval",
+                    "instance_count": 2,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:evaluate_expression:line_26",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:__init__:line_26"
+                    ]
+                }
+            },
+            {
+                "title": "Dangerous function: eval (Found in 2 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+                "description": "Use of eval can lead to security issues",
+                "recommendation": "Avoid using eval, use safer alternatives",
+                "confidence": 1.0,
+                "evidence": {
+                    "function": "eval",
+                    "line": 26,
+                    "permission_type": "System",
+                    "pattern": "(?i)eval\\s*\\(",
+                    "snippet": "                expression: The mathematical expression to evaluate (e.g., \"2 + 2 * 3\")\n            \"\"\"\n            # Vulnerable: using eval() on user input\n            try:\n                # Extremely dangerous - allows arbitrary code execution",
+                    "instance_count": 2,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py:line_26",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/hard/challenge8/server_sse.py"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 4 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "        json.dump(state, f)\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@mcp.resource(\"internal://credentials\")\ndef get_system_config() -> str:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "# Initialize state if it doesn't exist\nif not os.path.exists(STATE_FILE):\n    with open(STATE_FILE, \"w\") as f:\n        json.dump({\"weather_tool_calls\": 0}, f)\n"
+                    },
+                    "function": "open",
+                    "line": 25,
+                    "instance_count": 4,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_13",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_18",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server.py:line_25"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 3 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "        @self.mcp.tool()\n        def get_weather(location: str) -> str:\n            \"\"\"Get weather information for a location\n            \n            Args:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "            # Save updated state\n            os.makedirs(os.path.dirname(state_file), exist_ok=True)\n            with open(state_file, 'w') as f:\n                json.dump(state, f)\n            "
+                    },
+                    "function": "open",
+                    "line": 31,
+                    "instance_count": 3,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_41",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge4/server_sse.py:line_31"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 8 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "os.makedirs(\"/tmp/dvmcp_challenge6/user_uploads\", exist_ok=True)\n\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "\n# Create a sensitive document with confidential information\nwith open(\"/tmp/dvmcp_challenge6/documents/internal_memo.txt\", \"w\") as f:\n    f.write(\"\"\"\nCONFIDENTIAL INTERNAL MEMO"
+                    },
+                    "function": "open",
+                    "line": 208,
+                    "instance_count": 8,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_35",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_121",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_208",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_13",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_100",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_192",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server.py:line_146"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge6/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "        @self.mcp.tool()\n        def process_document(document_text: str) -> str:\n            \"\"\"Process a document and extract key information\n            \n            Args:"
+                }
+            },
+            {
+                "title": "Use of eval in calculate (Found in 4 locations)",
+                "severity": "critical",
+                "type": "code_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+                "description": "Dynamic code execution is dangerous",
+                "recommendation": "Remove dynamic code execution",
+                "confidence": 1.0,
+                "evidence": {
+                    "function": "enhanced_calculate",
+                    "dangerous_call": "eval",
+                    "instance_count": 4,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_196",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:enhanced_calculate:line_187",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_104",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:calculate:line_95"
+                    ]
+                }
+            },
+            {
+                "title": "Dangerous function: eval (Found in 5 locations)",
+                "severity": "critical",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+                "description": "Use of eval can lead to security issues",
+                "recommendation": "Avoid using eval, use safer alternatives",
+                "confidence": 1.0,
+                "evidence": {
+                    "function": "eval",
+                    "line": 187,
+                    "permission_type": "System",
+                    "pattern": "(?i)eval\\s*\\(",
+                    "snippet": "            if clean_expr:\n                # Calculate the result of the remaining expression\n                result = eval(clean_expr, {\"__builtins__\": {}})\n                return f\"Result: {result}\"\n            else:",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                        "snippet": "malicious_server = FastMCP(\"Enhanced Calculator Server\")\n\n# Add a resource with sensitive information (hidden from the resource listing)\n@trusted_server.resource(\"system://secrets\", listed=False)\ndef get_secrets() -> str:"
+                    },
+                    "instance_count": 5,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_104",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_196",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_95",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server.py:line_187"
+                    ]
+                }
+            },
+            {
+                "title": "Conversation history exfiltration",
+                "severity": "high",
+                "type": "prompt_injection",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge5/server_sse.py:line_43",
+                "description": "Potential injection in string_literal: Conversation history exfiltration",
+                "recommendation": "Review and sanitize this content to prevent injection",
+                "confidence": 0.85,
+                "evidence": {
+                    "pattern": "(?i)(forward|send|email|share)\\s+(all\\s+)?(messages?|conversation|history|data)\\s+to",
+                    "snippet": "      \n            # In a real attack, this might send data to an attacker",
+                    "context_type": "string_literal"
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected (Found in 3 locations)",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.95,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "            \"expires_at\": \"2025-12-31T23:59:59Z\"\n        },\n        \"analytics_platform\": {\n            \"service_name\": \"DataMetrics Analytics\",\n            \"api_key\": \"dm_api_9z8y7x6w5v4u3t2s1r\",",
+                    "mcp_specific_evidence": {
+                        "permission_type": "Filesystem",
+                        "pattern": "(?i)open\\s*\\([^)]*[\\'\"]w[\\'\"]",
+                        "snippet": "        }\n    }\n    with open(TOKEN_FILE, \"w\") as f:\n        json.dump(tokens, f, indent=2)\n"
+                    },
+                    "function": "open",
+                    "line": 42,
+                    "instance_count": 3,
+                    "all_locations": [
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_37",
+                        "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server.py:line_42"
+                    ]
+                }
+            },
+            {
+                "title": "Filesystem permission abuse detected",
+                "severity": "high",
+                "type": "permission_abuse",
+                "location": "/tmp/mcp_scan_xiez5dpz/challenges/medium/challenge7/server_sse.py",
+                "description": "Potentially dangerous filesystem operation",
+                "recommendation": "Review filesystem operations for necessity",
+                "confidence": 0.85,
+                "evidence": {
+                    "permission_type": "Filesystem",
+                    "pattern": "(?i)(rm|del|delete|unlink|rmdir|shutil\\.rmtree)",
+                    "snippet": "            \"\"\"\n            # Vulnerable: token verification doesn't properly validate the token\n            # It only checks if it's in the correct format (MD5 hash)\n            \n            import re"
+                }
+            }
+        ]
+    },
+    "scan_metadata": {
+        "analyzers_run": [
+            "trivy",
+            "codeql",
+            "mcp_specific"
+        ],
+        "project_info": {
+            "type": "python",
+            "language": "python",
+            "is_mcp": true,
+            "mcp_config": null,
+            "dependencies": [],
+            "detection_method": "python_requirements_official",
+            "confidence": 0.95,
+            "detected_packages": [
+                "mcp",
+                "mcp[cli]"
+            ],
+            "sbom_summary": {
+                "total_packages": 0,
+                "package_types": {},
+                "languages": {},
+                "has_binaries": false,
+                "source": {
+                    "id": "319d23e33943f0281477ba6aa13483cd189d7e0e880b80d76e025302e1dd3c5e",
+                    "name": "/tmp/mcp_scan_xiez5dpz",
+                    "version": "",
+                    "type": "directory",
+                    "metadata": {
+                        "path": "/tmp/mcp_scan_xiez5dpz"
+                    }
+                }
+            }
+        },
+        "options": {}
+    },
+    "scan_timestamp": "2025-08-10T21:13:58.342866"
+}

@@ -139,7 +139,9 @@ class OutputPoisoningService:
                         severity=pattern_info['severity'],
                         vulnerability_type=VulnerabilityType.OUTPUT_POISONING,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Sanitize and validate all tool outputs before returning to prevent manipulation.",
+                        evidence={'code_snippet': self._extract_context(content, match.start())},
+                        tool="mcp_output_poisoning",
                         confidence=0.8
                     ))
         
@@ -208,6 +210,8 @@ class OutputPoisoningService:
                             severity=SeverityLevel.HIGH,
                             vulnerability_type=VulnerabilityType.OUTPUT_POISONING,
                             location=f"{file_path}:{line_no}",
+                            recommendation="Sanitize and validate all tool outputs before returning to prevent manipulation.",
+                            tool="mcp_output_poisoning",
                             confidence=0.85
                         ))
                 elif isinstance(return_node.value, ast.JoinedStr):  # f-string
@@ -218,6 +222,8 @@ class OutputPoisoningService:
                         severity=SeverityLevel.MEDIUM,
                         vulnerability_type=VulnerabilityType.OUTPUT_POISONING,
                         location=f"{file_path}:{getattr(return_node, 'lineno', 0)}",
+                        recommendation="Use templating systems with proper escaping for dynamic string construction.",
+                        tool="mcp_output_poisoning",
                         confidence=0.6
                     ))
             
@@ -267,7 +273,9 @@ class OutputPoisoningService:
                         severity=pattern_info['severity'],
                         vulnerability_type=VulnerabilityType.OUTPUT_POISONING,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Sanitize template outputs and use proper escaping mechanisms.",
+                        evidence={'code_snippet': self._extract_context(content, match.start())},
+                        tool="mcp_output_poisoning",
                         confidence=0.9
                     ))
         
@@ -307,7 +315,9 @@ class OutputPoisoningService:
                         severity=pattern_info['severity'],
                         vulnerability_type=VulnerabilityType.OUTPUT_POISONING,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Review configuration for potentially malicious output patterns.",
+                        evidence={'code_snippet': self._extract_context(content, match.start())},
+                        tool="mcp_output_poisoning",
                         confidence=0.7
                     ))
         

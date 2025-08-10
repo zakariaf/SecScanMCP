@@ -69,7 +69,7 @@ class FindingService:
     }
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def convert_to_finding(self, bandit_result: Dict[str, Any]) -> Finding:
         """Convert Bandit result to our Finding model"""
@@ -91,7 +91,7 @@ class FindingService:
         references = self._build_references(bandit_result)
         evidence = self._build_evidence(bandit_result, test_id)
         
-        return self.base_analyzer.create_finding(
+        return Finding(
             vulnerability_type=vuln_type,
             severity=severity,
             confidence=confidence,

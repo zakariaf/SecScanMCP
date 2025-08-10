@@ -29,7 +29,7 @@ class FindingService:
     }
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def convert_match(self, match: Dict[str, Any], repo_path: str) -> Finding:
         """Convert Grype match to Finding"""
@@ -59,7 +59,7 @@ class FindingService:
         # Adjust severity for known exploited vulnerabilities
         severity = self._adjust_severity_for_kev(vulnerability, severity)
         
-        return self.base_analyzer.create_finding(
+        return Finding(
             vulnerability_type=VulnerabilityType.VULNERABLE_DEPENDENCY,
             severity=severity,
             confidence=confidence,

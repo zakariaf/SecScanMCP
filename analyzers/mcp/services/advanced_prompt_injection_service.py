@@ -379,7 +379,9 @@ class AdvancedPromptInjectionService:
                         severity=SeverityLevel.MEDIUM,
                         vulnerability_type=VulnerabilityType.PROMPT_INJECTION,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Sanitize and validate user input before processing.",
+                        evidence={'code_snippet': self._extract_context(content, match.start())},
+                        tool="mcp_prompt_injection",
                         confidence=0.6
                     ))
             
@@ -419,7 +421,9 @@ class AdvancedPromptInjectionService:
                     severity=pattern_info['severity'],
                     vulnerability_type=VulnerabilityType.PROMPT_INJECTION,
                     location=location,
-                    code_snippet=self._extract_context(text, match.start()),
+                    recommendation="Implement input validation and sanitization to prevent prompt injection attacks.",
+                    evidence={'code_snippet': self._extract_context(text, match.start())},
+                    tool="mcp_prompt_injection",
                     confidence=0.8
                 ))
         

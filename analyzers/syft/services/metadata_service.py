@@ -21,7 +21,7 @@ class MetadataService:
     INCOMPLETENESS_THRESHOLD = 0.1
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass  # BaseAnalyzer removed - services create Finding objects directly
     
     def analyze_metadata(self, sbom: Dict[str, Any], repo_path: str) -> List[Finding]:
         """Analyze SBOM metadata for completeness and issues"""
@@ -82,7 +82,7 @@ class MetadataService:
     def _create_incompleteness_finding(self, stats: Dict[str, int], 
                                      total_packages: int) -> Finding:
         """Create finding for incomplete package information"""
-        return self.base_analyzer.create_finding(
+        return Finding(
             vulnerability_type=VulnerabilityType.GENERIC,
             severity=SeverityLevel.LOW,
             confidence=1.0,

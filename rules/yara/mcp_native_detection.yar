@@ -30,9 +30,9 @@ rule MCP_Tool_Poisoning_Advanced
         $hidden6 = /ALWAYS\s*:/
         
         // Advanced poisoning patterns
-        $poison1 = /you\s+must\s+(?:first\s+)?(?:access|read|retrieve)/
-        $poison2 = /do\s+not\s+(?:mention|tell|say|reveal)/
-        $poison3 = /ignore\s+(?:all\s+)?previous\s+instructions/
+        $poison1 = /you\s+must\s+(first\s+)?(access|read|retrieve)/
+        $poison2 = /do\s+not\s+(mention|tell|say|reveal)/
+        $poison3 = /ignore\s+(all\s+)?previous\s+instructions/
         $poison4 = /override[_-]auth[_-]protocol/
         $poison5 = /get_secrets\s*\(\s*\)/
         

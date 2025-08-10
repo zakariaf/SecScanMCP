@@ -8,7 +8,6 @@ Following clean architecture with single responsibility
 import logging
 from typing import List, Dict, Any
 
-from analyzers.base import BaseAnalyzer
 from models import Finding, SeverityLevel, VulnerabilityType
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ class LicenseService:
     }
     
     def __init__(self):
-        self.base_analyzer = BaseAnalyzer()
+        pass
     
     def analyze_licenses(self, sbom: Dict[str, Any], repo_path: str) -> List[Finding]:
         """Analyze licenses in SBOM for potential issues"""
@@ -100,7 +99,7 @@ class LicenseService:
             severity = (SeverityLevel.HIGH if pkg['type'] == 'restrictive' 
                        else SeverityLevel.MEDIUM)
             
-            findings.append(self.base_analyzer.create_finding(
+            findings.append(Finding(
                 vulnerability_type=VulnerabilityType.LICENSE_VIOLATION,
                 severity=severity,
                 confidence=0.95,
@@ -138,7 +137,7 @@ class LicenseService:
     
     def _create_complexity_finding(self, license_summary: Dict) -> Finding:
         """Create finding for complex license landscape"""
-        return self.base_analyzer.create_finding(
+        return Finding(
             vulnerability_type=VulnerabilityType.LICENSE_VIOLATION,
             severity=SeverityLevel.LOW,
             confidence=1.0,

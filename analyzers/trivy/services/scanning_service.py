@@ -116,7 +116,7 @@ class ScanningService:
         try:
             # Import here to avoid circular dependency
             from analyzers.base import BaseAnalyzer
-            from analyzers.utils.ignore_patterns import IgnorePatterns
+            from config.ignore_patterns import IgnorePatterns
             
             # Use centralized ignore patterns from base analyzer
             ignore_patterns = IgnorePatterns.create_gitignore_style_list("TrivyAnalyzer")

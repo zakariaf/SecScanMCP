@@ -144,10 +144,6 @@ class ScanningService:
         """Create Finding object for detected malware"""
         severity = self._determine_severity(malware_name)
         
-        # Import here to avoid circular import
-        from analyzers.base import BaseAnalyzer
-        base = BaseAnalyzer()
-        
         # Get ClamAV version for evidence
         signature_version = "unknown"
         try:
@@ -155,7 +151,7 @@ class ScanningService:
         except Exception:
             pass
         
-        return base.create_finding(
+        return Finding(
             vulnerability_type=VulnerabilityType.MALWARE,
             severity=severity,
             confidence=0.99,  # ClamAV has very low false positive rate
