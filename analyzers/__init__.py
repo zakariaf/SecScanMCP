@@ -8,7 +8,7 @@ from .opengrep import OpenGrepAnalyzer  # Updated to use refactored module
 from .trivy import TrivyAnalyzer
 from .grype import GrypeAnalyzer
 from .syft import SyftAnalyzer
-from .trufflehog_analyzer import TruffleHogAnalyzer
+from .trufflehog import TruffleHogAnalyzer
 from .mcp import MCPSpecificAnalyzer
 from .dynamic import DynamicAnalyzer  # Updated to use refactored module
 from .traffic import TrafficAnalyzer  # Updated to use refactored module
