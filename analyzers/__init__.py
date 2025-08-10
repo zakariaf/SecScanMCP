@@ -13,9 +13,9 @@ from .mcp import MCPSpecificAnalyzer
 from .dynamic import DynamicAnalyzer  # Updated to use refactored module
 from .traffic import TrafficAnalyzer  # Updated to use refactored module
 
-from .security_tools.clamav_analyzer import ClamAVAnalyzer
-from .security_tools.yara_analyzer import YARAAnalyzer
-from .security_tools.codeql_analyzer import CodeQLAnalyzer
+from .security_tools.clamav import ClamAVAnalyzer
+from .security_tools.yara import YARAAnalyzer
+from .security_tools.codeql import CodeQLAnalyzer
 
 __all__ = [
     'BaseAnalyzer',
