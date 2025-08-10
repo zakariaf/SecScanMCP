@@ -144,7 +144,7 @@ class RugPullService:
                         title=f"Rug Pull Risk: {pattern_info['title']}",
                         description=f"Suspicious pattern detected in {file_path.name}",
                         severity=pattern_info['severity'],
-                        vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
+                        vulnerability_type=VulnerabilityType.MALWARE,
                         location=str(file_path),
                         recommendation="Review code for malicious intent and remove suspicious patterns.",
                         evidence={'code_snippet': self._extract_context(content, match.start())},
@@ -170,7 +170,7 @@ class RugPullService:
                     title="Code Obfuscation Detected",
                     description="File contains suspicious code obfuscation patterns",
                     severity=SeverityLevel.HIGH,
-                    vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
+                    vulnerability_type=VulnerabilityType.MALWARE,
                     location=str(file_path),
                     recommendation="Review obfuscated code for malicious intent and improve code clarity.",
                     evidence={'obfuscation_detected': True},
@@ -179,7 +179,7 @@ class RugPullService:
                 ))
         
         except Exception as e:
-            logger.warning(f"Error checking obfuscation in {file_path}: {e}")
+            logger.error(f"Rug pull analysis failed for {file_path}: {e}")
         
         return findings
     
@@ -199,7 +199,7 @@ class RugPullService:
                         title=f"Rug Pull Risk: {category}",
                         description=f"Suspicious {category.lower()} pattern in {file_path.name}",
                         severity=SeverityLevel.HIGH,
-                        vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
+                        vulnerability_type=VulnerabilityType.MALWARE,
                         location=str(file_path),
                         recommendation="Review suspicious patterns for potential malicious intent.",
                         evidence={'code_snippet': self._extract_context(content, match.start()), 'category': category},

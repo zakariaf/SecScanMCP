@@ -131,7 +131,7 @@ class TokenSecurityService:
                         title=pattern_info['title'],
                         description=f"Potential token exposure in {file_path.name}",
                         severity=pattern_info['severity'],
-                        vulnerability_type=VulnerabilityType.SENSITIVE_DATA_EXPOSURE,
+                        vulnerability_type=VulnerabilityType.DATA_EXPOSURE,
                         location=str(file_path),
                         code_snippet=self._extract_context(content, match.start()),
                         confidence=0.9

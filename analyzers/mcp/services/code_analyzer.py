@@ -36,7 +36,7 @@ class CodeAnalyzer:
             content = file_path.read_text()
             findings.extend(self._analyze_code_content(content, str(file_path)))
         except Exception as e:
-            logger.error(f"Error analyzing {file_path}: {e}")
+            logger.error(f"Code analysis failed for {file_path}: {e}")
         
         return findings
     
@@ -131,7 +131,7 @@ class CodeAnalyzer:
         
         if not has_validation:
             findings.append(Finding(
-                vulnerability_type=VulnerabilityType.INPUT_VALIDATION,
+                vulnerability_type=VulnerabilityType.MCP_SPECIFIC,
                 severity=SeverityLevel.HIGH,
                 confidence=0.75,
                 title=f"Missing input validation in {func_name}",

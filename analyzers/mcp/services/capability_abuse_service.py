@@ -324,7 +324,7 @@ class CapabilityAbuseService:
                         title="Authentication Bypass Detected",
                         description="Code may bypass authentication checks",
                         severity=SeverityLevel.HIGH,
-                        vulnerability_type=VulnerabilityType.AUTHENTICATION_BYPASS,
+                        vulnerability_type=VulnerabilityType.INSECURE_CONFIGURATION,
                         location=str(file_path),
                         code_snippet=self._extract_context(content, match.start()),
                         confidence=0.6
@@ -365,7 +365,7 @@ class CapabilityAbuseService:
                             title=f"Tool Abuse Risk: {abuse_type.replace('_', ' ').title()}",
                             description=abuse_info['description'],
                             severity=abuse_info['severity'],
-                            vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
+                            vulnerability_type=VulnerabilityType.PERMISSION_ABUSE,
                             location=str(file_path),
                             code_snippet=self._extract_context(content, match.start()),
                             confidence=0.7
