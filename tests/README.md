@@ -15,12 +15,20 @@ This directory contains comprehensive tests for the MCP Security Scanner, includ
 ### 2. Specialized Test Files
 - `test_mcp_specific_vulnerabilities.py` - MCP protocol vulnerability unit tests
 - `test_mcp_config_analyzer.py` - MCP configuration vulnerability tests
-- `security_test_cases/` - Additional vulnerability samples for advanced testing
 
-### 3. Legacy/Existing Tests
-- `test_analyzers_*.py` - Individual analyzer tests
-- `test_*_analyzer.py` - Tool-specific tests
-- `test_enhanced_scoring*.py` - Scoring system tests
+### 3. Analyzer Tests
+- `test_analyzers_simple.py` - Basic analyzer tests
+- `test_analyzers_enhanced.py` - Enhanced analyzer tests with complex scenarios
+- `test_clamav_analyzer.py` - ClamAV analyzer tests
+- `test_codeql_analyzer.py` - CodeQL analyzer tests
+- `test_opengrep.py` - OpenGrep analyzer tests
+- `test_yara_analyzer.py` - YARA analyzer tests
+- `test_attack_payloads.py` - Attack payload detection tests
+- `test_dynamic_integration.py` - Dynamic analysis integration tests
+- `test_dynamic_structure.py` - Dynamic analyzer structure tests
+- `test_enhanced_scoring.py` - Enhanced scoring system tests
+- `test_enhanced_scoring_simple.py` - Simple scoring tests
+- `test_scanner_integration.py` - Integration tests for the scanner
 
 ## Running Tests
 
@@ -97,8 +105,9 @@ When running against vulnerable samples, expect:
 To add new vulnerability tests:
 
 1. **For HTTP API tests**: Add samples to `create_comprehensive_test_samples()` in `test_scanner.py`
-2. **For unit tests**: Add to the `security_test_cases/` directory
+2. **For unit tests**: Create new test files in this directory
 3. **For MCP-specific**: Extend the MCP categorization in test functions
+4. **For vulnerability samples**: Add to `examples/vulnerability_samples/` directory
 
 ## Test Infrastructure
 

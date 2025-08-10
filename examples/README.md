@@ -1,42 +1,46 @@
-# MCP Security Scanner Test Examples
+# MCP Security Scanner Examples
 
-This directory contains **intentionally vulnerable** MCP server implementations for testing the security scanner's detection capabilities.
+This directory contains example scripts and vulnerable code samples for testing the security scanner.
+
+## Directory Structure
+
+### `/examples/`
+Example scripts and vulnerable MCP servers for testing:
+
+1. **`scan_example.py`**
+   - Purpose: Example client script showing how to use the scanner API
+   - Type: Safe utility script
+   - Usage: `python scan_example.py <repository_url>`
+
+2. **`vulnerable-mcp-server.py`**
+   - Purpose: Python MCP server with intentional vulnerabilities
+   - Contains: Command injection, path traversal, SQL injection, SSRF, hardcoded secrets, etc.
+
+3. **`vulnerable-mcp-server.js`**
+   - Purpose: JavaScript MCP server with advanced vulnerabilities
+   - Contains: Template injection, race conditions, XXE, prototype pollution, ReDoS, etc.
+
+4. **`test_vulnerable_mcp.js`**
+   - Purpose: Basic JavaScript test cases for CodeQL rules
+   - Contains: Simple examples of each vulnerability type
+
+### `/vulnerability_samples/`
+Comprehensive vulnerability code examples organized by type:
+
+- **`complex_vulnerabilities.py`** - Complex multi-layered vulnerability patterns
+- **`VulnerablePythonScript.py`** - General vulnerable Python patterns
+- **`malicious_mcp_samples/`** - MCP-specific malicious server examples
+  - `apt_mcp_server.py` - APT-style persistent threat patterns
+  - `backdoor_mcp_server.py` - Backdoor implementation examples
+- **`yara_patterns/`** - YARA detection pattern test cases
+  - `apt_behavioral_patterns.py` - APT behavior patterns
+  - `container_privilege_escalation.py` - Container escape patterns
+  - `data_exfiltration.py` - Data exfiltration techniques
+  - `polymorphic_obfuscation.py` - Code obfuscation patterns
+  - `schema_injection_mcp.py` - MCP schema injection
+  - `tool_poisoning_unicode.py` - Unicode-based tool poisoning
 
 ⚠️ **WARNING: DO NOT USE THESE FILES IN PRODUCTION** ⚠️
-
-## Test Files
-
-### 1. `scan_example.py`
-- **Purpose**: Example client script showing how to use the scanner API
-- **Type**: Safe utility script
-- **Usage**: `python scan_example.py <repository_url>`
-
-### 2. `vulnerable-mcp-server.py`
-- **Purpose**: Python MCP server with intentional vulnerabilities
-- **Contains**: 
-  - Command injection
-  - Path traversal
-  - SQL injection
-  - SSRF vulnerabilities
-  - Hardcoded secrets
-  - Information disclosure
-  - And more...
-
-### 3. `vulnerable-mcp-server.js` 
-- **Purpose**: JavaScript MCP server with advanced vulnerabilities
-- **Contains**:
-  - Template literal injection
-  - Race conditions
-  - XXE vulnerabilities
-  - Prototype pollution
-  - ReDoS patterns
-  - Timing attacks
-  - Memory leaks
-  - And more...
-
-### 4. `test_vulnerable_mcp.js`
-- **Purpose**: Basic JavaScript test cases for CodeQL rules
-- **Contains**: Simple examples of each vulnerability type
 
 ## Vulnerability Categories Covered
 
