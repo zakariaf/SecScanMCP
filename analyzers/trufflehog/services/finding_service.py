@@ -63,7 +63,8 @@ class FindingService:
             location=location,
             recommendation=recommendation,
             references=references,
-            evidence=evidence
+            evidence=evidence,
+            tool="trufflehog"
         )
     
     def _determine_vulnerability_type(self, detector_name: str) -> VulnerabilityType:

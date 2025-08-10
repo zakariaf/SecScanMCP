@@ -146,7 +146,9 @@ class RugPullService:
                         severity=pattern_info['severity'],
                         vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Review code for malicious intent and remove suspicious patterns.",
+                        evidence={'code_snippet': self._extract_context(content, match.start())},
+                        tool="mcp_rug_pull",
                         confidence=0.85
                     ))
         
@@ -170,6 +172,9 @@ class RugPullService:
                     severity=SeverityLevel.HIGH,
                     vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
                     location=str(file_path),
+                    recommendation="Review obfuscated code for malicious intent and improve code clarity.",
+                    evidence={'obfuscation_detected': True},
+                    tool="mcp_rug_pull",
                     confidence=0.7
                 ))
         
@@ -196,7 +201,9 @@ class RugPullService:
                         severity=SeverityLevel.HIGH,
                         vulnerability_type=VulnerabilityType.MALICIOUS_CODE,
                         location=str(file_path),
-                        code_snippet=self._extract_context(content, match.start()),
+                        recommendation="Review suspicious patterns for potential malicious intent.",
+                        evidence={'code_snippet': self._extract_context(content, match.start()), 'category': category},
+                        tool="mcp_rug_pull",
                         confidence=0.8
                     ))
         

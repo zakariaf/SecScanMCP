@@ -100,7 +100,8 @@ class FindingService:
             location=location,
             recommendation=recommendation,
             references=references,
-            evidence=evidence
+            evidence=evidence,
+            tool="bandit"
         )
     
     def _get_vulnerability_type(self, test_id: str) -> VulnerabilityType:
