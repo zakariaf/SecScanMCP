@@ -117,19 +117,11 @@ scan:
 example:
 	docker-compose run --rm scanner python examples/scan_example.py https://github.com/user/test-repo
 
-# Open development shell
-shell:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm dev-shell
-
 # Clean everything
 clean:
 	docker-compose down -v
 	rm -f security_report_*.json
 	@echo "Cleaned up containers and volumes"
-
-# Show tool versions
-versions:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml run --rm tool-versions
 
 # Show logs
 logs:
@@ -139,10 +131,6 @@ logs:
 status:
 	@echo "📊 Service Status:"
 	@docker-compose ps
-
-# Development mode with hot reload
-dev:
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 # Install tools locally (for development)
 install-local:
