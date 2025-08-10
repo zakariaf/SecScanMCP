@@ -7,7 +7,7 @@ from .bandit_analyzer import BanditAnalyzer
 from .opengrep import OpenGrepAnalyzer  # Updated to use refactored module
 from .trivy import TrivyAnalyzer
 from .grype_analyzer import GrypeAnalyzer
-from .syft_analyzer import SyftAnalyzer
+from .syft import SyftAnalyzer
 from .trufflehog_analyzer import TruffleHogAnalyzer
 from .mcp import MCPSpecificAnalyzer
 from .dynamic import DynamicAnalyzer  # Updated to use refactored module
