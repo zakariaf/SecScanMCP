@@ -14,6 +14,17 @@ class BehavioralAnalysisService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.analysis_session = {}
+        self.behavior_profiler = None
+        self._initialize_advanced_components()
+    
+    def _initialize_advanced_components(self) -> None:
+        """Initialize advanced behavioral components if available."""
+        try:
+            # Try to initialize behavior profiler if available
+            # This would be implemented in a future behavioral profiling module
+            pass
+        except ImportError:
+            pass
     
     async def analyze_behavior(self, mcp_client, container_id: str) -> List[Finding]:
         """
@@ -29,19 +40,65 @@ class BehavioralAnalysisService:
         findings = []
         
         try:
-            # Collect behavioral metrics
+            # Basic behavioral analysis
             behavior_data = await self._collect_behavior_data(mcp_client)
-            
-            # Run ML-based anomaly detection
             findings.extend(await self._detect_anomalies(behavior_data))
-            
-            # Check response patterns
             findings.extend(await self._analyze_response_patterns(behavior_data))
+            
+            # Advanced 30-second behavioral monitoring if container available
+            container = await self._get_container(container_id)
+            if container:
+                advanced_findings = await self._run_advanced_behavioral_analysis(container)
+                findings.extend(advanced_findings)
             
             logger.info(f"Behavioral analysis completed with {len(findings)} findings")
             
         except Exception as e:
             logger.error(f"Behavioral analysis failed: {e}")
+        
+        return findings
+    
+    async def _get_container(self, container_id: str):
+        """Get Docker container for advanced monitoring."""
+        try:
+            import docker
+            docker_client = docker.from_env()
+            return docker_client.containers.get(container_id)
+        except Exception:
+            return None
+    
+    async def _run_advanced_behavioral_analysis(self, container) -> List[Finding]:
+        """Run advanced 30-second behavioral analysis (from advanced analyzer)."""
+        findings = []
+        
+        try:
+            import asyncio
+            import time
+            
+            self.logger.info("🧠 Running advanced behavioral analysis...")
+            
+            # Monitor behavior for 30-second analysis period
+            behavior_duration = 30  # seconds
+            start_time = time.time()
+            behavior_metrics = []
+            
+            while time.time() - start_time < behavior_duration:
+                # Collect runtime metrics snapshot
+                metrics = await self._collect_runtime_metrics_snapshot(container)
+                if metrics:
+                    behavior_metrics.append(metrics)
+                    self._store_metrics_in_session(metrics)
+                
+                await asyncio.sleep(2)  # Collect metrics every 2 seconds
+            
+            # Analyze behavioral patterns if we have data
+            if behavior_metrics:
+                findings.extend(await self._analyze_behavioral_patterns(behavior_metrics))
+            
+            self.logger.info(f"🧠 Advanced behavioral analysis found {len(findings)} anomalies")
+            
+        except Exception as e:
+            self.logger.error(f"Advanced behavioral analysis failed: {e}")
         
         return findings
     
@@ -307,3 +364,201 @@ class BehavioralAnalysisService:
             logger.error(f"Performance pattern analysis failed: {e}")
         
         return findings
+    
+    async def _collect_runtime_metrics_snapshot(self, container) -> Dict[str, Any]:
+        """Collect a single snapshot of runtime metrics (from advanced analyzer)."""
+        try:
+            import time
+            
+            stats = container.stats(stream=False)
+            
+            # Calculate CPU and memory using same methods as performance service
+            cpu_percent = self._calculate_cpu_percent(stats)
+            memory_mb = self._extract_memory_usage(stats)
+            
+            # Collect system metrics
+            network_connections = await self._get_network_connections(container)
+            process_count = await self._get_process_count(container)
+            file_descriptors = await self._get_file_descriptors(container)
+            
+            return {
+                'timestamp': time.time(),
+                'cpu_percent': cpu_percent,
+                'memory_mb': memory_mb,
+                'network_connections': network_connections,
+                'process_count': process_count,
+                'file_descriptors': file_descriptors,
+                'dns_queries': 0,  # Updated by traffic analyzer
+                'file_operations': 0,  # Updated by monitoring
+                'process_spawns': 0,  # Updated by monitoring
+                'tool_calls': 0,  # Updated by MCP client
+                'error_count': 0,  # Updated by log analysis
+                'response_time_ms': 0,  # Updated by performance monitoring
+                'data_volume_bytes': 0,  # Updated by traffic analyzer
+                'unique_destinations': 0  # Updated by traffic analyzer
+            }
+        except Exception as e:
+            self.logger.debug(f"Metrics collection error: {e}")
+            return None
+    
+    def _store_metrics_in_session(self, metrics: Dict[str, Any]) -> None:
+        """Store metrics in analysis session."""
+        if 'metrics_history' not in self.analysis_session:
+            self.analysis_session['metrics_history'] = []
+        self.analysis_session['metrics_history'].append(metrics)
+    
+    async def _analyze_behavioral_patterns(self, behavior_metrics: List[Dict[str, Any]]) -> List[Finding]:
+        """Analyze behavioral patterns and detect anomalies (from advanced analyzer)."""
+        findings = []
+        
+        try:
+            # Create behavioral profile if profiler available
+            if self.behavior_profiler:
+                self.behavior_profiler.create_profile(behavior_metrics, "current_session")
+            
+            # Detect behavioral anomalies
+            findings.extend(await self._detect_behavioral_anomalies(behavior_metrics))
+            
+        except Exception as e:
+            self.logger.debug(f"Behavioral pattern analysis failed: {e}")
+        
+        return findings
+    
+    async def _detect_behavioral_anomalies(self, behavior_metrics: List[Dict[str, Any]]) -> List[Finding]:
+        """Detect behavioral anomalies in metrics (from advanced analyzer)."""
+        findings = []
+        
+        try:
+            # Analyze CPU patterns
+            cpu_findings = self._analyze_cpu_patterns(behavior_metrics)
+            findings.extend(cpu_findings)
+            
+            # Analyze memory patterns
+            memory_findings = self._analyze_memory_patterns(behavior_metrics)
+            findings.extend(memory_findings)
+            
+            # Analyze network patterns
+            network_findings = self._analyze_network_patterns(behavior_metrics)
+            findings.extend(network_findings)
+            
+        except Exception as e:
+            self.logger.debug(f"Anomaly detection failed: {e}")
+        
+        return findings
+    
+    def _analyze_cpu_patterns(self, metrics: List[Dict[str, Any]]) -> List[Finding]:
+        """Analyze CPU usage patterns for anomalies."""
+        findings = []
+        cpu_values = [m.get('cpu_percent', 0) for m in metrics]
+        
+        if cpu_values:
+            avg_cpu = sum(cpu_values) / len(cpu_values)
+            max_cpu = max(cpu_values)
+            
+            if max_cpu > 90:  # High CPU usage anomaly
+                findings.append(Finding(
+                    title="High CPU Usage Anomaly",
+                    description=f"Detected high CPU usage: max={max_cpu:.1f}%, avg={avg_cpu:.1f}%",
+                    severity=SeverityLevel.MEDIUM,
+                    vulnerability_type=VulnerabilityType.PERFORMANCE_ISSUE,
+                    location="behavioral_analysis",
+                    confidence=0.7,
+                    evidence={'max_cpu': max_cpu, 'avg_cpu': avg_cpu}
+                ))
+        
+        return findings
+    
+    def _analyze_memory_patterns(self, metrics: List[Dict[str, Any]]) -> List[Finding]:
+        """Analyze memory usage patterns for anomalies."""
+        findings = []
+        memory_values = [m.get('memory_mb', 0) for m in metrics]
+        
+        if memory_values and len(memory_values) > 1:
+            memory_growth = memory_values[-1] - memory_values[0]
+            
+            if memory_growth > 100:  # More than 100MB growth
+                findings.append(Finding(
+                    title="Memory Growth Anomaly",
+                    description=f"Significant memory growth detected: {memory_growth:.1f} MB",
+                    severity=SeverityLevel.MEDIUM,
+                    vulnerability_type=VulnerabilityType.MEMORY_LEAK,
+                    location="behavioral_analysis",
+                    confidence=0.6,
+                    evidence={'memory_growth_mb': memory_growth}
+                ))
+        
+        return findings
+    
+    def _analyze_network_patterns(self, metrics: List[Dict[str, Any]]) -> List[Finding]:
+        """Analyze network patterns for anomalies."""
+        findings = []
+        network_values = [m.get('network_connections', 0) for m in metrics]
+        
+        if network_values:
+            max_connections = max(network_values)
+            
+            if max_connections > 50:  # High connection count
+                findings.append(Finding(
+                    title="High Network Activity Anomaly",
+                    description=f"High network connection count: {max_connections}",
+                    severity=SeverityLevel.LOW,
+                    vulnerability_type=VulnerabilityType.SUSPICIOUS_NETWORK_ACTIVITY,
+                    location="behavioral_analysis",
+                    confidence=0.5,
+                    evidence={'max_connections': max_connections}
+                ))
+        
+        return findings
+    
+    # Utility methods (reused from performance service)
+    def _calculate_cpu_percent(self, stats: Dict[str, Any]) -> float:
+        """Calculate CPU usage percentage from Docker stats."""
+        try:
+            cpu_stats = stats['cpu_stats']
+            precpu_stats = stats['precpu_stats']
+            
+            cpu_delta = cpu_stats['cpu_usage']['total_usage'] - precpu_stats['cpu_usage']['total_usage']
+            system_delta = cpu_stats['system_cpu_usage'] - precpu_stats['system_cpu_usage']
+            
+            if system_delta > 0:
+                return (cpu_delta / system_delta) * 100.0
+        except (KeyError, ZeroDivisionError, TypeError):
+            pass
+        return 0.0
+    
+    def _extract_memory_usage(self, stats: Dict[str, Any]) -> float:
+        """Extract memory usage in MB."""
+        try:
+            return stats['memory_stats']['usage'] / (1024 * 1024)
+        except (KeyError, TypeError):
+            return 0.0
+    
+    async def _get_network_connections(self, container) -> int:
+        """Get network connections count."""
+        try:
+            result = container.exec_run('netstat -an | wc -l')
+            if result.exit_code == 0:
+                return int(result.output.decode().strip())
+        except (ValueError, TypeError):
+            pass
+        return 0
+    
+    async def _get_process_count(self, container) -> int:
+        """Get process count."""
+        try:
+            result = container.exec_run('ps aux | wc -l')
+            if result.exit_code == 0:
+                return int(result.output.decode().strip())
+        except (ValueError, TypeError):
+            pass
+        return 0
+    
+    async def _get_file_descriptors(self, container) -> int:
+        """Get file descriptor count."""
+        try:
+            result = container.exec_run('ls /proc/*/fd 2>/dev/null | wc -l')
+            if result.exit_code == 0:
+                return int(result.output.decode().strip())
+        except (ValueError, TypeError):
+            pass
+        return 0

@@ -2,7 +2,7 @@
 
 import asyncio
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 from models import Finding, SeverityLevel, VulnerabilityType
 
@@ -20,6 +20,27 @@ class SecurityTestingService:
             'resource_access',
             'authentication_bypass'
         ]
+        
+        # Initialize payload generator and validator if available
+        self.payload_generator = None
+        self.payload_validator = None
+        self._initialize_advanced_components()
+    
+    def _initialize_advanced_components(self) -> None:
+        """Initialize advanced payload components if available."""
+        try:
+            from analyzers.payloads.generators.payload_generator import PayloadGenerator
+            self.payload_generator = PayloadGenerator()
+            logger.info("Advanced payload generator initialized")
+        except ImportError:
+            logger.debug("PayloadGenerator not available, using basic payloads")
+        
+        try:
+            # Try to initialize payload validator if available
+            # This would be implemented in a future payload validation module
+            pass
+        except ImportError:
+            pass
     
     async def run_comprehensive_tests(self, mcp_client) -> List[Finding]:
         """
@@ -67,29 +88,82 @@ class SecurityTestingService:
             for tool in tools[:3]:  # Limit testing to first 3 tools
                 tool_name = tool.get('name', 'unknown')
                 
-                # Test malicious payloads
-                test_payloads = [
-                    {'input': '; rm -rf / #'},
-                    {'input': '$(whoami)'},
-                    {'input': '`cat /etc/passwd`'},
-                    {'input': '../../../etc/shadow'}
-                ]
-                
-                for payload in test_payloads:
-                    try:
-                        result = await mcp_client.call_tool(tool_name, payload)
-                        
-                        # Analyze response for vulnerabilities
-                        if self._analyze_tool_response(result, payload):
-                            findings.append(Finding(
-                                title=f"Tool Manipulation Vulnerability: {tool_name}",
-                                description=f"Tool accepts and processes malicious input: {payload['input'][:50]}...",
-                                severity=SeverityLevel.HIGH,
-                                vulnerability_type=VulnerabilityType.COMMAND_INJECTION,
-                                location=f"tool:{tool_name}",
-                                confidence=0.8,
-                                evidence={'payload': payload, 'response': str(result)[:200]}
+                # Use advanced payloads if available
+                if self.payload_generator:
+                    findings.extend(await self._test_tool_with_advanced_payloads(mcp_client, tool_name))
+                else:
+                    findings.extend(await self._test_tool_with_basic_payloads(mcp_client, tool_name))
+        
+        except Exception as e:
+            logger.error(f"Tool manipulation testing failed: {e}")
+        
+        return findings
+    
+    async def _test_tool_with_advanced_payloads(self, mcp_client, tool_name: str) -> List[Finding]:
+        """Test tool with advanced PayloadCategory payloads."""
+        findings = []
+        
+        try:
+            from analyzers.payloads.generators.payload_generator import PayloadCategory
+            
+            # Get tool manipulation payloads
+            manipulation_payloads = self.payload_generator.get_payloads(PayloadCategory.TOOL_MANIPULATION)
+            
+            for payload_data in manipulation_payloads:
+                try:
+                    payload = {'input': payload_data['payload']}
+                    result = await mcp_client.call_tool(tool_name, payload)
+                    
+                    # Advanced response analysis if validator available
+                    if self.payload_validator:
+                        analysis = self.payload_validator.analyze_response(str(result), payload_data)
+                        if analysis.get('vulnerable', False):
+                            findings.append(self._create_advanced_tool_finding(
+                                tool_name, payload_data, result, analysis
                             ))
+                    else:
+                        # Fallback to basic analysis
+                        if self._analyze_tool_response(result, payload):
+                            findings.append(self._create_basic_tool_finding(tool_name, payload_data, result))
+                            
+                except Exception as e:
+                    if self._is_vulnerability_error(str(e)):
+                        findings.append(self._create_tool_error_finding(tool_name, payload_data, str(e)))
+        
+        except ImportError:
+            # Fallback to basic testing if PayloadCategory not available
+            logger.debug("PayloadCategory not available, using basic payloads")
+            findings.extend(await self._test_tool_with_basic_payloads(mcp_client, tool_name))
+        
+        return findings
+    
+    async def _test_tool_with_basic_payloads(self, mcp_client, tool_name: str) -> List[Finding]:
+        """Test tool with basic payloads (original behavior)."""
+        findings = []
+        
+        # Basic malicious payloads
+        test_payloads = [
+            {'input': '; rm -rf / #'},
+            {'input': '$(whoami)'},
+            {'input': '`cat /etc/passwd`'},
+            {'input': '../../../etc/shadow'}
+        ]
+        
+        for payload in test_payloads:
+            try:
+                result = await mcp_client.call_tool(tool_name, payload)
+                
+                # Analyze response for vulnerabilities
+                if self._analyze_tool_response(result, payload):
+                    findings.append(Finding(
+                        title=f"Tool Manipulation Vulnerability: {tool_name}",
+                        description=f"Tool accepts and processes malicious input: {payload['input'][:50]}...",
+                        severity=SeverityLevel.HIGH,
+                        vulnerability_type=VulnerabilityType.COMMAND_INJECTION,
+                        location=f"tool:{tool_name}",
+                        confidence=0.8,
+                        evidence={'payload': payload, 'response': str(result)[:200]}
+                    ))
                     
                     except Exception as e:
                         # Tool errors might indicate vulnerability
@@ -308,6 +382,49 @@ class SecurityTestingService:
         ]
         
         return any(pattern in content_str for pattern in sensitive_patterns)
+    
+    def _create_advanced_tool_finding(self, tool_name: str, payload_data: Dict[str, Any], 
+                                    result, analysis: Dict[str, Any]) -> Finding:
+        """Create finding using advanced payload analysis."""
+        return Finding(
+            title=f"Tool Manipulation: {tool_name}",
+            description=f"Tool '{tool_name}' vulnerable to manipulation: {payload_data.get('description', '')}",
+            severity=SeverityLevel.HIGH,
+            vulnerability_type=VulnerabilityType.TOOL_MANIPULATION,
+            location=f"tool:{tool_name}",
+            confidence=analysis.get('confidence', 0.8),
+            evidence={
+                'tool_name': tool_name,
+                'payload': payload_data.get('payload', ''),
+                'response': str(result)[:500],
+                'analysis': analysis,
+                'payload_category': 'TOOL_MANIPULATION'
+            }
+        )
+    
+    def _create_basic_tool_finding(self, tool_name: str, payload_data: Dict[str, Any], result) -> Finding:
+        """Create finding using basic analysis."""
+        return Finding(
+            title=f"Tool Manipulation Vulnerability: {tool_name}",
+            description=f"Tool accepts and processes malicious input: {payload_data.get('payload', '')[:50]}...",
+            severity=SeverityLevel.HIGH,
+            vulnerability_type=VulnerabilityType.COMMAND_INJECTION,
+            location=f"tool:{tool_name}",
+            confidence=0.8,
+            evidence={'payload': payload_data, 'response': str(result)[:200]}
+        )
+    
+    def _create_tool_error_finding(self, tool_name: str, payload_data: Dict[str, Any], error: str) -> Finding:
+        """Create finding from tool error that reveals vulnerability."""
+        return Finding(
+            title=f"Tool Error Vulnerability: {tool_name}",
+            description=f"Tool error reveals system information: {error[:100]}...",
+            severity=SeverityLevel.MEDIUM,
+            vulnerability_type=VulnerabilityType.INFORMATION_DISCLOSURE,
+            location=f"tool:{tool_name}",
+            confidence=0.6,
+            evidence={'payload': payload_data, 'error': error[:300]}
+        )
     
     def _indicates_poor_validation(self, response: Dict, input_data: Dict) -> bool:
         """Check if response indicates poor input validation."""

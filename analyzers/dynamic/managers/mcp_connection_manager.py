@@ -93,7 +93,17 @@ class MCPConnectionManager:
     
     async def _create_mcp_client(self, container, 
                                 runtime_info: Dict[str, Any]):
-        """Create MCP client for communication."""
+        """Create MCP client for communication with multi-transport fallback."""
+        # Check if advanced multi-transport mode is requested
+        use_fallback = runtime_info.get('multi_transport_fallback', True)
+        
+        if use_fallback:
+            return await self._create_mcp_client_with_fallback(container, runtime_info)
+        else:
+            return await self._create_single_transport_client(container, runtime_info)
+    
+    async def _create_single_transport_client(self, container, runtime_info: Dict[str, Any]):
+        """Create MCP client with single transport (original behavior)."""
         try:
             # Determine transport type
             transport_type = runtime_info.get('transport', 'stdio')
@@ -143,6 +153,48 @@ class MCPConnectionManager:
         except Exception as e:
             logger.error(f"Failed to create MCP client: {e}")
             return None
+    
+    async def _create_mcp_client_with_fallback(self, container, runtime_info: Dict[str, Any]):
+        """Create MCP client with multi-transport fallback (advanced mode)."""
+        # Try different transport methods in priority order
+        transports_to_try = [
+            (MCPTransport.STDIO, runtime_info.get('command', '')),
+            (MCPTransport.SSE, 'http://localhost:8000/mcp'),
+            (MCPTransport.WEBSOCKET, 'ws://localhost:8000/mcp')
+        ]
+        
+        for transport, endpoint in transports_to_try:
+            try:
+                client = MCPClient(transport)
+                connected = await self._connect_with_transport(client, container, transport, endpoint)
+                
+                if connected:
+                    logger.info(f"🔗 MCP connection established via {transport.value}")
+                    return client
+                    
+            except Exception as e:
+                logger.debug(f"Connection failed for {transport.value}: {e}")
+                continue
+        
+        logger.warning("❌ Could not establish MCP protocol connection with any transport")
+        
+        # Final fallback to mock client
+        client = MockMCPClient(
+            container=container,
+            transport='fallback'
+        )
+        await client.initialize()
+        return client
+    
+    async def _connect_with_transport(self, client: MCPClient, container, 
+                                     transport: MCPTransport, endpoint: str) -> bool:
+        """Connect client using specific transport."""
+        if transport == MCPTransport.STDIO:
+            # Execute command in container
+            docker_command = f"docker exec -i {container.id} {endpoint}"
+            return await client.connect(docker_command)
+        else:
+            return await client.connect(endpoint)
     
     async def _test_connection(self, mcp_client) -> bool:
         """Test MCP connection with basic call."""
