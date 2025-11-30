@@ -5,6 +5,7 @@ This file provides guidance to Claude Code when working with this MCP security s
 ## Essential Commands
 
 ### Development & Testing
+
 ```bash
 make restart              # Stop, build, and start all services
 make up                   # Start services
@@ -17,6 +18,7 @@ make status               # Show service status
 ```
 
 ### Direct Python Usage
+
 ```bash
 pip install -r requirements.txt
 python main.py                    # Run FastAPI server (port 8000)
@@ -24,6 +26,7 @@ python test_scanner.py            # Run tests
 ```
 
 ### Tool Setup
+
 ```bash
 make setup-all            # Setup all security tools
 make setup-clamav         # Setup ClamAV
@@ -41,12 +44,14 @@ make install-local        # Install tools locally
 This codebase follows **Sandi Metz best practices** and **clean architecture**:
 
 #### Mandatory Rules
+
 1. **Classes**: ≤100 lines of code
 2. **Methods**: ≤10 lines of code
 3. **Single Responsibility**: Each class/method does ONE thing
 4. **Clear Separation**: Business logic, utilities, and orchestration are separate
 
 #### Design Patterns
+
 - **Service Layer Pattern**: Business logic in dedicated services
 - **Repository Pattern**: Data access abstraction
 - **Dependency Injection**: Services are composed, not inherited
@@ -57,7 +62,7 @@ This codebase follows **Sandi Metz best practices** and **clean architecture**:
 
 ## Project Structure
 
-```
+```text
 secscanmcp/
 ├── main.py                      # FastAPI entry point (175 lines)
 ├── models.py                    # Pydantic data models (5,777 lines)
@@ -86,7 +91,7 @@ secscanmcp/
 
 ### 1. Scanner Module (`scanner/`) - CLEAN ARCHITECTURE
 
-```
+```text
 scanner/
 ├── main_scanner.py              # Orchestrator (85 lines)
 ├── services/
@@ -102,13 +107,15 @@ scanner/
 ### 2. Analyzers Module (`analyzers/`) - 20+ SPECIALIZED ANALYZERS
 
 #### Base Class
-```
+
+```text
 analyzers/
 ├── base.py                      # BaseAnalyzer abstract class (99 lines)
 ```
 
 #### MCP-Specific Analyzers
-```
+
+```text
 analyzers/mcp/                   # MCP vulnerability detection (~1,200 lines)
 ├── main_analyzer.py             # MCPSpecificAnalyzer orchestrator (95 lines)
 ├── services/
@@ -129,7 +136,8 @@ analyzers/mcp/                   # MCP vulnerability detection (~1,200 lines)
 ```
 
 #### Dynamic Analysis
-```
+
+```text
 analyzers/dynamic/               # Runtime behavior analysis (~1,000+ lines)
 ├── main_analyzer.py             # DynamicAnalyzer orchestrator
 ├── managers/
@@ -145,7 +153,8 @@ analyzers/dynamic/               # Runtime behavior analysis (~1,000+ lines)
 ```
 
 #### ML Anomaly Detection
-```
+
+```text
 analyzers/ml_anomaly/            # Machine learning detection (~700 lines)
 ├── main_analyzer.py             # MLAnomalyAnalyzer orchestrator
 ├── detectors/
@@ -161,7 +170,8 @@ analyzers/ml_anomaly/            # Machine learning detection (~700 lines)
 ```
 
 #### Traffic Analysis
-```
+
+```text
 analyzers/traffic/               # Network traffic monitoring (~700 lines)
 ├── main_analyzer.py             # TrafficAnalyzer (513 lines)
 ├── managers/
@@ -178,7 +188,8 @@ analyzers/traffic/               # Network traffic monitoring (~700 lines)
 ```
 
 #### Intelligent Context Analyzer (EXEMPLAR MODULE)
-```
+
+```text
 analyzers/intelligent/           # Context-aware analysis (~800 lines)
 ├── main_analyzer.py             # IntelligentContextAnalyzer
 ├── components/
@@ -202,7 +213,8 @@ analyzers/intelligent/           # Context-aware analysis (~800 lines)
 ```
 
 #### Attack Payload Library
-```
+
+```text
 analyzers/payloads/              # Security testing payloads (~700 lines)
 ├── main_payloads.py             # AdvancedPayloadGenerator (82 lines)
 ├── generators/
@@ -220,7 +232,8 @@ analyzers/payloads/              # Security testing payloads (~700 lines)
 ```
 
 #### Security Tool Wrappers
-```
+
+```text
 analyzers/security_tools/
 ├── codeql/                      # CodeQL semantic analysis
 │   ├── main_analyzer.py
@@ -246,7 +259,8 @@ analyzers/security_tools/
 ```
 
 #### Universal Analyzers
-```
+
+```text
 analyzers/
 ├── trivy/                       # Vulnerability + secret + config scanning
 │   ├── main_analyzer.py         # TrivyAnalyzer (49 lines)
@@ -293,7 +307,7 @@ analyzers/
 
 ## Configuration
 
-```
+```text
 config/
 ├── default.yaml                 # Default configuration (2,340 lines)
 ├── scanner.yml                  # Scanner configuration (5,363 lines)
@@ -329,6 +343,7 @@ ScanResult (BaseModel)           # API response model with scores
 ## Scoring System (`enhanced_scoring.py`)
 
 Dual-scoring algorithm:
+
 - **User Safety Score (0-100)**: Focuses on MCP-exploitable vulnerabilities
 - **Developer Security Score (0-100)**: Comprehensive code security
 - Letter grades (A-F) with color-coded badges
@@ -338,7 +353,7 @@ Dual-scoring algorithm:
 
 ## Testing Suite
 
-```
+```text
 tests/
 ├── conftest.py                  # Pytest fixtures
 ├── analyzers/
@@ -364,7 +379,7 @@ tests/
 
 ## Scripts
 
-```
+```text
 scripts/
 ├── install-tools.sh             # Install all security tools (1,776 lines)
 ├── setup_clamav.sh              # ClamAV setup (5,955 lines)
@@ -378,7 +393,7 @@ scripts/
 
 ## Security Rules
 
-```
+```text
 rules/
 ├── codeql/
 │   ├── MCP_SECURITY_SUITE.md
@@ -393,7 +408,7 @@ rules/
 
 ## Documentation
 
-```
+```text
 docs/
 ├── README.md                    # Documentation index
 ├── quick-reference.md           # Quick start
@@ -416,7 +431,7 @@ docs/
 
 ## Examples & Test Samples
 
-```
+```text
 examples/
 ├── scan_example.py              # Example scan code
 ├── vulnerable-mcp-server.py     # Vulnerable Python MCP server
@@ -443,7 +458,8 @@ tmp/damn-vulnerable-MCP-server/  # Challenge-based learning
 **EVERY** new component MUST follow these rules:
 
 1. **File Structure**:
-   ```
+
+   ```text
    module_name/
    ├── __init__.py               # Public exports only
    ├── main_<module>.py          # Orchestrator (≤100 lines)
@@ -453,6 +469,7 @@ tmp/damn-vulnerable-MCP-server/  # Challenge-based learning
    ```
 
 2. **Class Rules**:
+
    ```python
    class ServiceName:  # ≤100 lines TOTAL
        def method_one(self):  # ≤10 lines
@@ -502,6 +519,55 @@ tmp/damn-vulnerable-MCP-server/  # Challenge-based learning
    - Create in `utils/`
    - Pure functions only (no state)
 
+### Refactoring Checklist
+
+When refactoring existing code:
+
+- [ ] Identify responsibilities (list them)
+- [ ] Create service for each responsibility
+- [ ] Ensure each class ≤100 lines
+- [ ] Ensure each method ≤10 lines
+- [ ] Extract utilities to `utils/`
+- [ ] Extract models to `models/`
+- [ ] Update imports and dependencies
+- [ ] Test each service independently
+
+---
+
+## Examples of Good Architecture
+
+### GOOD: scanner/services/finding_service.py
+
+```python
+class FindingService:  # 155 lines total
+    def deduplicate_findings(self, findings):  # 8 lines
+        grouped = self._group_findings(findings)
+        unique = self._select_best_findings(grouped)
+        self._log_stats(len(findings), len(unique))
+        return unique
+
+    def _group_findings(self, findings):  # 7 lines
+        # Single responsibility: grouping
+        pass
+```
+
+### GOOD: analyzers/intelligent/main_analyzer.py
+
+```python
+class IntelligentAnalyzer:  # <100 lines
+    def __init__(self):
+        # Dependency injection
+        self.semantic = SemanticAnalyzer()
+        self.behavioral = BehavioralAnalyzer()
+```
+
+### AVOID: Monolithic files
+
+- Files with 500+ lines
+- Classes doing multiple things
+- Methods with nested complexity
+- Direct file I/O in business logic
+
 ---
 
 ## MCP Security Focus
@@ -509,6 +575,7 @@ tmp/damn-vulnerable-MCP-server/  # Challenge-based learning
 Specialized for Model Context Protocol server security:
 
 **Vulnerability Types Detected**:
+
 - Prompt injection in tool descriptions
 - Tool poisoning attacks (TPAs)
 - Permission abuse and privilege escalation
@@ -521,6 +588,7 @@ Specialized for Model Context Protocol server security:
 - Rug pull patterns (crypto)
 
 **Advanced Features**:
+
 - Context-aware analysis to reduce false positives
 - ML-based legitimacy assessment (Isolation Forest)
 - Real MCP protocol communication testing
@@ -531,7 +599,7 @@ Specialized for Model Context Protocol server security:
 
 ## API Endpoints
 
-```
+```text
 GET  /health    # Health check
 POST /scan      # Main scanning endpoint
 GET  /tools     # List available security tools
@@ -559,6 +627,7 @@ clamav:         # ClamAV daemon (port 3310)
 ## Quality Standards
 
 Every PR must meet:
+
 1. No class exceeds 100 lines
 2. No method exceeds 10 lines
 3. Each class has single responsibility
@@ -569,10 +638,5 @@ Every PR must meet:
 
 ## Project Statistics
 
-- **Total Files**: 327+
-- **Python Modules**: 200+ files
-- **Total Lines**: 100,000+
 - **Security Analyzers**: 20+
-- **Test Files**: 25+
-- **Documentation Files**: 40+
 - **Integrated Security Tools**: 11 (Trivy, Grype, Syft, Bandit, Semgrep, TruffleHog, CodeQL, YARA, ClamAV, MCP-specific, Dynamic)
