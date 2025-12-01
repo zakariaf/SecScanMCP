@@ -433,7 +433,7 @@ docker-compose up --scale scanner=3
 
 ## License
 
-MIT License - See LICENSE file
+AGPL-3.0 license - See LICENSE file
 
 ## Acknowledgments
 
