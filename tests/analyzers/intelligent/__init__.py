@@ -1,0 +1,1 @@
+"""Intelligent analyzer tests."""
