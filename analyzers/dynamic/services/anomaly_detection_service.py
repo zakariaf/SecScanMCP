@@ -66,6 +66,7 @@ class AnomalyDetectionService:
             severity=severity, vulnerability_type=VulnerabilityType.BEHAVIORAL_ANOMALY,
             location="runtime:behavior", confidence=min(0.9, z_score / 4.0),
             recommendation=f"Investigate unusual {display_name.lower()} patterns",
+            tool="anomaly_detection",
             evidence={'metric': metric_name, 'value': value, 'z_score': z_score, 'timestamp': timestamp}
         )
 
@@ -79,6 +80,8 @@ class AnomalyDetectionService:
                     title=f"{title} Anomaly", description=f"Max {metric}: {max(values):.1f}",
                     severity=severity, vulnerability_type=vuln_type,
                     location="behavioral_analysis", confidence=0.7,
+                    recommendation=f"Investigate high {metric} values",
+                    tool="anomaly_detection",
                     evidence={'max': max(values), 'avg': sum(values)/len(values)}
                 ))
         return findings
@@ -91,6 +94,9 @@ class AnomalyDetectionService:
             findings.append(Finding(
                 title="Memory Growth Anomaly", description=f"Memory growth: {growth:.1f} MB",
                 severity=SeverityLevel.MEDIUM, vulnerability_type=VulnerabilityType.RESOURCE_ABUSE,
-                location="behavioral_analysis", confidence=0.6, evidence={'memory_growth_mb': growth}
+                location="behavioral_analysis", confidence=0.6,
+                recommendation="Investigate memory usage patterns",
+                tool="anomaly_detection",
+                evidence={'memory_growth_mb': growth}
             ))
         return findings
