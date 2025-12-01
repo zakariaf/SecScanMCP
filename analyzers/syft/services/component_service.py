@@ -98,7 +98,8 @@ class ComponentService:
                     'package': binary['name'],
                     'type': binary['type'],
                     'locations': binary['locations']
-                }
+                },
+                tool="syft"
             ))
         
         return findings
@@ -121,7 +122,8 @@ class ComponentService:
                     evidence={
                         'package': pkg_name,
                         'versions': list(unique_versions)
-                    }
+                    },
+                    tool="syft"
                 ))
         
         return findings
@@ -141,7 +143,8 @@ class ComponentService:
                 evidence={
                     'unknown_count': len(unknown_packages),
                     'examples': unknown_packages[:10]  # First 10 examples
-                }
+                },
+                tool="syft"
             )]
         return []
     

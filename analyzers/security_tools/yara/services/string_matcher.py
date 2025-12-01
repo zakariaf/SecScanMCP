@@ -51,8 +51,14 @@ class StringMatcherService:
             'line': line_number,
             'line_content': line_content,
             'identifier': identifier,
-            'content': data[:MAX_CONTENT_LENGTH] if data else ''
+            'content': self._safe_decode(data[:MAX_CONTENT_LENGTH]) if data else ''
         }
+
+    def _safe_decode(self, data: Any) -> str:
+        """Safely decode bytes to string, handling non-UTF-8 data."""
+        if isinstance(data, bytes):
+            return data.decode('utf-8', errors='replace')
+        return str(data) if data else ''
 
     def _extract_match_data(self, s: Any) -> tuple:
         """Extract offset, identifier, and data from match"""

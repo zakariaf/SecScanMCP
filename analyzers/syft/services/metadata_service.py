@@ -79,7 +79,7 @@ class MetadataService:
         """Check if incompleteness is significant"""
         return stats['incomplete_count'] > total * self.INCOMPLETENESS_THRESHOLD
     
-    def _create_incompleteness_finding(self, stats: Dict[str, int], 
+    def _create_incompleteness_finding(self, stats: Dict[str, int],
                                      total_packages: int) -> Finding:
         """Create finding for incomplete package information"""
         return Finding(
@@ -95,7 +95,8 @@ class MetadataService:
                 'incomplete_count': stats['incomplete_count'],
                 'missing_versions': stats['missing_versions'],
                 'missing_licenses': stats['missing_licenses']
-            }
+            },
+            tool="syft"
         )
     
     def _build_incompleteness_description(self, stats: Dict[str, int], 

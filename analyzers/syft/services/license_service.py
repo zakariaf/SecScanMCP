@@ -113,7 +113,8 @@ class LicenseService:
                     'version': pkg['version'],
                     'license': pkg['license'],
                     'license_type': pkg['type']
-                }
+                },
+                tool="syft"
             ))
         
         return findings
@@ -148,5 +149,6 @@ class LicenseService:
             evidence={
                 'license_count': len(license_summary),
                 'licenses': list(license_summary.keys())[:10]  # Top 10
-            }
+            },
+            tool="syft"
         )
