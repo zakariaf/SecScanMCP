@@ -118,9 +118,34 @@ class IgnorePatterns:
             'ignore_files': {'*.min.js', '*.bundle.js'},
         },
         'yara': {
-            # YARA should scan more broadly for malware patterns
-            'ignore_dirs': {'node_modules', '__pycache__'},
-            'ignore_files': {'*.min.js'},
+            # YARA scans for malware patterns - exclude test files to reduce false positives
+            'ignore_dirs': {
+                'node_modules', '__pycache__',
+                # Test directories
+                'tests', 'test', '__tests__', 'spec', 'specs',
+                'test_data', 'testdata', 'fixtures', 'mocks',
+                # Test snapshots (Go)
+                '__toolsnaps__', '__snapshots__', 'snapshots', 'toolsnaps',
+                # Utility script directories (not MCP tool code)
+                'script', 'scripts',
+                # Documentation
+                'docs', 'doc', 'examples', 'example',
+            },
+            'ignore_files': {
+                '*.min.js',
+                # Test files (Go, Python, JavaScript, TypeScript)
+                '*_test.go', 'test_*.py', '*_test.py',
+                '*.spec.js', '*.spec.ts', '*.spec.jsx', '*.spec.tsx',
+                '*.test.js', '*.test.ts', '*.test.jsx', '*.test.tsx',
+                # Mock files
+                '*_mock.go', 'mock_*.py', '*.mock.js', '*.mock.ts',
+                # Snapshot files
+                '*.snap', '*.snapshot',
+                # Generated Go files
+                '*_generated.go', '*.pb.go',
+                # Build scripts
+                'Makefile', 'makefile', 'CMakeLists.txt',
+            },
         },
         'trivy': {
             # Trivy scans for vulnerabilities and secrets, include more files
@@ -156,36 +181,78 @@ class IgnorePatterns:
         return False
     
     @classmethod
+    def _is_likely_binary(cls, file_path: str) -> bool:
+        """
+        Check if a file is likely a binary file (not source code)
+        """
+        try:
+            # Check file size - binaries are often larger than typical source files
+            file_size = os.path.getsize(file_path)
+            if file_size > 5 * 1024 * 1024:  # > 5MB is likely binary
+                return True
+
+            # Read first few KB to check for binary content
+            with open(file_path, 'rb') as f:
+                chunk = f.read(8192)
+
+            # Check for null bytes (common in binaries)
+            if b'\x00' in chunk:
+                return True
+
+            # Check for ELF/Mach-O/PE headers
+            if chunk.startswith(b'\x7fELF'):  # ELF binary
+                return True
+            if chunk.startswith(b'\xfe\xed\xfa') or chunk.startswith(b'\xca\xfe\xba\xbe'):  # Mach-O
+                return True
+            if chunk.startswith(b'MZ'):  # PE/Windows executable
+                return True
+
+            # High ratio of non-printable characters suggests binary
+            non_printable = sum(1 for b in chunk if b < 32 and b not in (9, 10, 13))
+            if len(chunk) > 0 and non_printable / len(chunk) > 0.3:
+                return True
+
+        except (OSError, IOError):
+            pass
+
+        return False
+
+    @classmethod
     def should_ignore_file(cls, file_path: str, tool_name: str = None) -> bool:
         """
         Check if a file should be ignored
         """
         file_name = os.path.basename(file_path)
         file_ext = os.path.splitext(file_name)[1].lower()
-        
+
         # Check file patterns
         for pattern in cls.IGNORE_FILE_PATTERNS:
             if fnmatch.fnmatch(file_name, pattern):
                 return True
-        
+
         # Check safe extensions
         if file_ext in cls.SAFE_EXTENSIONS:
             return True
-            
+
         # Check tool-specific patterns
         if tool_name and tool_name in cls.TOOL_SPECIFIC_IGNORES:
             tool_ignores = cls.TOOL_SPECIFIC_IGNORES[tool_name].get('ignore_files', set())
             for pattern in tool_ignores:
                 if fnmatch.fnmatch(file_name, pattern):
                     return True
-        
+
         # Check if file is too large (> 10MB, likely not source code)
         try:
             if os.path.getsize(file_path) > 10 * 1024 * 1024:
                 return True
         except (OSError, IOError):
             pass
-        
+
+        # For files without extension, check if they're binary
+        if not file_ext or file_ext == '':
+            if cls._is_likely_binary(file_path):
+                return True
+
         return False
     
     @classmethod

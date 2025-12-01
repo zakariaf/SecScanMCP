@@ -125,34 +125,39 @@ rule MCP_Weak_Authentication_Pattern
         author = "MCP Security Scanner"
         severity = "critical"
         category = "vulnerability"
+        version = "1.1"
 
     strings:
-        // No auth patterns
+        // No auth patterns (high confidence)
         $noauth1 = /"auth":\s*false/
         $noauth2 = /"requireAuth":\s*false/
         $noauth3 = "skipAuthentication"
         $noauth4 = "// TODO: Add authentication"
 
-        // Weak session handling
-        $session1 = "Math.random()"
-        $session2 = "Date.now()"
-        $session3 = /sessionId.*substring\(0,\s*8\)/
+        // Weak session/token generation with context (specific patterns)
+        $session1 = /session[Ii]d\s*=\s*Math\.random\(\)/
+        $session2 = /token\s*=\s*Math\.random\(\)/
+        $session3 = /auth[Tt]oken\s*=\s*Date\.now\(\)/
+        $session4 = /sessionId.*substring\(0,\s*8\)/
+        $session5 = /generateSession\s*[({][\s\S]{0,50}Math\.random/
+        $session6 = /generateToken\s*[({][\s\S]{0,50}Math\.random/
 
-        // Hardcoded credentials
-        $creds1 = /"password":\s*"[^"]+"/
+        // Hardcoded credentials (high confidence)
+        $creds1 = /["']password["']\s*:\s*["'][a-zA-Z0-9!@#$%^&*]{6,}["']/
         $creds2 = "DEFAULT_API_KEY"
-        $creds3 = /token\s*=\s*["']Bearer/
+        $creds3 = /api[Kk]ey\s*=\s*["'][a-zA-Z0-9_-]{16,}["']/
 
-        // Insecure token handling
-        $token1 = /token.*localStorage/
+        // Insecure token handling (high confidence)
+        $token1 = /authToken.*localStorage\.setItem/
         $token2 = /cookie.*httpOnly:\s*false/
         $token3 = "access_token_in_url"
+        $token4 = /Bearer\s+[a-zA-Z0-9_-]{20,}/ // Hardcoded bearer token
+
+        // Exclusions - test files, examples
+        $exclude1 = /test|spec|mock|fixture|example/i
 
     condition:
-        any of ($noauth*) or
-        (any of ($session*) and /auth|session|token/) or
-        any of ($creds*) or
-        any of ($token*)
+        (any of ($noauth*, $session*, $creds*, $token*)) and not $exclude1
 }
 
 rule MCP_Race_Condition_Pattern
@@ -196,28 +201,36 @@ rule MCP_Schema_Validation_Bypass
         author = "MCP Security Scanner"
         severity = "high"
         category = "vulnerability"
+        version = "1.1"
 
     strings:
-        // Weak schema patterns
-        $schema1 = /"additionalProperties":\s*true/
+        // MCP/tool context required
+        $mcp1 = "inputSchema"
+        $mcp2 = "@mcp.tool"
+        $mcp3 = "MCPServer"
+        $mcp4 = "tool_handler"
+
+        // Weak schema patterns combined with dangerous operations
+        $schema1 = /"additionalProperties":\s*true[^}]*"type":\s*"object"/
         $schema2 = /"type":\s*"any"/
-        $schema3 = /schema\s*=\s*\{\s*\}/
-        $schema4 = "// Skip validation"
+        $schema3 = /inputSchema\s*[:=]\s*\{\s*\}/
 
-        // Dynamic schema modification
-        $dynamic1 = /schema\[.*\]\s*=/
-        $dynamic2 = "Object.assign(schema"
-        $dynamic3 = "merge_schemas"
+        // Dynamic schema modification (more specific)
+        $dynamic1 = /schema\s*\[\s*["'][^"']+["']\s*\]\s*=\s*user/
+        $dynamic2 = /Object\.assign\s*\(\s*schema[^)]*params/
 
-        // Validation bypass
-        $bypass1 = /validate.*catch.*continue/
-        $bypass2 = /if.*!validate.*return\s+true/
-        $bypass3 = "disable_validation"
+        // Explicit validation bypass
+        $bypass1 = /validate[^)]*=\s*false/i
+        $bypass2 = /skip[_-]?validation\s*[=:]\s*true/i
+        $bypass3 = /disable[_-]?validation\s*\(/i
+        $bypass4 = /validation[_-]?enabled\s*[=:]\s*false/i
 
     condition:
-        any of ($schema*) or
-        any of ($dynamic*) or
-        any of ($bypass*)
+        any of ($mcp*) and (
+            any of ($schema*) or
+            any of ($dynamic*) or
+            any of ($bypass*)
+        )
 }
 
 rule MCP_Memory_Leak_Pattern
@@ -351,102 +364,94 @@ rule MCP_Insufficient_Rate_Limiting
 rule MCP_System_Environment_Access
 {
     meta:
-        description = "Detects access to sensitive system environment variables"
+        description = "Detects access to sensitive system environment variables with exfiltration risk"
         author = "secscanmcp"
         severity = "high"
         category = "system_manipulation"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // MCP/tool context indicators
-        $mcp1 = "tool"
-        $mcp2 = "handler"
-        $mcp3 = "execute"
-        $mcp4 = "mcp"
+        // Sensitive credentials in environment (high risk if accessed)
+        $sensitive1 = /\$AWS_SECRET_ACCESS_KEY\b/
+        $sensitive2 = /\$AWS_ACCESS_KEY_ID\b/
+        $sensitive3 = /\$GITHUB_TOKEN\b/
+        $sensitive4 = /\$SSH_AUTH_SOCK\b/
+        $sensitive5 = /\$OPENAI_API_KEY\b/
+        $sensitive6 = /\$ANTHROPIC_API_KEY\b/
 
-        // Environment access - Unix-style
-        $env1 = /\$PATH\b/
-        $env2 = /\$HOME\b/
-        $env3 = /\$USER\b/
-        $env4 = /\$SHELL\b/
-        $env5 = /\$PWD\b/
-        $env6 = /\$SSH_AUTH_SOCK\b/
-        $env7 = /\$AWS_SECRET_ACCESS_KEY\b/
-        $env8 = /\$GITHUB_TOKEN\b/
+        // Sensitive env access patterns (Python/JS)
+        $sens_py1 = /os\.environ\[['"]AWS_SECRET/i
+        $sens_py2 = /os\.getenv\s*\(['"]AWS_SECRET/i
+        $sens_py3 = /os\.environ\[['"].*_API_KEY/i
+        $sens_py4 = /os\.getenv\s*\(['"].*_API_KEY/i
+        $sens_js1 = /process\.env\.(AWS_SECRET|OPENAI_API_KEY|ANTHROPIC_API_KEY)/
+        $sens_js2 = /process\.env\[['"].*SECRET/
 
-        // Environment access - Python
-        $py_env1 = /os\.environ\[/i
-        $py_env2 = /os\.getenv\s*\(/i
-        $py_env3 = /environ\.get\s*\(/i
-
-        // Environment access - JavaScript/Node
-        $js_env1 = /process\.env\./
-        $js_env2 = /process\.env\[/
-
-        // Environment modification (more dangerous)
+        // Environment modification (dangerous)
         $mod1 = /os\.environ\s*\[.*\]\s*=/
-        $mod2 = /process\.env\s*\.\s*\w+\s*=/
-        $mod3 = /putenv\s*\(/i
-        $mod4 = /setenv\s*\(/i
+        $mod2 = /putenv\s*\(/i
+        $mod3 = /setenv\s*\(/i
 
-        // Exclusions for legitimate usage
-        $exclude1 = "NODE_ENV"
-        $exclude2 = "DEBUG"
-        $exclude3 = "LOG_LEVEL"
+        // Exfiltration patterns (env to external)
+        $exfil1 = /fetch\s*\([^)]*process\.env/
+        $exfil2 = /axios\s*\.\s*(get|post)\s*\([^)]*process\.env/
+        $exfil3 = /requests\s*\.\s*(get|post)\s*\([^)]*os\.environ/
+        $exfil4 = /JSON\.stringify\s*\(\s*process\.env\s*\)/
+
+        // Bulk environment dump
+        $dump1 = /Object\.keys\s*\(\s*process\.env\s*\)/
+        $dump2 = /JSON\.stringify\s*\(\s*process\.env/
+        $dump3 = /return\s+process\.env\b/
+        $dump4 = /dict\s*\(\s*os\.environ\s*\)/
 
     condition:
-        any of ($mcp*) and (
-            any of ($mod*) or
-            (2 of ($env*) and not any of ($exclude*)) or
-            any of ($py_env*) or
-            any of ($js_env*)
-        )
+        any of ($sensitive*, $sens_py*, $sens_js*, $mod*, $exfil*, $dump*)
 }
 
 rule MCP_File_Destruction_Operations
 {
     meta:
-        description = "Detects dangerous file destruction and manipulation operations"
+        description = "Detects dangerous file destruction operations in MCP tools"
         author = "secscanmcp"
         severity = "critical"
         category = "system_manipulation"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Force/recursive deletion - Unix
-        $rm1 = /\brm\s+-rf?\s/i
-        $rm2 = /\brm\s+-fr?\s/i
-        $rm3 = /\brm\s+--force\b/i
-        $rm4 = /\brm\s+--recursive\b/i
+        // MCP/tool context required
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "@mcp.tool"
+        $mcp5 = "MCPServer"
 
-        // Force deletion - Windows
-        $del1 = /\bdel\s+.*\/[FfSsQq]/
-        $del2 = /\brmdir\s+.*\/[Ss]/
-        $del3 = /Remove-Item.*-Recurse/i
-        $del4 = /Remove-Item.*-Force/i
+        // Dangerous root-level deletion
+        $rm_root1 = /\brm\s+-rf\s+\/[^\/\s]/i
+        $rm_root2 = /\brm\s+-rf\s+~\//i
+        $rm_root3 = /\brm\s+-rf\s+\$HOME/i
+        $rm_root4 = /\brm\s+-rf\s+\/home\//i
 
-        // Low-level destruction
-        $low1 = /\bdd\s+if=/i
-        $low2 = /\bwipefs\b/i
-        $low3 = /\bshred\s/i
-        $low4 = /\bsrm\s/i
-        $low5 = /\bwipe\s/i
+        // Deletion with user input (very dangerous)
+        $rm_user1 = /rm\s+-rf?\s+[^\n]*params/i
+        $rm_user2 = /rm\s+-rf?\s+[^\n]*user_input/i
+        $rm_user3 = /rm\s+-rf?\s+[^\n]*\$\{/i
 
-        // Find with delete
-        $find1 = /\bfind\s+.*-delete\b/i
-        $find2 = /\bfind\s+.*-exec\s+rm\b/i
+        // Low-level destruction (always dangerous)
+        $low1 = /\bdd\s+if=\/dev\/zero\s+of=/i
+        $low2 = /\bdd\s+if=\/dev\/urandom\s+of=/i
+        $low3 = /\bshred\s+-[uvzn]/i
 
-        // Dangerous wildcards
-        $wild1 = /\brm\s+[^\n]*\*/
-        $wild2 = /\bdel\s+[^\n]*\*/
-        $wild3 = /\brm\s+.*\/\s*$/
+        // System-level deletion
+        $sys_del1 = /rm\s+-rf?\s+\/etc\//i
+        $sys_del2 = /rm\s+-rf?\s+\/var\//i
+        $sys_del3 = /rm\s+-rf?\s+\/usr\//i
 
-        // Truncation
-        $trunc1 = />\s*\/\w+/
-        $trunc2 = /truncate\s+-s\s*0/i
+        // Truncation of system files
+        $trunc1 = />\s*\/etc\//i
+        $trunc2 = />\s*\/var\/log\//i
 
     condition:
-        any of ($rm*, $del*, $low*, $find*, $wild*, $trunc*)
+        any of ($mcp*) and (any of ($rm_root*, $rm_user*, $low*, $sys_del*, $trunc*))
 }
 
 rule MCP_Permission_Manipulation
@@ -495,49 +500,42 @@ rule MCP_Permission_Manipulation
 rule MCP_Critical_System_Access
 {
     meta:
-        description = "Detects access to critical system files and directories"
+        description = "Detects dangerous access to critical system files in MCP tools"
         author = "secscanmcp"
         severity = "critical"
         category = "system_manipulation"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Unix password/authentication files
-        $passwd1 = /\/etc\/passwd\b/i
-        $passwd2 = /\/etc\/shadow\b/i
-        $passwd3 = /\/etc\/sudoers\b/i
-        $passwd4 = /\/etc\/group\b/i
+        // MCP/tool context required
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "@mcp.tool"
+        $mcp5 = "MCPServer"
 
-        // SSH keys and configuration
-        $ssh1 = /\/\.ssh\/id_/i
-        $ssh2 = /\/\.ssh\/authorized_keys\b/i
-        $ssh3 = /\/\.ssh\/known_hosts\b/i
-        $ssh4 = /\/etc\/ssh\/sshd_config\b/i
+        // Dangerous operations on auth files (read/write)
+        $passwd_op1 = /open\s*\([^)]*\/etc\/passwd/i
+        $passwd_op2 = /open\s*\([^)]*\/etc\/shadow/i
+        $passwd_op3 = /read[^(]*\([^)]*\/etc\/sudoers/i
+        $passwd_op4 = /cat\s+[^\n]*\/etc\/passwd/i
 
-        // System directories
-        $sys1 = /\/etc\/cron/i
-        $sys2 = /\/etc\/init\.d\//i
-        $sys3 = /\/etc\/systemd\//i
-        $sys4 = /\/var\/log\//i
-        $sys5 = /\/root\//i
+        // SSH key access operations
+        $ssh_op1 = /open\s*\([^)]*\.ssh\/id_/i
+        $ssh_op2 = /read[^(]*\([^)]*\.ssh\/authorized_keys/i
+        $ssh_op3 = /cat\s+[^\n]*\.ssh\/id_rsa/i
 
-        // Binary directories
-        $bin1 = /\/usr\/bin\//i
-        $bin2 = /\/usr\/sbin\//i
-        $bin3 = /\/usr\/local\/bin\//i
+        // System file write operations
+        $sys_write1 = /write[^(]*\([^)]*\/etc\/cron/i
+        $sys_write2 = /open\s*\([^)]*\/etc\/init\.d\/[^)]*,\s*["']w/i
+        $sys_write3 = /write[^(]*\([^)]*\/etc\/systemd/i
 
-        // Windows system paths
-        $win1 = /C:\\Windows\\System32\b/i
-        $win2 = /C:\\Windows\\SysWOW64\b/i
-        $win3 = /\\system32\\config\\/i
-        $win4 = /\\Windows\\Tasks\\/i
-
-        // Temporary execution paths
-        $tmp1 = /\/tmp\/.*\.(sh|py|pl|rb|exe)\b/i
-        $tmp2 = /\/var\/tmp\/.*\.(sh|py|pl|rb|exe)\b/i
+        // Dangerous patterns mentioning exfiltration
+        $exfil1 = /(read|cat|access)[^\n]*(\/etc\/passwd|\.ssh\/id_)[^\n]*(send|upload|exfil)/i
+        $exfil2 = /(steal|exfiltrate)[^\n]*ssh[^\n]*key/i
 
     condition:
-        any of them
+        any of ($mcp*) and (any of ($passwd_op*, $ssh_op*, $sys_write*, $exfil*))
 }
 
 rule MCP_Privilege_Escalation
@@ -590,52 +588,43 @@ rule MCP_Privilege_Escalation
 rule MCP_Process_Manipulation
 {
     meta:
-        description = "Detects process control and termination commands"
+        description = "Detects dangerous process control in MCP tools"
         author = "secscanmcp"
         severity = "high"
         category = "system_manipulation"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Force kill signals
-        $kill1 = /\bkill\s+-9\b/i
-        $kill2 = /\bkill\s+-KILL\b/i
-        $kill3 = /\bkill\s+-SIGKILL\b/i
-        $kill4 = /\bkill\s+1\b/  // Kill init
+        // MCP/tool context required
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "@mcp.tool"
+        $mcp5 = "MCPServer"
 
-        // Mass kill commands
-        $mass1 = /\bkillall\s/i
-        $mass2 = /\bpkill\s/i
-        $mass3 = /\bkillall\s+-9\b/i
-        $mass4 = /\bpkill\s+-9\b/i
+        // Kill with user input (dangerous)
+        $kill_user1 = /kill[^\n]*params/i
+        $kill_user2 = /kill[^\n]*user_input/i
+        $kill_user3 = /pkill[^\n]*params/i
+        $kill_user4 = /killall[^\n]*params/i
 
-        // Process discovery for targeting
-        $disc1 = /\bpgrep\s+-f\b/i
-        $disc2 = /\bpidof\s/i
-        $disc3 = /\blsof\s+-i\b/i
-        $disc4 = /\bps\s+aux\b.*grep/i
+        // System control commands (dangerous in tool context)
+        $sys1 = /subprocess[^)]*shutdown/i
+        $sys2 = /os\.system[^)]*reboot/i
+        $sys3 = /exec[^)]*poweroff/i
 
-        // System control
-        $sys1 = /\bshutdown\s/i
-        $sys2 = /\breboot\b/i
-        $sys3 = /\bhalt\b/i
-        $sys4 = /\bpoweroff\b/i
-        $sys5 = /\binit\s+0\b/i
-        $sys6 = /\binit\s+6\b/i
+        // Kill init/systemd (very dangerous)
+        $sys_kill1 = /kill\s+-9\s+1\b/i
+        $sys_kill2 = /kill[^\n]*systemd/i
+        $sys_kill3 = /kill[^\n]*init\b/i
 
-        // Programmatic process control
-        $prog1 = /os\.kill\s*\(/i
-        $prog2 = /process\.kill\s*\(/i
-        $prog3 = /signal\.SIGKILL/i
-        $prog4 = /subprocess\..*kill\s*\(/i
-
-        // Windows process control
-        $win1 = /\btaskkill\s/i
-        $win2 = /\btaskkill\s+\/F\b/i
-        $win3 = /Stop-Process.*-Force/i
+        // Programmatic kill with user input
+        $prog1 = /os\.kill\s*\([^)]*params/i
+        $prog2 = /process\.kill\s*\([^)]*user/i
+        $prog3 = /signal\.SIGKILL[^\n]*params/i
 
     condition:
-        any of them
+        any of ($mcp*) and (any of ($kill_user*, $sys*, $sys_kill*, $prog*))
 }
 
 rule MCP_Recursive_Dangerous_Operations

@@ -133,25 +133,24 @@ rule SQL_Injection_Error_Based {
         severity = "HIGH"
         category = "sql_injection"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // MySQL error-based
-        $mysql1 = /\bEXTRACTVALUE\s*\(/i
-        $mysql2 = /\bUPDATEXML\s*\(/i
-        $mysql3 = /\bEXP\s*\(\s*~\s*\(\s*SELECT/i
-        $mysql4 = /\bGROUP\s+BY\s+.*\bHAVING\b/i
+        // MySQL error-based extraction (actual attack patterns)
+        $mysql_extract1 = /\bEXTRACTVALUE\s*\(\s*\d+\s*,\s*CONCAT/i
+        $mysql_extract2 = /\bUPDATEXML\s*\(\s*\d+\s*,\s*CONCAT/i
+        $mysql_extract3 = /\bEXP\s*\(\s*~\s*\(\s*SELECT/i
 
-        // SQL Server error-based
-        $mssql1 = /\bCONVERT\s*\(\s*int\s*,/i
-        $mssql2 = /\bCAST\s*\(\s*\(/i
+        // SQL Server error-based extraction
+        $mssql_extract1 = /\bCONVERT\s*\(\s*int\s*,\s*\(\s*SELECT/i
+        $mssql_extract2 = /\bCAST\s*\(\s*\(\s*SELECT[^)]+\)\s*AS\s+int/i
 
-        // PostgreSQL error-based
-        $pg1 = /\bCAST\s*\(\s*CHR\s*\(/i
+        // PostgreSQL error-based extraction
+        $pg_extract1 = /\bCAST\s*\(\s*\(\s*SELECT[^)]+\)\s*AS\s+int/i
 
-        // Deliberate syntax errors for probing
-        $syntax1 = /['"]--\s*$/
-        $syntax2 = /'[^']*\bOR\b[^']*$/i
+        // Error extraction with XPATH (actual injection patterns)
+        $xpath1 = /EXTRACTVALUE\s*\([^,]+,\s*['"]\/\//i
+        $xpath2 = /UPDATEXML\s*\([^,]+,\s*['"]\/\//i
 
     condition:
         any of them
@@ -251,30 +250,39 @@ rule NoSQL_Injection_MongoDB {
 
 rule NoSQL_Injection_Redis {
     meta:
-        description = "Detects Redis injection patterns"
+        description = "Detects Redis injection with user input patterns"
         severity = "HIGH"
         category = "nosql_injection"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Dangerous Redis commands
-        $redis1 = /\bCONFIG\s+(GET|SET)\b/i
-        $redis2 = /\bFLUSHALL\b/i
-        $redis3 = /\bFLUSHDB\b/i
-        $redis4 = /\bDEBUG\s+SEGFAULT\b/i
-        $redis5 = /\bSLAVEOF\b/i
-        $redis6 = /\bSHUTDOWN\b/i
+        // Redis dangerous commands with user input (string concatenation/interpolation)
+        $inject1 = /\.execute\s*\([^)]*\+[^)]*\bCONFIG\b/i
+        $inject2 = /\.execute\s*\([^)]*\$\{[^}]*\}[^)]*\bCONFIG\b/i
+        $inject3 = /\.execute\s*\([^)]*user/i
+        $inject4 = /redis\s*\.\s*\w+\s*\([^)]*\+[^)]*\)/
 
-        // Lua script injection
-        $lua1 = /\bEVAL\s+['"]/i
-        $lua2 = /\bEVALSHA\b/i
+        // Lua script injection with user input
+        $lua1 = /\.eval\s*\([^)]*\+[^)]*\)/i
+        $lua2 = /\.eval\s*\([^)]*\$\{[^}]*\}/i
+        $lua3 = /\.eval\s*\([^)]*user/i
 
-        // Key pattern attacks
-        $key1 = /\bKEYS\s+\*/i
+        // Dangerous admin commands in MCP tool context
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+
+        // Admin commands that shouldn't be in user-facing tools
+        $admin1 = /redis\.flushall/i
+        $admin2 = /redis\.flushdb/i
+        $admin3 = /redis\.config_set/i
+        $admin4 = /redis\.debug/i
+        $admin5 = /redis\.shutdown/i
 
     condition:
-        any of them
+        any of ($inject*, $lua*) or
+        (any of ($mcp*) and any of ($admin*))
 }
 
 rule SQL_Injection_ORM_Bypass {

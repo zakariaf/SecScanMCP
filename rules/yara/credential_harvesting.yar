@@ -362,36 +362,39 @@ rule Credential_Environment_Files {
         severity = "HIGH"
         category = "credential_harvesting"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Environment files
-        $env1 = /\.env\b/
-        $env2 = /\.env\.local\b/i
-        $env3 = /\.env\.production\b/i
-        $env4 = /\.env\.development\b/i
-        $env5 = /\.env\.[a-z]+\b/i
+        // Environment file ACCESS (reading/loading) - not just mentioning
+        $env_read1 = /\bread\s*\([^)]*\.env/i
+        $env_read2 = /\bopen\s*\([^)]*\.env/i
+        $env_read3 = /\bfs\.readFile[^)]*\.env/i
+        $env_read4 = /\brequire\s*\([^)]*\.env/i
+        $env_read5 = /\bexec\s*\([^)]*cat\s+[^)]*\.env/i
 
-        // Environment access methods
-        $access1 = /process\.env\./i
-        $access2 = /os\.environ\[/i
-        $access3 = /getenv\s*\(/i
-        $access4 = /\$ENV\{/
+        // Environment file exfiltration patterns
+        $env_exfil1 = /\bfetch\s*\([^)]*\.env/i
+        $env_exfil2 = /\bsend\s*\([^)]*\.env/i
+        $env_exfil3 = /\bcurl\s+[^\n]*\.env/i
+        $env_exfil4 = /\bwget\s+[^\n]*\.env/i
 
-        // dotenv patterns
-        $dotenv1 = /dotenv\.config/i
-        $dotenv2 = /load_dotenv/i
+        // Secret/sensitive variable patterns with actual values
+        $secret1 = /SECRET_KEY\s*[=:]\s*['"][^'"]{8,}['"]/i
+        $secret2 = /API_SECRET\s*[=:]\s*['"][^'"]{8,}['"]/i
+        $secret3 = /JWT_SECRET\s*[=:]\s*['"][^'"]{8,}['"]/i
+        $secret4 = /SESSION_SECRET\s*[=:]\s*['"][^'"]{8,}['"]/i
+        $secret5 = /COOKIE_SECRET\s*[=:]\s*['"][^'"]{8,}['"]/i
+        $secret6 = /ENCRYPTION_KEY\s*[=:]\s*['"][^'"]{8,}['"]/i
 
-        // Secret/sensitive variable patterns in env
-        $secret1 = /SECRET_KEY\s*[=:]/i
-        $secret2 = /API_SECRET\s*[=:]/i
-        $secret3 = /JWT_SECRET\s*[=:]/i
-        $secret4 = /SESSION_SECRET\s*[=:]/i
-        $secret5 = /COOKIE_SECRET\s*[=:]/i
-        $secret6 = /ENCRYPTION_KEY\s*[=:]/i
+        // Exclusions - gitignore, documentation, examples
+        $exclude1 = /^#.*\.env/
+        $exclude2 = /\.gitignore/
+        $exclude3 = /\.dockerignore/
+        $exclude4 = /README/i
+        $exclude5 = /EXAMPLE|SAMPLE|TEMPLATE/i
 
     condition:
-        any of them
+        (any of ($env_read*, $env_exfil*, $secret*)) and not any of ($exclude*)
 }
 
 rule Credential_Exfiltration_Actions {
@@ -400,29 +403,32 @@ rule Credential_Exfiltration_Actions {
         severity = "CRITICAL"
         category = "credential_harvesting"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // File access action words combined with credential targets
-        $action1 = /\b(read|cat|open|fetch|retrieve|access|load|dump|steal|grab|extract|leak|exfiltrate)\s+[^;]*\b(password|credential|secret|token|key|certificate)\b/i
-        $action2 = /\b(curl|wget|scp|rsync|nc)\s+[^;]*(password|credential|secret|token|\.pem|\.key)/i
+        // Network exfiltration with credentials (high confidence)
+        $net_exfil1 = /\b(curl|wget)\s+[^|;]*(-d|--data|--data-raw)\s+[^|;]*(password|token|secret|key|credential)/i
+        $net_exfil2 = /\b(curl|wget)\s+[^|;]*POST\s+[^|;]*(password|token|secret)/i
+        $net_exfil3 = /\b(nc|netcat)\s+[^|;]*<\s*[^|;]*(\.pem|\.key|id_rsa|password)/i
+        $net_exfil4 = /\bscp\s+[^|;]*(\.ssh|\.aws|\.pem|credential)/i
 
-        // Transfer with encoding
-        $transfer1 = /base64\s+encode\s+[^;]*credential/i
-        $transfer2 = /concatenate\s+[^;]*conversation\s+history/i
+        // Base64 encoding + network transfer (exfiltration pattern)
+        $encode_exfil1 = /base64\s+(-w0\s+)?[^|;]*\|\s*(curl|wget|nc)/i
+        $encode_exfil2 = /\bcat\s+[^|;]*(\.pem|\.key|id_rsa)\s*\|\s*base64/i
 
-        // Explicit exfiltration patterns
-        $exfil1 = /\b(leak|exfiltrate|export|dump)\s+[^\n]*(parameter|context|files?|credentials?|keys?|tokens?|secrets?)\b/i
+        // Explicit malicious intent keywords
+        $malicious1 = /\b(steal|exfiltrate|leak)\s+[^\n]*(credential|password|token|secret|key)/i
+        $malicious2 = /\bexfiltrat(e|ion)\s+[^\n]*(data|file|secret)/i
 
-        // MCP-specific credential patterns
-        $mcp1 = /claude_desktop_config\.json/i
+        // MCP-specific credential access (high confidence)
+        $mcp1 = /\bread\s+[^\n]*claude_desktop_config\.json/i
         $mcp2 = /~\/\.cursor\/logs\/conversations/i
-        $mcp3 = /plaintext[^\n]*api[^\n]*key/i
+        $mcp3 = /\baccess\s+[^\n]*plaintext[^\n]*api[^\n]*key/i
 
-        // WhatsApp exploit patterns (from Cisco)
-        $whatsapp1 = /_get_all_messages[^\n]*messages\.db/i
-        $whatsapp2 = /whatsapp[^\n]*message[^\n]*history/i
-        $whatsapp3 = /contact[^\n]*list[^\n]*exfiltrat/i
+        // WhatsApp/messaging data exfiltration (from Cisco)
+        $msg_exfil1 = /_get_all_messages[^\n]*messages\.db/i
+        $msg_exfil2 = /whatsapp[^\n]*exfiltrat/i
+        $msg_exfil3 = /\bcontact[^\n]*list[^\n]*\b(steal|exfiltrat|leak)/i
 
     condition:
         any of them
