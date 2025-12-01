@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from analyzers.base import BaseAnalyzer
 from models import Finding
 from .services.rule_service import RuleService
-from .services.scan_service import ScanService
+from .services.scan_service import ScanService, MAX_FILE_SIZE
 from .services.finding_service import FindingService
 
 logger = logging.getLogger(__name__)
@@ -96,7 +96,7 @@ class YARAAnalyzer(BaseAnalyzer):
         
         # Check file size limit
         try:
-            if file_path.stat().st_size > self.scan_service.MAX_FILE_SIZE:
+            if file_path.stat().st_size > MAX_FILE_SIZE:
                 return False
         except (OSError, IOError):
             return False
