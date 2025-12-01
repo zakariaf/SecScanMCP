@@ -57,8 +57,9 @@ class DynamicAnalyzer(BaseAnalyzer):
     
     def is_applicable(self, project_info: Dict[str, Any]) -> bool:
         """Check if dynamic analysis should be performed."""
-        dynamic_enabled = project_info.get('enable_dynamic_analysis', False)
-        is_mcp = project_info.get('is_mcp', False)
+        is_mcp = project_info.get('is_mcp_server', False)
+        # Dynamic analysis enabled by default for MCP servers unless explicitly disabled
+        dynamic_enabled = project_info.get('enable_dynamic_analysis', True)
         return dynamic_enabled and is_mcp
     
     async def analyze(self, repo_path: str, project_info: Dict[str, Any]) -> List[Finding]:
