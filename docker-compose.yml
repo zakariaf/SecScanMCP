@@ -28,6 +28,8 @@ services:
       - scanner-cache:/home/scanner/.cache
       # Rules directories
       - ./rules:/app/rules:ro
+      # Frontend directory
+      - ./frontend:/app/frontend:ro
       # Cache GOPATH modules between runs
       - gocache:/home/scanner/go
       - codeql-cache:/home/scanner/.codeql

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Security Scanner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0d1117',
+                            800: '#161b22',
+                            700: '#21262d',
+                            600: '#30363d',
+                            500: '#484f58',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .scanning-pulse::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: inherit;
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+        .score-ring {
+            transform: rotate(-90deg);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #161b22; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #484f58; }
+    </style>
+</head>
+<body class="bg-dark-900 min-h-screen text-gray-100">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                    MCP Security Scanner
+                </h1>
+            </div>
+            <p class="text-gray-400 max-w-2xl mx-auto">
+                Comprehensive security analysis for Model Context Protocol servers. Detect vulnerabilities, malicious patterns, and compliance issues.
+            </p>
+        </header>
+
+        <!-- Search Form -->
+        <div class="bg-dark-800 rounded-2xl p-6 mb-8 border border-dark-600 shadow-xl">
+            <form id="scanForm" class="flex gap-4">
+                <div class="flex-1 relative">
+                    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                        </svg>
+                    </div>
+                    <input
+                        type="url"
+                        id="repoUrl"
+                        placeholder="https://github.com/owner/repo"
+                        class="w-full bg-dark-700 border border-dark-600 rounded-xl py-3.5 pl-12 pr-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                        required
+                    >
+                </div>
+                <button
+                    type="submit"
+                    id="scanBtn"
+                    class="px-8 py-3.5 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white font-semibold rounded-xl transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span>Scan Repository</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="hidden">
+            <div class="bg-dark-800 rounded-2xl p-12 border border-dark-600 text-center">
+                <div class="relative inline-flex mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-full scanning-pulse flex items-center justify-center">
+                        <svg class="w-10 h-10 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Scanning Repository</h3>
+                <p class="text-gray-400 mb-4" id="loadingText">Cloning and analyzing with 10+ security tools...</p>
+                <div class="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
+                    <span class="px-2 py-1 bg-dark-700 rounded text-xs text-gray-400">YARA</span>
+                    <span class="px-2 py-1 bg-dark-700 rounded text-xs text-gray-400">Trivy</span>
+                    <span class="px-2 py-1 bg-dark-700 rounded text-xs text-gray-400">Bandit</span>
+                    <span class="px-2 py-1 bg-dark-700 rounded text-xs text-gray-400">TruffleHog</span>
+                    <span class="px-2 py-1 bg-dark-700 rounded text-xs text-gray-400">MCP Analyzer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="hidden">
+            <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-8 text-center">
+                <svg class="w-16 h-16 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h3 class="text-xl font-semibold text-red-400 mb-2">Scan Failed</h3>
+                <p class="text-gray-400" id="errorText"></p>
+                <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-dark-700 hover:bg-dark-600 rounded-lg text-sm transition-colors">Try Again</button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results" class="hidden space-y-6">
+
+            <!-- Alert Banner for Critical Issues -->
+            <div id="alertBanner" class="hidden bg-gradient-to-r from-red-500/20 to-orange-500/20 border border-red-500/30 rounded-2xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-red-400" id="alertTitle">Critical Security Issues Detected</h4>
+                        <p class="text-sm text-gray-300" id="alertMessage"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Score Cards -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- User Safety Score -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -mr-16 -mt-16"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300">User Safety Score</h3>
+                                <p class="text-xs text-gray-500">Risk for end users of this MCP server</p>
+                            </div>
+                            <div id="userSafetyBadge" class="px-3 py-1 rounded-full text-sm font-bold"></div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="relative">
+                                <svg class="w-24 h-24 score-ring" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#21262d" stroke-width="8"/>
+                                    <circle id="userScoreRing" cx="50" cy="50" r="45" fill="none" stroke="#10b981" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span id="userSafetyScore" class="text-2xl font-bold"></span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div id="userSafetyRisk" class="text-sm font-medium mb-2"></div>
+                                <p id="userSafetyMessage" class="text-sm text-gray-400"></p>
+                            </div>
+                        </div>
+                        <!-- User Safety Categories -->
+                        <div id="userCategories" class="mt-4 grid grid-cols-2 gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- Developer Security Score -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16"></div>
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-300">Developer Security</h3>
+                                <p class="text-xs text-gray-500">Code quality and security practices</p>
+                            </div>
+                            <div id="devSecurityBadge" class="px-3 py-1 rounded-full text-sm font-bold"></div>
+                        </div>
+                        <div class="flex items-center gap-6">
+                            <div class="relative">
+                                <svg class="w-24 h-24 score-ring" viewBox="0 0 100 100">
+                                    <circle cx="50" cy="50" r="45" fill="none" stroke="#21262d" stroke-width="8"/>
+                                    <circle id="devScoreRing" cx="50" cy="50" r="45" fill="none" stroke="#06b6d4" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <span id="devSecurityScore" class="text-2xl font-bold"></span>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div id="devSecurityFindings" class="text-sm text-gray-400 mb-2"></div>
+                                <div id="devRiskPoints" class="text-xs text-gray-500"></div>
+                            </div>
+                        </div>
+                        <!-- Improvement Areas -->
+                        <div id="improvementAreas" class="mt-4 space-y-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity Breakdown & Vulnerability Types -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Severity Breakdown -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600">
+                    <h3 class="text-lg font-semibold text-gray-300 mb-4">Severity Distribution</h3>
+                    <div class="grid grid-cols-5 gap-2" id="severityBreakdown">
+                        <div class="text-center p-3 bg-red-500/10 rounded-xl border border-red-500/30 hover:bg-red-500/20 transition-colors cursor-pointer" onclick="filterFindings('critical')">
+                            <div id="criticalCount" class="text-2xl font-bold text-red-400">0</div>
+                            <div class="text-xs text-red-400/70 uppercase tracking-wide">Critical</div>
+                        </div>
+                        <div class="text-center p-3 bg-orange-500/10 rounded-xl border border-orange-500/30 hover:bg-orange-500/20 transition-colors cursor-pointer" onclick="filterFindings('high')">
+                            <div id="highCount" class="text-2xl font-bold text-orange-400">0</div>
+                            <div class="text-xs text-orange-400/70 uppercase tracking-wide">High</div>
+                        </div>
+                        <div class="text-center p-3 bg-yellow-500/10 rounded-xl border border-yellow-500/30 hover:bg-yellow-500/20 transition-colors cursor-pointer" onclick="filterFindings('medium')">
+                            <div id="mediumCount" class="text-2xl font-bold text-yellow-400">0</div>
+                            <div class="text-xs text-yellow-400/70 uppercase tracking-wide">Medium</div>
+                        </div>
+                        <div class="text-center p-3 bg-blue-500/10 rounded-xl border border-blue-500/30 hover:bg-blue-500/20 transition-colors cursor-pointer" onclick="filterFindings('low')">
+                            <div id="lowCount" class="text-2xl font-bold text-blue-400">0</div>
+                            <div class="text-xs text-blue-400/70 uppercase tracking-wide">Low</div>
+                        </div>
+                        <div class="text-center p-3 bg-gray-500/10 rounded-xl border border-gray-500/30 hover:bg-gray-500/20 transition-colors cursor-pointer" onclick="filterFindings('info')">
+                            <div id="infoCount" class="text-2xl font-bold text-gray-400">0</div>
+                            <div class="text-xs text-gray-400/70 uppercase tracking-wide">Info</div>
+                        </div>
+                    </div>
+
+                    <!-- MCP Exploitable Badge -->
+                    <div id="mcpExploitable" class="hidden mt-4 p-3 bg-purple-500/10 border border-purple-500/30 rounded-xl">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            <span class="text-sm text-purple-300"><span id="mcpExploitableCount" class="font-bold">0</span> MCP-Exploitable Issues</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vulnerability Types Chart -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600">
+                    <h3 class="text-lg font-semibold text-gray-300 mb-4">Vulnerability Types</h3>
+                    <div class="h-48">
+                        <canvas id="vulnTypesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Risks -->
+            <div id="topRisksSection" class="bg-dark-800 rounded-2xl p-6 border border-dark-600">
+                <h3 class="text-lg font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Top Security Risks
+                </h3>
+                <div id="topRisksList" class="space-y-3"></div>
+            </div>
+
+            <!-- Project Info & Analyzers -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Project Info -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600">
+                    <h3 class="text-lg font-semibold text-gray-300 mb-4">Project Information</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-dark-700 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase">Language / Type</div>
+                                <div id="projectType" class="font-medium"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-dark-700 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase">MCP Server</div>
+                                <div id="isMcp" class="font-medium"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-dark-700 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 uppercase">Detection Confidence</div>
+                                <div id="detectionConfidence" class="font-medium"></div>
+                            </div>
+                        </div>
+                        <div id="detectedPackages" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- Analyzers Run -->
+                <div class="bg-dark-800 rounded-2xl p-6 border border-dark-600">
+                    <h3 class="text-lg font-semibold text-gray-300 mb-4">Security Analyzers</h3>
+                    <div id="analyzersList" class="flex flex-wrap gap-2"></div>
+                    <div class="mt-4 pt-4 border-t border-dark-600">
+                        <div class="text-xs text-gray-500 uppercase mb-2">Scan Status</div>
+                        <div id="scanCompleteness" class="text-sm text-emerald-400 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Findings List -->
+            <div class="bg-dark-800 rounded-2xl border border-dark-600 overflow-hidden">
+                <!-- Category Tabs -->
+                <div class="border-b border-dark-600">
+                    <div class="flex">
+                        <button onclick="switchCategory('all')" class="category-tab active flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-emerald-500 text-emerald-400 bg-dark-700/30" data-category="all">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                                </svg>
+                                All Findings
+                                <span id="allFindingsCount" class="px-2 py-0.5 bg-dark-600 rounded-full text-xs">0</span>
+                            </span>
+                        </button>
+                        <button onclick="switchCategory('user')" class="category-tab flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-transparent text-gray-400 hover:text-gray-300 hover:bg-dark-700/30 transition-colors" data-category="user">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                                User Safety Issues
+                                <span id="userFindingsCount" class="px-2 py-0.5 bg-red-500/20 text-red-400 rounded-full text-xs">0</span>
+                            </span>
+                        </button>
+                        <button onclick="switchCategory('developer')" class="category-tab flex-1 px-6 py-4 text-sm font-medium text-center border-b-2 border-transparent text-gray-400 hover:text-gray-300 hover:bg-dark-700/30 transition-colors" data-category="developer">
+                            <span class="flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                                </svg>
+                                Developer Issues
+                                <span id="devFindingsCount" class="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded-full text-xs">0</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Row -->
+                <div class="p-4 border-b border-dark-600 bg-dark-900/30">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <!-- Severity Filters -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 uppercase">Severity:</span>
+                            <div class="flex gap-1">
+                                <button onclick="filterBySeverity('all')" class="severity-btn active px-2.5 py-1 text-xs rounded-md bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors" data-severity="all">All</button>
+                                <button onclick="filterBySeverity('critical')" class="severity-btn px-2.5 py-1 text-xs rounded-md bg-dark-700 text-gray-400 hover:bg-dark-600 transition-colors" data-severity="critical">Critical</button>
+                                <button onclick="filterBySeverity('high')" class="severity-btn px-2.5 py-1 text-xs rounded-md bg-dark-700 text-gray-400 hover:bg-dark-600 transition-colors" data-severity="high">High</button>
+                                <button onclick="filterBySeverity('medium')" class="severity-btn px-2.5 py-1 text-xs rounded-md bg-dark-700 text-gray-400 hover:bg-dark-600 transition-colors" data-severity="medium">Medium</button>
+                                <button onclick="filterBySeverity('low')" class="severity-btn px-2.5 py-1 text-xs rounded-md bg-dark-700 text-gray-400 hover:bg-dark-600 transition-colors" data-severity="low">Low</button>
+                            </div>
+                        </div>
+
+                        <!-- Analyzer Filter -->
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500 uppercase">Analyzer:</span>
+                            <select id="analyzerFilter" onchange="filterByAnalyzer(this.value)" class="bg-dark-700 border border-dark-600 rounded-lg px-3 py-1.5 text-xs text-gray-300 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="all">All Analyzers</option>
+                            </select>
+                        </div>
+
+                        <!-- Results Count -->
+                        <div class="text-xs text-gray-500">
+                            Showing <span id="filteredCount" class="text-emerald-400 font-medium">0</span> findings
+                        </div>
+                    </div>
+                </div>
+
+                <div id="findingsList" class="divide-y divide-dark-600 max-h-[600px] overflow-y-auto"></div>
+            </div>
+
+            <!-- Scan Timestamp -->
+            <div class="text-center text-xs text-gray-500">
+                Scanned: <span id="scanTimestamp"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use same origin
+        const API_URL = window.location.origin;
+        let allFindings = [];
+        let userFindings = [];
+        let developerFindings = [];
+        let vulnChart = null;
+
+        // Current filter state
+        let currentFilters = {
+            category: 'all',
+            severity: 'all',
+            analyzer: 'all'
+        };
+
+        document.getElementById('scanForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const repoUrl = document.getElementById('repoUrl').value;
+            await scanRepository(repoUrl);
+        });
+
+        async function scanRepository(repoUrl) {
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            const error = document.getElementById('error');
+            const scanBtn = document.getElementById('scanBtn');
+
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+            error.classList.add('hidden');
+            scanBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/scan`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repository_url: repoUrl })
+                });
+
+                if (!response.ok) throw new Error(`Scan failed: ${response.statusText}`);
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                document.getElementById('errorText').textContent = err.message;
+                error.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+                scanBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            results.classList.remove('hidden');
+
+            // User Safety Score
+            const userSafety = data.enhanced_scores?.user_safety || {};
+            const userScore = userSafety.score ?? 0;
+            updateScoreRing('userScoreRing', userScore, getScoreColorHex(userScore));
+            document.getElementById('userSafetyScore').textContent = userScore;
+            document.getElementById('userSafetyScore').className = `text-2xl font-bold ${getScoreColor(userScore)}`;
+            document.getElementById('userSafetyBadge').textContent = `Grade ${userSafety.grade || 'N/A'}`;
+            document.getElementById('userSafetyBadge').className = `px-3 py-1 rounded-full text-sm font-bold ${getGradeBadgeClass(userSafety.grade)}`;
+            document.getElementById('userSafetyRisk').innerHTML = `<span class="${getRiskColor(userSafety.risk_level)}">${userSafety.risk_level || 'Unknown'} Risk</span> · <span class="text-gray-400">${(data.user_centric_findings || []).length} issues</span>`;
+            document.getElementById('userSafetyMessage').textContent = userSafety.user_message || '';
+
+            // User Categories
+            const categories = userSafety.categories || {};
+            const categoriesHtml = Object.entries(categories).map(([key, value]) => `
+                <div class="flex items-center justify-between p-2 bg-dark-700/50 rounded-lg">
+                    <span class="text-xs text-gray-400">${formatCategoryName(key)}</span>
+                    <span class="text-xs font-medium ${value > 0 ? 'text-red-400' : 'text-emerald-400'}">${value}</span>
+                </div>
+            `).join('');
+            document.getElementById('userCategories').innerHTML = categoriesHtml;
+
+            // Developer Security Score
+            const devSecurity = data.enhanced_scores?.developer_security || {};
+            const devScore = devSecurity.score ?? 0;
+            updateScoreRing('devScoreRing', devScore, devScore >= 50 ? '#06b6d4' : '#f97316');
+            document.getElementById('devSecurityScore').textContent = Math.round(devScore);
+            document.getElementById('devSecurityScore').className = `text-2xl font-bold ${getScoreColor(devScore)}`;
+            document.getElementById('devSecurityBadge').textContent = `Grade ${devSecurity.grade || 'N/A'}`;
+            document.getElementById('devSecurityBadge').className = `px-3 py-1 rounded-full text-sm font-bold ${getGradeBadgeClass(devSecurity.grade)}`;
+            document.getElementById('devSecurityFindings').textContent = `${(data.developer_centric_findings || []).length} developer issues`;
+            document.getElementById('devRiskPoints').textContent = devSecurity.risk_points ? `Risk Points: ${Math.round(devSecurity.risk_points)}` : '';
+
+            // Improvement Areas
+            const improvements = devSecurity.improvement_areas || [];
+            document.getElementById('improvementAreas').innerHTML = improvements.slice(0, 3).map(area => `
+                <div class="flex items-start gap-2 text-xs">
+                    <svg class="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span class="text-gray-400">${area}</span>
+                </div>
+            `).join('');
+
+            // Alert Banner
+            const alertBanner = document.getElementById('alertBanner');
+            if (data.summary?.requires_immediate_attention) {
+                alertBanner.classList.remove('hidden');
+                document.getElementById('alertTitle').textContent = 'Immediate Attention Required';
+                document.getElementById('alertMessage').textContent = userSafety.user_message || 'Critical security issues detected in this repository.';
+            } else {
+                alertBanner.classList.add('hidden');
+            }
+
+            // Severity Breakdown
+            const severity = data.summary?.severity_breakdown || {};
+            document.getElementById('criticalCount').textContent = severity.critical || 0;
+            document.getElementById('highCount').textContent = severity.high || 0;
+            document.getElementById('mediumCount').textContent = severity.medium || 0;
+            document.getElementById('lowCount').textContent = severity.low || 0;
+            document.getElementById('infoCount').textContent = severity.info || 0;
+
+            // MCP Exploitable
+            const mcpExploitable = data.summary?.mcp_exploitable_issues || 0;
+            const mcpSection = document.getElementById('mcpExploitable');
+            if (mcpExploitable > 0) {
+                mcpSection.classList.remove('hidden');
+                document.getElementById('mcpExploitableCount').textContent = mcpExploitable;
+            } else {
+                mcpSection.classList.add('hidden');
+            }
+
+            // Vulnerability Types Chart
+            const vulnTypes = data.summary?.vulnerability_types || {};
+            renderVulnTypesChart(vulnTypes);
+
+            // Top Risks
+            const topRisks = data.summary?.top_risks || [];
+            document.getElementById('topRisksList').innerHTML = topRisks.slice(0, 5).map(risk => `
+                <div class="flex items-start gap-3 p-3 bg-dark-700/50 rounded-lg">
+                    <div class="flex-shrink-0 mt-0.5">${getSeverityIcon(risk.severity)}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="${getSeverityBadgeClass(risk.severity)} px-2 py-0.5 rounded text-xs font-medium uppercase">${risk.severity}</span>
+                            <span class="text-xs text-gray-500">${risk.type}</span>
+                        </div>
+                        <div class="text-sm text-gray-200">${escapeHtml(risk.title)}</div>
+                        <div class="text-xs text-gray-500 mt-1 truncate">${escapeHtml(formatLocation(risk.location))}</div>
+                    </div>
+                </div>
+            `).join('') || '<p class="text-gray-500 text-sm">No critical risks identified</p>';
+
+            // Project Info
+            const projectInfo = data.scan_metadata?.project_info || {};
+            document.getElementById('projectType').textContent = `${projectInfo.language || 'Unknown'} / ${projectInfo.type || 'Unknown'}`;
+            document.getElementById('isMcp').innerHTML = projectInfo.is_mcp
+                ? '<span class="text-emerald-400">Yes</span> <span class="text-xs text-gray-500">(' + (projectInfo.detection_method || 'detected') + ')</span>'
+                : '<span class="text-gray-400">No</span>';
+            document.getElementById('detectionConfidence').textContent = projectInfo.confidence ? `${Math.round(projectInfo.confidence * 100)}%` : 'N/A';
+
+            // Detected Packages
+            const packages = projectInfo.detected_packages || [];
+            if (packages.length > 0) {
+                document.getElementById('detectedPackages').innerHTML = `
+                    <div class="text-xs text-gray-500 mb-2">Detected MCP Packages</div>
+                    <div class="flex flex-wrap gap-1">
+                        ${packages.map(pkg => `<span class="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-xs">${pkg}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            // Analyzers
+            const analyzers = data.scan_metadata?.analyzers_run || [];
+            document.getElementById('analyzersList').innerHTML = analyzers.map(a => `
+                <span class="px-3 py-1.5 bg-dark-700 rounded-lg text-xs text-gray-300 flex items-center gap-1">
+                    <svg class="w-3 h-3 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    ${formatAnalyzerName(a)}
+                </span>
+            `).join('');
+
+            document.getElementById('scanCompleteness').querySelector('span').textContent = data.enhanced_scores?.summary?.scan_completeness || 'Completed';
+
+            // Timestamp
+            document.getElementById('scanTimestamp').textContent = data.scan_timestamp ? new Date(data.scan_timestamp).toLocaleString() : 'Unknown';
+
+            // Findings - store all categories
+            allFindings = data.findings || [];
+            userFindings = data.user_centric_findings || [];
+            developerFindings = data.developer_centric_findings || [];
+
+            // Update category counts
+            document.getElementById('allFindingsCount').textContent = allFindings.length;
+            document.getElementById('userFindingsCount').textContent = userFindings.length;
+            document.getElementById('devFindingsCount').textContent = developerFindings.length;
+
+            // Populate analyzer dropdown
+            const analyzerSelect = document.getElementById('analyzerFilter');
+            const uniqueAnalyzers = [...new Set(allFindings.map(f => f.tool).filter(Boolean))];
+            analyzerSelect.innerHTML = '<option value="all">All Analyzers</option>' +
+                uniqueAnalyzers.map(a => `<option value="${a}">${formatAnalyzerName(a)}</option>`).join('');
+
+            // Reset filters and render
+            currentFilters = { category: 'all', severity: 'all', analyzer: 'all' };
+            applyFilters();
+        }
+
+        function updateScoreRing(id, score, color) {
+            const ring = document.getElementById(id);
+            const circumference = 283;
+            const offset = circumference - (score / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+            ring.style.stroke = color;
+        }
+
+        function renderVulnTypesChart(vulnTypes) {
+            const ctx = document.getElementById('vulnTypesChart').getContext('2d');
+
+            if (vulnChart) vulnChart.destroy();
+
+            const entries = Object.entries(vulnTypes).sort((a, b) => b[1] - a[1]).slice(0, 8);
+            const labels = entries.map(([k]) => formatVulnType(k));
+            const values = entries.map(([, v]) => v);
+
+            const colors = [
+                '#ef4444', '#f97316', '#eab308', '#22c55e',
+                '#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'
+            ];
+
+            vulnChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, values.length),
+                        borderWidth: 0,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#9ca3af',
+                                font: { size: 10 },
+                                boxWidth: 12,
+                                padding: 8
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        function renderFindings(findings) {
+            const container = document.getElementById('findingsList');
+
+            if (findings.length === 0) {
+                container.innerHTML = `
+                    <div class="p-12 text-center">
+                        <svg class="w-16 h-16 text-emerald-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h4 class="text-xl font-semibold text-gray-300 mb-2">No Issues Found</h4>
+                        <p class="text-gray-500">This repository appears to be secure.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = findings.map((finding, idx) => `
+                <div class="finding-item p-4 hover:bg-dark-700/50 transition-colors" data-severity="${finding.severity}">
+                    <div class="flex items-start gap-4">
+                        <div class="flex-shrink-0 mt-1">${getSeverityIcon(finding.severity)}</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1 flex-wrap">
+                                <span class="${getSeverityBadgeClass(finding.severity)} px-2 py-0.5 rounded text-xs font-medium uppercase">${finding.severity}</span>
+                                <span class="text-xs text-gray-500">${finding.tool || 'Unknown'}</span>
+                                ${finding.vulnerability_type ? `<span class="text-xs text-cyan-400">${formatVulnType(finding.vulnerability_type)}</span>` : ''}
+                            </div>
+                            <h4 class="font-medium text-gray-200 mb-1">${escapeHtml(finding.title)}</h4>
+                            <p class="text-sm text-gray-400 mb-2">${escapeHtml(finding.description || '')}</p>
+                            <div class="flex flex-wrap gap-3 text-xs">
+                                <span class="text-gray-500 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    </svg>
+                                    ${escapeHtml(formatLocation(finding.location) || 'N/A')}
+                                </span>
+                                ${finding.cwe_id ? `<span class="text-cyan-400">CWE-${finding.cwe_id}</span>` : ''}
+                                ${finding.confidence ? `<span class="text-gray-500">Confidence: ${Math.round(finding.confidence * 100)}%</span>` : ''}
+                            </div>
+                            ${finding.recommendation ? `
+                                <div class="mt-3 p-3 bg-dark-900/50 rounded-lg">
+                                    <div class="text-xs text-emerald-400 font-medium mb-1">Recommendation</div>
+                                    <p class="text-sm text-gray-400">${escapeHtml(finding.recommendation)}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Called from severity breakdown cards
+        function filterFindings(severity) {
+            filterBySeverity(severity);
+        }
+
+        // Utility functions
+        function getScoreColor(score) {
+            if (score >= 80) return 'text-emerald-400';
+            if (score >= 60) return 'text-yellow-400';
+            if (score >= 40) return 'text-orange-400';
+            return 'text-red-400';
+        }
+
+        function getScoreColorHex(score) {
+            if (score >= 80) return '#10b981';
+            if (score >= 60) return '#eab308';
+            if (score >= 40) return '#f97316';
+            return '#ef4444';
+        }
+
+        function getRiskColor(risk) {
+            const colors = {
+                'LOW': 'text-emerald-400',
+                'MEDIUM': 'text-yellow-400',
+                'HIGH': 'text-orange-400',
+                'CRITICAL': 'text-red-400'
+            };
+            return colors[risk] || 'text-gray-400';
+        }
+
+        function getGradeBadgeClass(grade) {
+            const classes = {
+                'A': 'bg-emerald-500/20 text-emerald-400',
+                'B': 'bg-green-500/20 text-green-400',
+                'C': 'bg-yellow-500/20 text-yellow-400',
+                'D': 'bg-orange-500/20 text-orange-400',
+                'F': 'bg-red-500/20 text-red-400'
+            };
+            return classes[grade] || 'bg-gray-500/20 text-gray-400';
+        }
+
+        function getSeverityBadgeClass(severity) {
+            const classes = {
+                'critical': 'bg-red-500/20 text-red-400',
+                'high': 'bg-orange-500/20 text-orange-400',
+                'medium': 'bg-yellow-500/20 text-yellow-400',
+                'low': 'bg-blue-500/20 text-blue-400',
+                'info': 'bg-gray-500/20 text-gray-400'
+            };
+            return classes[severity] || 'bg-gray-500/20 text-gray-400';
+        }
+
+        function getSeverityIcon(severity) {
+            const colors = {
+                'critical': 'text-red-400',
+                'high': 'text-orange-400',
+                'medium': 'text-yellow-400',
+                'low': 'text-blue-400',
+                'info': 'text-gray-400'
+            };
+            return `<svg class="w-5 h-5 ${colors[severity] || 'text-gray-400'}" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>`;
+        }
+
+        function formatCategoryName(name) {
+            return name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        function formatVulnType(type) {
+            return type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        function formatAnalyzerName(name) {
+            const names = {
+                'mcp_specific': 'MCP Analyzer',
+                'mcp_command_injection': 'Command Injection',
+                'mcp_cross_server': 'Cross-Server',
+                'mcp_rug_pull': 'Rug Pull',
+                'mcp_output_poisoning': 'Output Poisoning',
+                'mcp_prompt_injection': 'Prompt Injection',
+                'trufflehog': 'TruffleHog',
+                'trivy': 'Trivy',
+                'bandit': 'Bandit',
+                'yara': 'YARA',
+                'clamav': 'ClamAV',
+                'opengrep': 'OpenGrep',
+                'codeql': 'CodeQL',
+                'syft': 'Syft',
+                'grype': 'Grype'
+            };
+            return names[name] || name;
+        }
+
+        function formatLocation(location) {
+            if (!location) return '';
+            // Remove temp directory prefix
+            return location.replace(/\/tmp\/mcp_scan_[^\/]+\/?/, '');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Category switching
+        function switchCategory(category) {
+            currentFilters.category = category;
+
+            // Update tab styles
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                const isActive = tab.dataset.category === category;
+                tab.classList.toggle('border-emerald-500', isActive);
+                tab.classList.toggle('text-emerald-400', isActive);
+                tab.classList.toggle('bg-dark-700/30', isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+                tab.classList.toggle('text-gray-400', !isActive);
+            });
+
+            applyFilters();
+        }
+
+        // Severity filter
+        function filterBySeverity(severity) {
+            currentFilters.severity = severity;
+
+            // Update button styles
+            document.querySelectorAll('.severity-btn').forEach(btn => {
+                const isActive = btn.dataset.severity === severity;
+                btn.classList.toggle('bg-emerald-500/20', isActive);
+                btn.classList.toggle('text-emerald-400', isActive);
+                btn.classList.toggle('bg-dark-700', !isActive);
+                btn.classList.toggle('text-gray-400', !isActive);
+            });
+
+            applyFilters();
+        }
+
+        // Analyzer filter
+        function filterByAnalyzer(analyzer) {
+            currentFilters.analyzer = analyzer;
+            applyFilters();
+        }
+
+        // Apply all filters
+        function applyFilters() {
+            // Get base findings based on category
+            let findings;
+            switch (currentFilters.category) {
+                case 'user':
+                    findings = [...userFindings];
+                    break;
+                case 'developer':
+                    findings = [...developerFindings];
+                    break;
+                default:
+                    findings = [...allFindings];
+            }
+
+            // Apply severity filter
+            if (currentFilters.severity !== 'all') {
+                findings = findings.filter(f => f.severity === currentFilters.severity);
+            }
+
+            // Apply analyzer filter
+            if (currentFilters.analyzer !== 'all') {
+                findings = findings.filter(f => f.tool === currentFilters.analyzer);
+            }
+
+            // Update count and render
+            document.getElementById('filteredCount').textContent = findings.length;
+            renderFindings(findings);
+        }
+    </script>
+</body>
+</html>

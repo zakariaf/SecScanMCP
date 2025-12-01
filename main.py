@@ -5,6 +5,9 @@ Focuses purely on scanning functionality
 """
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 import tempfile
 import shutil
@@ -31,8 +34,29 @@ app = FastAPI(
     version="2.0.0"
 )
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Initialize scanner
 scanner = SecurityScanner()
+
+# Frontend directory
+FRONTEND_DIR = Path(__file__).parent / "frontend"
+
+
+@app.get("/")
+async def serve_frontend():
+    """Serve the frontend HTML page"""
+    index_path = FRONTEND_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+    return {"message": "MCP Security Scanner API", "docs": "/docs"}
 
 
 @app.get("/health")

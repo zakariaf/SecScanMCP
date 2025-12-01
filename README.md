@@ -148,11 +148,30 @@ git clone https://github.com/yourusername/mcp-security-scanner
 cd mcp-security-scanner
 docker-compose up -d
 
-# Run a scan
+# Open Web UI
+open http://localhost:8000
+
+# Or run a scan via API
 curl -X POST http://localhost:8000/scan \
   -H "Content-Type: application/json" \
   -d '{"repository_url": "https://github.com/example/mcp-server"}'
 ```
+
+## Web Interface
+
+The scanner includes a beautiful dark-themed web UI at `http://localhost:8000/`:
+
+![MCP Security Scanner UI](docs/images/scanner-ui.png)
+
+### Features
+
+- **Dual Score Cards** - User Safety Score + Developer Security Score with grades (A-F)
+- **Severity Distribution** - Visual breakdown of Critical/High/Medium/Low findings
+- **Vulnerability Types Chart** - Interactive doughnut chart showing finding categories
+- **Top Security Risks** - Highlighted critical issues requiring immediate attention
+- **Category Filtering** - Filter findings by User Safety vs Developer Issues
+- **Analyzer Filtering** - Filter by specific security tool (YARA, Trivy, Bandit, etc.)
+- **Detailed Findings List** - Expandable findings with location, CWE IDs, and recommendations
 
 ### Local Development
 
@@ -236,6 +255,7 @@ POST /scan
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/` | GET | Web UI (Tailwind CSS frontend) |
 | `/health` | GET | Health check |
 | `/tools` | GET | List available analyzers |
 | `/scan/{id}` | GET | Get scan results by ID |
