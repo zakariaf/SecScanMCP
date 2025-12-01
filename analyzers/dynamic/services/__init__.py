@@ -8,6 +8,10 @@ from .runtime_detection_service import RuntimeDetectionService
 from .analysis_summary_service import AnalysisSummaryService
 from .analysis_pipeline_service import AnalysisPipelineService
 from .cleanup_service import CleanupService
+from .metrics_collection_service import MetricsCollectionService
+from .anomaly_detection_service import AnomalyDetectionService
+from .performance_pattern_service import PerformancePatternService
+from .behavior_data_service import BehaviorDataService
 
 __all__ = [
     'SecurityTestingService',
@@ -18,4 +22,8 @@ __all__ = [
     'AnalysisSummaryService',
     'AnalysisPipelineService',
     'CleanupService',
+    'MetricsCollectionService',
+    'AnomalyDetectionService',
+    'PerformancePatternService',
+    'BehaviorDataService',
 ]
