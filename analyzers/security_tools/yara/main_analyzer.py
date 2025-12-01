@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from analyzers.base import BaseAnalyzer
 from models import Finding
 from .services.rule_service import RuleService
-from .services.scan_service import ScanService, MAX_FILE_SIZE
+from .services.scan_service import ScanService
 from .services.finding_service import FindingService
 
 logger = logging.getLogger(__name__)
@@ -57,25 +57,16 @@ class YARAAnalyzer(BaseAnalyzer):
     async def _parallel_scan(self, files: List[str], repo_path: Path) -> List[Finding]:
         """Scan files in parallel using thread pool"""
         findings = []
-        
+
         with ThreadPoolExecutor(max_workers=4) as executor:
-            tasks = []
-            
-            for file_path_str in files:
-                file_path = Path(file_path_str)
-                if self._should_scan_file(file_path):
-                    tasks.append(
-                        executor.submit(
-                            self.scan_service.scan_file, 
-                            file_path, 
-                            repo_path
-                        )
-                    )
-            
-            # Process results with timeout
+            tasks = [
+                executor.submit(self.scan_service.scan_file, Path(f), repo_path)
+                for f in files
+            ]
+
             for future in asyncio.as_completed(
                 [asyncio.wrap_future(f) for f in tasks],
-                timeout=300  # 5 minutes total
+                timeout=300
             ):
                 try:
                     result = await future
@@ -86,19 +77,5 @@ class YARAAnalyzer(BaseAnalyzer):
                     break
                 except Exception as e:
                     self.logger.error(f"Error in YARA scan: {e}")
-        
+
         return findings
-    
-    def _should_scan_file(self, file_path: Path) -> bool:
-        """Check if file should be scanned"""
-        if not file_path.is_file():
-            return False
-        
-        # Check file size limit
-        try:
-            if file_path.stat().st_size > MAX_FILE_SIZE:
-                return False
-        except (OSError, IOError):
-            return False
-        
-        return True

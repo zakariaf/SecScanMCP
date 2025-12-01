@@ -68,7 +68,8 @@ class ScanService:
         """Check if file should be scanned"""
         if not self.rule_service.rules:
             return False
-
+        if not file_path.is_file():
+            return False
         try:
             return file_path.stat().st_size <= MAX_FILE_SIZE
         except OSError:
