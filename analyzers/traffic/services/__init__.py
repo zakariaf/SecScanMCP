@@ -10,6 +10,9 @@ from .metrics_service import MetricsService
 from .suspicious_activity_service import SuspiciousActivityService
 from .monitoring_orchestrator import MonitoringOrchestrator
 from .event_handler import EventHandler
+from .baseline_service import BaselineService
+from .burst_detection_service import BurstDetectionService
+from .connection_anomaly_service import ConnectionAnomalyService
 
 __all__ = [
     'ThreatDetectionService',
@@ -22,4 +25,7 @@ __all__ = [
     'SuspiciousActivityService',
     'MonitoringOrchestrator',
     'EventHandler',
+    'BaselineService',
+    'BurstDetectionService',
+    'ConnectionAnomalyService',
 ]
