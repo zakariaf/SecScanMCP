@@ -46,8 +46,14 @@ TEMPLATE_FILE_PATTERNS = [
 # Config file patterns
 CONFIG_FILE_PATTERNS = ['*.json', '*.yaml', '*.yml', 'mcp.*']
 
-# Excluded paths
+# Excluded paths - directories and files that should not be scanned
 EXCLUDE_PATTERNS = [
+    # Test directories
     'test_', 'tests/', '__pycache__/',
-    'node_modules/', '.git/', 'venv/'
+    'node_modules/', '.git/', 'venv/',
+    # CI/CD directories (contain legitimate workflow commands)
+    '.github/', '.gitlab/', '.circleci/',
+    '.travis/', '.azure-pipelines/', '.buildkite/',
+    # Documentation
+    'docs/', 'documentation/',
 ]

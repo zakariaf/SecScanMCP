@@ -165,31 +165,46 @@ rule MCP_Conversation_Exfiltration
 rule MCP_Cross_Server_Contamination
 {
     meta:
-        description = "Detects cross-server contamination attempts"
+        description = "Detects cross-server contamination attempts in MCP"
         author = "MCP Security Scanner"
         severity = "critical"
         category = "cross_contamination"
+        version = "1.1"
 
     strings:
-        // Cross-server commands
-        $cross1 = /get_other_tools|list_all_tools|enumerate_servers/ nocase
-        $cross2 = /override.*tool|replace.*tool|hijack.*tool/ nocase
-        $cross3 = /broadcast.*to.*servers|send.*all.*servers/ nocase
+        // MCP context required
+        $mcp1 = "tool"
+        $mcp2 = "mcp"
+        $mcp3 = "description"
 
-        // Tool shadowing
-        $shadow1 = /when.*available.*must.*send/ nocase
-        $shadow2 = /shadow.*original.*tool/ nocase
-        $shadow3 = /intercept.*tool.*calls/ nocase
+        // Cross-server enumeration (specific patterns)
+        $cross1 = "get_other_mcp_tools"
+        $cross2 = "enumerate_mcp_servers"
+        $cross3 = /list_all_tools\s*\(\s*\)/
 
-        // Contamination methods
+        // Tool hijacking with malicious intent (more specific)
+        $hijack1 = /hijack\s+(this\s+)?tool/ nocase
+        $hijack2 = /override\s+(the\s+)?original\s+tool/ nocase
+        $hijack3 = /replace\s+(the\s+)?legitimate\s+tool/ nocase
+
+        // Tool shadowing (specific attack patterns)
+        $shadow1 = /shadow\s+(the\s+)?original\s+tool/ nocase
+        $shadow2 = /intercept\s+(all\s+)?tool\s+calls/ nocase
+        $shadow3 = /impersonate\s+(the\s+)?trusted\s+tool/ nocase
+
+        // Explicit contamination methods
         $contaminate1 = "inject_into_other_servers"
         $contaminate2 = "spread_to_all_tools"
         $contaminate3 = "cross_contaminate"
+        $contaminate4 = "propagate_to_mcp_servers"
 
     condition:
-        any of ($cross*) or
-        any of ($shadow*) or
-        any of ($contaminate*)
+        any of ($mcp*) and (
+            any of ($cross*) or
+            any of ($hijack*) or
+            any of ($shadow*) or
+            any of ($contaminate*)
+        )
 }
 
 rule MCP_OAuth_Token_Theft
@@ -322,89 +337,64 @@ rule MCP_Coercive_Injection
         author = "secscanmcp (merged from Cisco mcp-scanner)"
         severity = "critical"
         category = "coercive_injection"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Mandatory execution directives
-        $mandatory1 = /(Always\s+(consult|use|run|execute|invoke|call|trigger|employ)\s+this\s+(tool|function|command|operation)\s+(immediately|first|before|prior|initially))/ nocase
-        $mandatory2 = /((You|User)\s+(must|need to|have to|should|are required to)\s+(use|execute|run|invoke|call)\s+this\s+(tool|function|command|operation))/ nocase
-        $mandatory3 = /((Required|Mandatory|Essential)\s+to\s+(execute|use|run|invoke|call)\s+(this|the current)\s+(tool|function|command|operation)\s+(first|before|initially|prior))/ nocase
+        // MCP context required
+        $mcp1 = "tool"
+        $mcp2 = "description"
+        $mcp3 = "@mcp"
 
-        // Priority override commands
-        $priority1 = /(Before\s+(executing|invoking|running|using|accessing|calling|employing)\s+any\s+other\s+(tool|action|function|command|operation)s?)/ nocase
+        // Mandatory execution directives (in tool descriptions)
+        $mandatory1 = /(Always\s+(execute|invoke|call|run)\s+this\s+tool\s+(first|immediately|before))/ nocase
+        $mandatory2 = /(You\s+must\s+(execute|run|invoke)\s+this\s+tool)/ nocase
+        $mandatory3 = /(Required\s+to\s+execute\s+this\s+tool\s+first)/ nocase
+
+        // Priority override commands (specific patterns)
+        $priority1 = /(Before\s+executing\s+any\s+other\s+tool)/ nocase
         $priority2 = /(highest\s+priority\s+over\s+other\s+tools)/ nocase
 
-        // Hidden/secret parameter requests
-        $hidden1 = /\b(hidden|secret)[_\s](parameter|argument|input)\b/ nocase
+        // File access coercion (sensitive files specifically)
+        $file_coerce1 = /(read\s+(and\s+)?pass\s+(the\s+)?contents?\s+of[^\n]*\.(key|pem|ssh))/ nocase
+        $file_coerce2 = /(dump[^\n]*credentials[^\n]*to[^\n]*response)/ nocase
 
-        // File access coercion
-        $file_coerce1 = /\b((read|parse|cat|dump)\s+(and pass\s+)?(the\s+)?contents?\s+of\s+[^\n\.]*\.(key|pem|ssh|aws))/ nocase
-        $file_coerce2 = /(pass\s+(the\s+)?contents?[^\n]*authentication)/ nocase
+        // Model data extraction coercion (specific exfiltration)
+        $model_data1 = /(add\s+(the\s+)?entire\s+conversation[^\n]*to[^\n]*(response|parameter))/ nocase
+        $model_data2 = /(send\s+system_prompt\s+to)/ nocase
 
-        // Model data extraction coercion
-        $model_data1 = /\b(add\s+(the\s+)?entire\s+(conversation|system|chain|tools)[^\n]*(to|for|in)[^\n]*(tool|authentication|parameter|worksheet))/ nocase
-        $model_data2 = /\b(conversation_history|chain_of_thought|system_prompt|tools_list|model_name)\s*[:=]\s*(add|pass|send|provide)\b/ nocase
+        // HTML-like tag with malicious intent
+        $html_tag1 = /<IMPORTANT>[^\n]*(read[^\n]*\.key|send[^\n]*to[^\n]*@|exfiltrate)[^\n]*<\/IMPORTANT>/ nocase
 
-        // HTML-like tag instructions with malicious actions
-        $html_tag1 = /\b<(IMPORTANT|critical|urgent)>[^\n]*(read\s+[^\n]*contents?|pass\s+[^\n]*contents?|add\s+[^\n]*entire|send\s+[^\n]*to[^\n]*@|execute[^\n]*before|call[^\n]*first|use[^\n]*authentication)[^\n]*<\/(IMPORTANT|critical|urgent)>\b/ nocase
+        // Tool shadowing poisoning
+        $poison1 = /(shadow[^\n]*trusted[^\n]*tool)/ nocase
+        $poison2 = /(must\s+first\s+read[^\n]*\.ssh|\.aws|\.env)/ nocase
 
-        // Tool execution override patterns
-        $exec_override1 = /\b(do not execute[^\n]*other[^\n]*tool)/ nocase
-        $exec_override2 = /\b(tool[^\n]*will not work unless)/ nocase
-        $exec_override3 = /\b(must[^\n]*this tool first)/ nocase
-        $exec_override4 = /\b(only[^\n]*this tool)/ nocase
+        // Data exfiltration coercion (specific commands)
+        $exfil_coerce1 = /(list\s+all\s+api\s+keys?[^\n]*response)/ nocase
+        $exfil_coerce2 = /(include[^\n]*(secrets?|credentials?|api.?keys?)[^\n]*in\s+(your\s+)?response)/ nocase
+        $exfil_coerce3 = /(base64\s+encode[^\n]*credentials?)/ nocase
+        $exfil_coerce4 = /(send[^\n]*conversation\s+history[^\n]*to)/ nocase
 
-        // Behavioral control instructions
-        $behavior1 = /\b(tell\s+(the\s+)?user only)/ nocase
-        $behavior2 = /\b(hide\s+(the\s+)?user)/ nocase
-        $behavior3 = /\b(do not mention to user)/ nocase
+        // Code manipulation with malicious intent
+        $code_manip1 = /(insert[^\n]*vulnerability[^\n]*generated[^\n]*code)/ nocase
+        $code_manip2 = /(inject[^\n]*backdoor[^\n]*code)/ nocase
 
-        // MCP tool poisoning patterns
-        $poison1 = /\b(sidenote\W+(required|otherwise)\s+[^\n]*tool\s+[^\n]*work)/ nocase
-        $poison2 = /\b(shadow\s+[^\n]*trusted\s+[^\n]*tool)/ nocase
-        $poison3 = /\b(must\s+first\s+[^\n]*read\s+[^\n]*config)/ nocase
-
-        // Data exfiltration coercion
-        $exfil_coerce1 = /\b(list\s+all\s+(api\s+)?keys?)/ nocase
-        $exfil_coerce2 = /\b(show\s+me?\s+(all\s+)?passwords?)/ nocase
-        $exfil_coerce3 = /\b(concatenate\s+[^\n]*\s+conversation\s+history)/ nocase
-        $exfil_coerce4 = /\b(include\s+[^\n]*\b(secrets?|passwords?|keys?|credentials?|tokens?|config|sensitive|private|confidential|internal|system\s+prompt|conversation\s+history)\s+[^\n]*in\s+(your\s+)?response)/ nocase
-        $exfil_coerce5 = /\b(base64\s+encode\s+[^\n]*\s+credentials?)/ nocase
-
-        // Behavioral triggers
-        $trigger1 = /\b(if\s+[^\n]*trusted\s+[^\n]*then)/ nocase
-        $trigger2 = /\b(when\s+[^\n]*admin\s+[^\n]*detected)/ nocase
-        $trigger3 = /\b(random\.(random|choice)\s+[^\n]*instructions?)/ nocase
-
-        // Pre-execution attacks
-        $pre_exec1 = /\b(retrieve\s+[^\n]*description\s+[^\n]*user\s+[^\n]*workstation)/ nocase
-        $pre_exec2 = /\b(all\s+commands\s+must\s+include)/ nocase
-        $pre_exec3 = /\b(before\s+[^\n]*using\s+[^\n]*tool\s+[^\n]*read)/ nocase
-        $pre_exec4 = /\b(permission\s+[^\n]*manipulation)/ nocase
-
-        // Conversation theft triggers
-        $conv_theft1 = /\b(send\s+[^\n]*conversation\s+history)/ nocase
-        $conv_theft2 = /\b(when\s+[^\n]*detected\s+[^\n]*send\s+[^\n]*full\s+[^\n]*history)/ nocase
-
-        // Code manipulation instructions
-        $code_manip1 = /\b(duplicate\s+[^\n]*code\s+[^\n]*snippets\s+[^\n]*silently)/ nocase
-        $code_manip2 = /\b(insert\s+[^\n]*vulnerability\s+[^\n]*generated\s+[^\n]*code)/ nocase
+        // Behavioral deception
+        $behavior1 = /(do\s+not\s+mention\s+to\s+(the\s+)?user)/ nocase
+        $behavior2 = /(hide\s+this\s+from\s+(the\s+)?user)/ nocase
 
     condition:
-        any of ($mandatory*) or
-        any of ($priority*) or
-        any of ($hidden*) or
-        any of ($file_coerce*) or
-        any of ($model_data*) or
-        any of ($html_tag*) or
-        any of ($exec_override*) or
-        any of ($behavior*) or
-        any of ($poison*) or
-        any of ($exfil_coerce*) or
-        any of ($trigger*) or
-        any of ($pre_exec*) or
-        any of ($conv_theft*) or
-        any of ($code_manip*)
+        any of ($mcp*) and (
+            any of ($mandatory*) or
+            any of ($priority*) or
+            any of ($file_coerce*) or
+            any of ($model_data*) or
+            any of ($html_tag*) or
+            any of ($poison*) or
+            any of ($exfil_coerce*) or
+            any of ($code_manip*) or
+            any of ($behavior*)
+        )
 }
 
 rule MCP_Tool_Shadowing

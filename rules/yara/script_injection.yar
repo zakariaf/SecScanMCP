@@ -107,32 +107,38 @@ rule Script_Injection_VBScript {
         severity = "HIGH"
         category = "script_injection"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // VBScript objects
-        $vbs1 = /\bCreateObject\s*\(/i
-        $vbs2 = /\bWScript\.Shell\b/i
-        $vbs3 = /\bShell\.Application\b/i
-        $vbs4 = /\bScripting\.FileSystemObject\b/i
+        // VBScript objects (high confidence indicators)
+        $vbs_obj1 = /\bCreateObject\s*\(\s*['"]W[Ss]cript/i
+        $vbs_obj2 = /\bCreateObject\s*\(\s*['"]Shell\./i
+        $vbs_obj3 = /\bCreateObject\s*\(\s*['"]Scripting\./i
+        $vbs_obj4 = /\bWScript\.Shell\b/i
+        $vbs_obj5 = /\bShell\.Application\b/i
+        $vbs_obj6 = /\bScripting\.FileSystemObject\b/i
 
-        // VBScript dangerous methods
-        $method1 = /\.Exec\s*\(/i
-        $method2 = /\.Run\s*\(/i
-        $method3 = /\.ShellExecute\s*\(/i
-        $method4 = /\.RegWrite\s*\(/i
-        $method5 = /\.RegRead\s*\(/i
+        // VBScript methods WITH object context (require WScript/Shell prefix)
+        $vbs_method1 = /\bWScript\s*\.\s*Run\s*\(/i
+        $vbs_method2 = /\bWScript\s*\.\s*Exec\s*\(/i
+        $vbs_method3 = /\bShell\s*\.\s*Run\s*\(/i
+        $vbs_method4 = /\bShell\s*\.\s*ShellExecute\s*\(/i
+        $vbs_method5 = /\bWSH\s*\.\s*Run\s*\(/i
 
         // ActiveX controls
-        $activex1 = /\bActiveXObject\s*\(/i
-        $activex2 = /OBJECT\s+classid\s*=/i
-        $activex3 = /CLSID:/i
+        $activex1 = /\bActiveXObject\s*\(\s*['"]/i
+        $activex2 = /OBJECT\s+classid\s*=\s*['"]?CLSID:/i
 
         // WMI access
         $wmi1 = /\bwinmgmts:/i
         $wmi2 = /\bGetObject\s*\(\s*['"]winmgmts/i
 
+        // Registry manipulation with VBScript context
+        $reg1 = /\b(WScript|Shell)\s*\.\s*RegWrite\s*\(/i
+        $reg2 = /\b(WScript|Shell)\s*\.\s*RegRead\s*\(/i
+
     condition:
+        // Patterns require VBScript-specific context, reducing false positives
         any of them
 }
 
@@ -312,32 +318,31 @@ rule Script_Injection_WebAssembly {
 
 rule Script_Injection_Import_Hijacking {
     meta:
-        description = "Detects JavaScript/module import hijacking"
+        description = "Detects JavaScript/module import hijacking with suspicious paths"
         severity = "HIGH"
         category = "script_injection"
         author = "secscanmcp"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Dynamic import
-        $import1 = /import\s*\(\s*['"]/i
-        $import2 = /import\s*\(\s*`/i
-        $import3 = /import\s*\(\s*\$/i
+        // Suspicious dynamic imports (path traversal or remote)
+        $import_traversal = /import\s*\(\s*['"`][^'"`)]*\.\.\/[^'"`)]*['"`]\s*\)/i
+        $import_remote = /import\s*\(\s*['"`]https?:\/\//i
+        $import_variable = /import\s*\(\s*[a-zA-Z_$][a-zA-Z0-9_$]*\s*\)/
 
-        // Require hijacking
-        $require1 = /require\s*\(\s*['"]\.\.\//i
-        $require2 = /require\s*\(\s*['"]https?:/i
-        $require3 = /require\s*\(\s*process\.env/i
+        // Require hijacking (suspicious patterns only)
+        $require_remote = /require\s*\(\s*['"]https?:/i
+        $require_env = /require\s*\(\s*process\.env/i
 
-        // Module prototype pollution
-        $proto1 = /require\.cache/i
-        $proto2 = /module\.exports\s*=\s*function/i
-        $proto3 = /Object\.defineProperty\s*\(\s*require/i
+        // Module prototype pollution (these are actual attacks)
+        $proto_cache_del = /delete\s+require\.cache/i
+        $proto_override = /Object\.defineProperty\s*\(\s*require/i
 
-        // ES module manipulation
-        $esm1 = /import\.meta/i
-        $esm2 = /import\s*\*\s*as\s*\w+\s*from\s*['"]\.\.\//i
+        // ES module manipulation with path traversal
+        $esm_traversal = /import\s*\*\s*as\s*\w+\s*from\s*['"]\.\.\/\.\.\//i
 
     condition:
+        // Patterns are specific enough to avoid false positives
+        (filesize < 5MB) and
         any of them
 }

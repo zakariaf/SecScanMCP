@@ -7,7 +7,7 @@ from typing import List
 
 from models import Finding, VulnerabilityType
 from .patterns import POISONING_PATTERNS, CONFIG_FILE_PATTERNS
-from .utils import extract_context
+from .utils import extract_context, should_analyze_file
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class ConfigAnalyzer:
         findings = []
         for pattern in CONFIG_FILE_PATTERNS:
             for config_file in repo.glob(f'**/{pattern}'):
-                if config_file.is_file():
+                if config_file.is_file() and should_analyze_file(config_file):
                     findings.extend(self._check_file(config_file))
         return findings
 

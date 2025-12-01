@@ -7,7 +7,7 @@ from typing import List
 
 from models import Finding, VulnerabilityType
 from .patterns import POISONING_PATTERNS, TEMPLATE_FILE_PATTERNS
-from .utils import extract_context
+from .utils import extract_context, should_analyze_file
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class TemplateAnalyzer:
         findings = []
         for pattern in TEMPLATE_FILE_PATTERNS:
             for template_file in repo.glob(pattern):
-                if template_file.is_file():
+                if template_file.is_file() and should_analyze_file(template_file):
                     findings.extend(self._check_file(template_file))
         return findings
 

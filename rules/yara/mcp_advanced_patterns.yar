@@ -456,37 +456,43 @@ rule MCP_PHP_Code_Execution
 rule MCP_Ruby_Code_Execution
 {
     meta:
-        description = "Detects Ruby code execution patterns"
+        description = "Detects Ruby code execution patterns in MCP tools"
         author = "secscanmcp"
         severity = "critical"
         category = "code_execution"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Ruby system execution
-        $sys1 = /\bsystem\s*\(/i
-        $sys2 = /\b`[^`]+`/
-        $sys3 = /\bexec\s*\(/i
-        $sys4 = /\bspawn\s*\(/i
+        // MCP/tool context required
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "mcp.tool"
+        $mcp5 = "MCPServer"
 
-        // Ruby IO and popen
-        $io1 = /IO\.popen\s*\(/i
-        $io2 = /Open3\.popen/i
-        $io3 = /Open3\.capture/i
+        // Ruby system execution with user input
+        $sys1 = /system\s*\(\s*[^)]*params/i
+        $sys2 = /system\s*\(\s*[^)]*user/i
+        $sys3 = /exec\s*\(\s*[^)]*params/i
+        $sys4 = /exec\s*\(\s*[^)]*input/i
 
-        // Ruby eval
-        $eval1 = /\beval\s*\(/i
-        $eval2 = /\binstance_eval\s*\(/i
-        $eval3 = /\bclass_eval\s*\(/i
-        $eval4 = /\bmodule_eval\s*\(/i
+        // Ruby IO and popen with user input
+        $io1 = /IO\.popen\s*\(\s*[^)]*params/i
+        $io2 = /Open3\.popen[^(]*\(\s*[^)]*user/i
+        $io3 = /Open3\.capture[^(]*\(\s*[^)]*params/i
 
-        // Ruby kernel methods
-        $kern1 = /Kernel\.system\s*\(/i
-        $kern2 = /Kernel\.exec\s*\(/i
-        $kern3 = /Kernel\.`/i
+        // Ruby eval with user input (dangerous)
+        $eval1 = /\beval\s*\(\s*[^)]*params/i
+        $eval2 = /\beval\s*\(\s*[^)]*user/i
+        $eval3 = /\binstance_eval\s*\(\s*[^)]*params/i
+        $eval4 = /\binstance_eval\s*\(\s*[^)]*user/i
+
+        // Ruby kernel methods with user input
+        $kern1 = /Kernel\.system\s*\(\s*[^)]*params/i
+        $kern2 = /Kernel\.exec\s*\(\s*[^)]*user/i
 
     condition:
-        any of them
+        any of ($mcp*) and (any of ($sys*, $io*, $eval*, $kern*))
 }
 
 rule MCP_Code_Obfuscation_Detection
@@ -575,79 +581,75 @@ rule MCP_Polyglot_Payload_Detection
 rule MCP_Shell_Command_Construction
 {
     meta:
-        description = "Detects dangerous shell command construction patterns"
+        description = "Detects dangerous shell command construction patterns in MCP"
         author = "secscanmcp"
         severity = "critical"
         category = "code_execution"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // MCP/tool context
+        // MCP/tool context (more specific)
         $mcp1 = "@tool"
-        $mcp2 = "mcp"
-        $mcp3 = "params"
-        $mcp4 = "handler"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "@mcp.tool"
+        $mcp5 = "MCPServer"
+        $mcp6 = "mcp.tool("
 
-        // String interpolation in commands
-        $interp1 = /f["'].*\{.*\}.*["'].*subprocess/i
-        $interp2 = /`.*\$\{.*\}.*`.*exec/i
-        $interp3 = /\.format\s*\(.*\).*system/i
+        // String interpolation in commands WITH subprocess/exec
+        $interp1 = /f["'].*\{.*params.*\}.*["'].*subprocess/i
+        $interp2 = /`.*\$\{.*user.*\}.*`.*exec/i
+        $interp3 = /\.format\s*\([^)]*params[^)]*\).*system/i
 
-        // Command concatenation
-        $concat1 = /["']\s*\+\s*\w+\s*\+\s*["'].*exec/i
-        $concat2 = /cmd\s*=.*\+.*params/i
-        $concat3 = /command\s*=.*\+.*user/i
+        // Command concatenation with user input
+        $concat1 = /cmd\s*=\s*["'][^"']*["']\s*\+\s*params/i
+        $concat2 = /command\s*=\s*["'][^"']*["']\s*\+\s*user/i
+        $concat3 = /subprocess[^(]*\([^)]*\+\s*params/i
 
-        // Shell metacharacter injection vectors
-        $meta1 = /\|\s*["']?\s*\+/  // Pipe injection
-        $meta2 = /;\s*["']?\s*\+/   // Semicolon injection
-        $meta3 = /`.*\+.*`/         // Backtick injection
-        $meta4 = /\$\(.*\+.*\)/     // Command substitution
-
-        // Unsafe command patterns
-        $unsafe1 = /shell\s*=\s*True/i
-        $unsafe2 = /shlex\.join\s*\(/i
-        $unsafe3 = /args\s*=\s*.*split\s*\(\s*\)/i
+        // Shell=True with user input (very dangerous)
+        $unsafe1 = /shell\s*=\s*True[^)]*params/i
+        $unsafe2 = /shell\s*=\s*True[^)]*user/i
+        $unsafe3 = /subprocess\.run\s*\([^,]*params[^)]*shell\s*=\s*True/i
 
     condition:
         any of ($mcp*) and (
-            any of ($interp*, $concat*, $meta*, $unsafe*)
+            any of ($interp*, $concat*, $unsafe*)
         )
 }
 
 rule MCP_Dynamic_Import_Execution
 {
     meta:
-        description = "Detects dynamic import patterns that could load malicious code"
+        description = "Detects dangerous dynamic import patterns in MCP tools"
         author = "secscanmcp"
         severity = "high"
         category = "code_execution"
-        version = "1.0"
+        version = "1.1"
 
     strings:
-        // Python dynamic imports
-        $py1 = /__import__\s*\(\s*[^)]*\+/i
-        $py2 = /importlib\.import_module\s*\(\s*[^)]*\+/i
-        $py3 = /exec\s*\(\s*["']import\s/i
-        $py4 = /importlib\.util\.spec_from_file_location/i
+        // MCP/tool context required
+        $mcp1 = "@tool"
+        $mcp2 = "mcp_server"
+        $mcp3 = "tool_handler"
+        $mcp4 = "@mcp.tool"
+        $mcp5 = "MCPServer"
 
-        // JavaScript dynamic imports
-        $js1 = /require\s*\(\s*[^)]*\+/i
-        $js2 = /import\s*\(\s*[^)]*\+/i
-        $js3 = /require\.resolve\s*\(\s*[^)]*\+/i
+        // Python dynamic imports with user input
+        $py1 = /__import__\s*\(\s*[^)]*params/i
+        $py2 = /__import__\s*\(\s*[^)]*user/i
+        $py3 = /importlib\.import_module\s*\(\s*[^)]*params/i
+        $py4 = /exec\s*\(\s*["']import\s+[^"']*["']\s*\+/i
 
-        // Module path manipulation
-        $path1 = /sys\.path\.insert\s*\(/i
-        $path2 = /sys\.path\.append\s*\(/i
-        $path3 = /NODE_PATH/i
-        $path4 = /PYTHONPATH/i
+        // JavaScript dynamic imports with user input
+        $js1 = /require\s*\(\s*[^)]*params/i
+        $js2 = /require\s*\(\s*[^)]*user_/i
+        $js3 = /import\s*\(\s*[^)]*params/i
 
-        // Package installation at runtime
-        $pkg1 = /pip\s+install/i
-        $pkg2 = /npm\s+install/i
-        $pkg3 = /subprocess.*pip/i
-        $pkg4 = /child_process.*npm/i
+        // Package installation at runtime with user input (dangerous)
+        $pkg1 = /subprocess[^)]*pip\s+install\s+[^)]*params/i
+        $pkg2 = /child_process[^)]*npm\s+install\s+[^)]*user/i
+        $pkg3 = /os\.system[^)]*pip\s+install\s+[^)]*params/i
 
     condition:
-        any of them
+        any of ($mcp*) and (any of ($py*, $js*, $pkg*))
 }
