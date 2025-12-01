@@ -119,7 +119,7 @@ class AnalyzerOrchestrator:
     
     def _get_mcp_analyzers(self, scan_options: Dict) -> List[str]:
         """Get MCP-specific analyzers."""
-        analyzers = ['mcp_specific', 'mcp_config']
+        analyzers = ['mcp_specific']
         
         if scan_options.get('enable_dynamic_analysis', True):
             analyzers.append('dynamic')
