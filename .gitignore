@@ -67,3 +67,5 @@ results/
 /tmp/
 codeql-db/        # Add this line
 *.yarc            # Add this line (compiled YARA rules)
+# ML model files (downloaded at runtime)
+analyzers/models/
