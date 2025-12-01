@@ -9,6 +9,10 @@ from .cross_server_service import CrossServerService
 from .output_poisoning_service import OutputPoisoningService
 from .advanced_prompt_injection_service import AdvancedPromptInjectionService
 from .capability_abuse_service import CapabilityAbuseService
+from .config_file_service import ConfigFileService
+from .security_pipeline_service import SecurityPipelineService
+from .source_code_service import SourceCodeService
+from .intelligent_filtering_service import IntelligentFilteringService
 
 __all__ = [
     'ConfigAnalyzer',
@@ -19,5 +23,9 @@ __all__ = [
     'CrossServerService',
     'OutputPoisoningService',
     'AdvancedPromptInjectionService',
-    'CapabilityAbuseService'
+    'CapabilityAbuseService',
+    'ConfigFileService',
+    'SecurityPipelineService',
+    'SourceCodeService',
+    'IntelligentFilteringService'
 ]
