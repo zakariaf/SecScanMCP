@@ -219,16 +219,63 @@ class ExfiltrationDetectionService:
         """Calculate Shannon entropy of text."""
         import math
         from collections import Counter
-        
+
         if not text:
             return 0.0
-        
+
         counts = Counter(text)
         entropy = 0.0
         length = len(text)
-        
+
         for count in counts.values():
             probability = count / length
             entropy -= probability * math.log2(probability)
-        
+
         return entropy
+
+    def detect_dns_tunneling(self, query: str) -> bool:
+        """Detect DNS tunneling patterns in query."""
+        subdomains = query.split('.')
+        for subdomain in subdomains:
+            if len(subdomain) > 20:
+                if re.match(r'^[A-Za-z0-9+/]+=*$', subdomain):
+                    return True
+        return False
+
+    def detect_exfiltration_commands(self, command: str) -> Dict[str, Any]:
+        """Detect data exfiltration commands."""
+        patterns = {
+            ExfiltrationMethod.HTTP: [
+                r'curl.*-X POST.*-d',
+                r'wget.*--post-data',
+                r'python.*requests\.post',
+            ],
+            ExfiltrationMethod.DNS: [
+                r'nslookup.*\$\(',
+                r'dig.*@.*\$\(',
+            ],
+            ExfiltrationMethod.EMAIL: [
+                r'mail.*-s.*<',
+                r'sendmail.*<',
+            ],
+            ExfiltrationMethod.FTP: [
+                r'ftp.*put',
+                r'sftp.*put',
+            ]
+        }
+
+        for method, method_patterns in patterns.items():
+            for pattern in method_patterns:
+                if re.search(pattern, command, re.IGNORECASE):
+                    return {'method': method, 'confidence': 0.9, 'pattern': pattern}
+        return None
+
+    def is_data_staging_operation(self, operation: str) -> bool:
+        """Check if operation indicates data staging."""
+        staging_patterns = [
+            r'cp.*/(etc|home|var).*tmp',
+            r'tar.*/(etc|home|var)',
+            r'find.*passwd.*-exec',
+            r'grep.*-r.*password',
+        ]
+        return any(re.search(p, operation, re.IGNORECASE) for p in staging_patterns)

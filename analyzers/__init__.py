@@ -11,7 +11,8 @@ from .syft import SyftAnalyzer
 from .trufflehog import TruffleHogAnalyzer
 from .mcp import MCPSpecificAnalyzer
 from .dynamic import DynamicAnalyzer  # Updated to use refactored module
-from .traffic import TrafficAnalyzer  # Updated to use refactored module
+# TrafficAnalyzer is a container utility, not a BaseAnalyzer - import directly if needed
+from .traffic import TrafficAnalyzer
 
 from .security_tools.clamav import ClamAVAnalyzer
 from .security_tools.yara import YARAAnalyzer
@@ -27,7 +28,6 @@ __all__ = [
     'TruffleHogAnalyzer',
     'MCPSpecificAnalyzer',
     'DynamicAnalyzer',
-    'TrafficAnalyzer',
     'ClamAVAnalyzer',
     'YARAAnalyzer',
     'CodeQLAnalyzer'
