@@ -58,6 +58,7 @@ docker-compose.override.yml
 /tmp/
 /temp/
 *.tmp
+TASK_LIST.md
 
 # Security tool artifacts
 *.sarif
