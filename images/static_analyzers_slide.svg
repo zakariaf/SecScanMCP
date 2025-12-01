@@ -1,0 +1,185 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#431407;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="1120" height="120" rx="15" fill="url(#cardGradient)" stroke="#ea580c" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="600" y="80" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold">
+    Static Analysis Suite
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="115" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="18">
+    Comprehensive Static Code Analysis • 10 Specialized Analyzers
+  </text>
+  
+  <!-- Main Content Card -->
+  <rect x="80" y="200" width="1040" height="520" rx="20" fill="url(#cardGradient)" stroke="#ea580c" stroke-width="1"/>
+  
+  <!-- Purpose Section -->
+  <text x="120" y="250" fill="#fb923c" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Purpose</text>
+  <text x="120" y="280" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="18">
+    Multi-layered static analysis covering security, vulnerabilities, dependencies, and malware detection
+  </text>
+  
+  <!-- Analyzers Grid -->
+  <text x="120" y="340" fill="#fb923c" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Static Analyzers (10 Tools)</text>
+  
+  <!-- Row 1 -->
+  <g transform="translate(120, 370)">
+    <!-- Bandit -->
+    <rect x="0" y="0" width="200" height="60" rx="8" fill="#ea580c"/>
+    <text x="100" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">BanditAnalyzer</text>
+    <text x="100" y="35" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="11">Python Security Linting</text>
+    <text x="100" y="48" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="10">Security issues in Python code</text>
+    
+    <!-- OpenGrep -->
+    <rect x="210" y="0" width="200" height="60" rx="8" fill="#dc2626"/>
+    <text x="310" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">OpenGrepAnalyzer</text>
+    <text x="310" y="35" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="11">Pattern-based Detection</text>
+    <text x="310" y="48" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="10">Vulnerability pattern matching</text>
+    
+    <!-- Trivy -->
+    <rect x="420" y="0" width="200" height="60" rx="8" fill="#c2410c"/>
+    <text x="520" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">TrivyAnalyzer</text>
+    <text x="520" y="35" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="11">Container Vulnerability</text>
+    <text x="520" y="48" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="10">Container and dependency scanning</text>
+    
+    <!-- Grype -->
+    <rect x="630" y="0" width="200" height="60" rx="8" fill="#9a3412"/>
+    <text x="730" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">GrypeAnalyzer</text>
+    <text x="730" y="35" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="11">Vulnerability Database</text>
+    <text x="730" y="48" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="10">CVE database scanning</text>
+    
+    <!-- Syft -->
+    <rect x="840" y="0" width="200" height="60" rx="8" fill="#7c2d12"/>
+    <text x="940" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">SyftAnalyzer</text>
+    <text x="940" y="35" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="11">SBOM Generation</text>
+    <text x="940" y="48" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="10">Software bill of materials</text>
+  </g>
+  
+  <!-- Row 2 -->
+  <g transform="translate(120, 440)">
+    <!-- TruffleHog -->
+    <rect x="0" y="0" width="200" height="60" rx="8" fill="#b91c1c"/>
+    <text x="100" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">TruffleHogAnalyzer</text>
+    <text x="100" y="35" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="11">Secret Detection</text>
+    <text x="100" y="48" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="10">Code and git history secrets</text>
+    
+    <!-- MCP Specific -->
+    <rect x="210" y="0" width="200" height="60" rx="8" fill="#991b1b"/>
+    <text x="310" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">MCPSpecificAnalyzer</text>
+    <text x="310" y="35" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="11">MCP-Specific Analysis</text>
+    <text x="310" y="48" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="10">MCP protocol compliance</text>
+    
+    <!-- CodeQL -->
+    <rect x="420" y="0" width="200" height="60" rx="8" fill="#7f1d1d"/>
+    <text x="520" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">CodeQLAnalyzer</text>
+    <text x="520" y="35" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="11">Advanced Static Analysis</text>
+    <text x="520" y="48" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="10">Custom query analysis</text>
+    
+    <!-- YARA -->
+    <rect x="630" y="0" width="200" height="60" rx="8" fill="#450a0a"/>
+    <text x="730" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">YARAAnalyzer</text>
+    <text x="730" y="35" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="11">Malware Pattern Detection</text>
+    <text x="730" y="48" text-anchor="middle" fill="#fecaca" font-family="Arial, sans-serif" font-size="10">Pattern-based malware scan</text>
+    
+    <!-- ClamAV -->
+    <rect x="840" y="0" width="200" height="60" rx="8" fill="#292524"/>
+    <text x="940" y="20" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">ClamAVAnalyzer</text>
+    <text x="940" y="35" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="11">Antivirus Scanning</text>
+    <text x="940" y="48" text-anchor="middle" fill="#fed7aa" font-family="Arial, sans-serif" font-size="10">Traditional virus detection</text>
+  </g>
+  
+  <!-- Coverage Areas -->
+  <g transform="translate(120, 540)">
+    <text x="0" y="0" fill="#fb923c" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Coverage Areas</text>
+    
+    <!-- Security -->
+    <rect x="0" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="80" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Security Issues</text>
+    <text x="80" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Code vulnerabilities</text>
+    
+    <!-- Dependencies -->
+    <rect x="170" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="250" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Dependencies</text>
+    <text x="250" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Library vulnerabilities</text>
+    
+    <!-- Secrets -->
+    <rect x="340" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="420" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Secret Detection</text>
+    <text x="420" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Exposed credentials</text>
+    
+    <!-- Malware -->
+    <rect x="510" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="590" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Malware Detection</text>
+    <text x="590" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Malicious patterns</text>
+    
+    <!-- Compliance -->
+    <rect x="680" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="760" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Protocol Compliance</text>
+    <text x="760" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">MCP standards</text>
+    
+    <!-- SBOM -->
+    <rect x="850" y="20" width="160" height="40" rx="8" fill="rgba(234, 88, 12, 0.3)" stroke="#ea580c" stroke-width="2"/>
+    <text x="930" y="35" text-anchor="middle" fill="#fb923c" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Asset Inventory</text>
+    <text x="930" y="50" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="11">Component tracking</text>
+  </g>
+  
+  <!-- Analysis Flow -->
+  <g transform="translate(120, 620)">
+    <text x="0" y="0" fill="#fb923c" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Static Analysis Flow</text>
+    
+    <!-- Flow steps -->
+    <circle cx="50" cy="30" r="15" fill="#ea580c"/>
+    <text x="50" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">1</text>
+    <text x="50" y="55" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="10">Code Scan</text>
+    
+    <path d="M 65 30 L 135 30" stroke="#ea580c" stroke-width="3" marker-end="url(#arrowhead2)"/>
+    
+    <circle cx="150" cy="30" r="15" fill="#dc2626"/>
+    <text x="150" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">2</text>
+    <text x="150" y="55" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="10">Dependency</text>
+    
+    <path d="M 165 30 L 235 30" stroke="#ea580c" stroke-width="3" marker-end="url(#arrowhead2)"/>
+    
+    <circle cx="250" cy="30" r="15" fill="#c2410c"/>
+    <text x="250" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">3</text>
+    <text x="250" y="55" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="10">Secrets</text>
+    
+    <path d="M 265 30 L 335 30" stroke="#ea580c" stroke-width="3" marker-end="url(#arrowhead2)"/>
+    
+    <circle cx="350" cy="30" r="15" fill="#9a3412"/>
+    <text x="350" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">4</text>
+    <text x="350" y="55" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="10">Malware</text>
+    
+    <path d="M 365 30 L 435 30" stroke="#ea580c" stroke-width="3" marker-end="url(#arrowhead2)"/>
+    
+    <circle cx="450" cy="30" r="15" fill="#7c2d12"/>
+    <text x="450" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">5</text>
+    <text x="450" y="55" text-anchor="middle" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="10">Report</text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
+    </marker>
+  </defs>
+  
+  <!-- Bottom accent -->
+  <rect x="80" y="740" width="1040" height="4" rx="2" fill="#ea580c"/>
+</svg>

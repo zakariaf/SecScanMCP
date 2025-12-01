@@ -1,0 +1,172 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0c4a6e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="1120" height="120" rx="15" fill="url(#cardGradient)" stroke="#0ea5e9" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="600" y="80" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold">
+    Dynamic Analyzer Advanced
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="115" text-anchor="middle" fill="#7dd3fc" font-family="Arial, sans-serif" font-size="18">
+    Advanced Runtime Analysis and Sandbox Security Testing
+  </text>
+  
+  <!-- Main Content Card -->
+  <rect x="80" y="200" width="1040" height="520" rx="20" fill="url(#cardGradient)" stroke="#0ea5e9" stroke-width="1"/>
+  
+  <!-- Purpose Section -->
+  <text x="120" y="250" fill="#38bdf8" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Purpose</text>
+  <text x="120" y="280" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="18">
+    Advanced runtime analysis with containerized sandbox environments and security isolation
+  </text>
+  
+  <!-- Core Components -->
+  <text x="120" y="340" fill="#38bdf8" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Core Components</text>
+  
+  <!-- Left Column - Components -->
+  <g transform="translate(120, 365)">
+    <!-- Docker Environment -->
+    <rect x="0" y="0" width="320" height="50" rx="8" fill="#0ea5e9"/>
+    <text x="20" y="20" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Docker Environment Management</text>
+    <text x="20" y="35" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Containerized testing environments</text>
+    <text x="20" y="47" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Isolated sandbox initialization</text>
+    
+    <!-- Security Isolation -->
+    <rect x="0" y="60" width="320" height="50" rx="8" fill="#0284c7"/>
+    <text x="20" y="80" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Advanced Sandbox Security</text>
+    <text x="20" y="95" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Security isolation mechanisms</text>
+    <text x="20" y="107" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Resource limitation controls</text>
+    
+    <!-- MCP Connection -->
+    <rect x="0" y="120" width="320" height="50" rx="8" fill="#0369a1"/>
+    <text x="20" y="140" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">MCP Connection Testing</text>
+    <text x="20" y="155" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Secure connection establishment</text>
+    <text x="20" y="167" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Protocol compliance validation</text>
+    
+    <!-- Tool Manipulation -->
+    <rect x="0" y="180" width="320" height="50" rx="8" fill="#0c4a6e"/>
+    <text x="20" y="200" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Tool Manipulation Detection</text>
+    <text x="20" y="215" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Advanced tool behavior analysis</text>
+    <text x="20" y="227" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Unauthorized access detection</text>
+    
+    <!-- Prompt Injection -->
+    <rect x="0" y="240" width="320" height="50" rx="8" fill="#075985"/>
+    <text x="20" y="260" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Advanced Prompt Injection</text>
+    <text x="20" y="275" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Sophisticated injection techniques</text>
+    <text x="20" y="287" fill="#bae6fd" font-family="Arial, sans-serif" font-size="12">Response validation and analysis</text>
+  </g>
+  
+  <!-- Right Column - Features -->
+  <g transform="translate(480, 340)">
+    <text x="0" y="0" fill="#38bdf8" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Advanced Features</text>
+    
+    <!-- Feature 1 -->
+    <circle cx="20" cy="35" r="4" fill="#f97316"/>
+    <text x="40" y="40" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Container Orchestration:</tspan> Docker-based isolation
+    </text>
+    
+    <!-- Feature 2 -->
+    <circle cx="20" cy="65" r="4" fill="#f97316"/>
+    <text x="40" y="70" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Security Boundaries:</tspan> Multi-layer protection
+    </text>
+    
+    <!-- Feature 3 -->
+    <circle cx="20" cy="95" r="4" fill="#f97316"/>
+    <text x="40" y="100" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Resource Management:</tspan> CPU/Memory controls
+    </text>
+    
+    <!-- Feature 4 -->
+    <circle cx="20" cy="125" r="4" fill="#f97316"/>
+    <text x="40" y="130" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Network Isolation:</tspan> Controlled connectivity
+    </text>
+    
+    <!-- Feature 5 -->
+    <circle cx="20" cy="155" r="4" fill="#f97316"/>
+    <text x="40" y="160" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Behavior Monitoring:</tspan> Real-time analysis
+    </text>
+    
+    <!-- Feature 6 -->
+    <circle cx="20" cy="185" r="4" fill="#f97316"/>
+    <text x="40" y="190" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Automated Testing:</tspan> Scripted security scenarios
+    </text>
+    
+    <!-- Feature 7 -->
+    <circle cx="20" cy="215" r="4" fill="#f97316"/>
+    <text x="40" y="220" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Evidence Collection:</tspan> Comprehensive logging
+    </text>
+    
+    <!-- Feature 8 -->
+    <circle cx="20" cy="245" r="4" fill="#f97316"/>
+    <text x="40" y="250" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Cleanup and Recovery:</tspan> Environment restoration
+    </text>
+    
+    <!-- Feature 9 -->
+    <circle cx="20" cy="275" r="4" fill="#f97316"/>
+    <text x="40" y="280" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+      <tspan font-weight="bold">Integration Ready:</tspan> Modular architecture
+    </text>
+  </g>
+  
+  <!-- Docker Architecture Diagram -->
+  <g transform="translate(850, 400)">
+    <rect x="0" y="0" width="220" height="280" rx="10" fill="rgba(14, 165, 233, 0.1)" stroke="#0ea5e9" stroke-width="2"/>
+    <text x="110" y="25" text-anchor="middle" fill="#38bdf8" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Sandbox Architecture</text>
+    
+    <!-- Host System -->
+    <rect x="20" y="40" width="180" height="40" rx="5" fill="#0ea5e9"/>
+    <text x="110" y="58" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Host System</text>
+    <text x="110" y="72" text-anchor="middle" fill="#bae6fd" font-family="Arial, sans-serif" font-size="11">Security Scanner</text>
+    
+    <!-- Docker Layer -->
+    <rect x="30" y="90" width="160" height="35" rx="5" fill="#0284c7"/>
+    <text x="110" y="105" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Docker Engine</text>
+    <text x="110" y="118" text-anchor="middle" fill="#bae6fd" font-family="Arial, sans-serif" font-size="10">Container Management</text>
+    
+    <!-- Container 1 -->
+    <rect x="40" y="135" width="65" height="50" rx="5" fill="#0369a1"/>
+    <text x="72" y="152" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">MCP</text>
+    <text x="72" y="163" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Server</text>
+    <text x="72" y="177" text-anchor="middle" fill="#bae6fd" font-family="Arial, sans-serif" font-size="9">Isolated</text>
+    
+    <!-- Container 2 -->
+    <rect x="115" y="135" width="65" height="50" rx="5" fill="#0c4a6e"/>
+    <text x="147" y="152" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Test</text>
+    <text x="147" y="163" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="11" font-weight="bold">Client</text>
+    <text x="147" y="177" text-anchor="middle" fill="#bae6fd" font-family="Arial, sans-serif" font-size="9">Monitored</text>
+    
+    <!-- Network -->
+    <rect x="40" y="195" width="140" height="25" rx="5" fill="#075985"/>
+    <text x="110" y="210" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Isolated Network</text>
+    
+    <!-- Security Layer -->
+    <rect x="30" y="230" width="160" height="30" rx="5" fill="#064e3b"/>
+    <text x="110" y="245" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Security Controls</text>
+    <text x="110" y="257" text-anchor="middle" fill="#d1fae5" font-family="Arial, sans-serif" font-size="10">Firewall | Resource Limits | Monitoring</text>
+  </g>
+  
+  <!-- Bottom accent -->
+  <rect x="80" y="740" width="1040" height="4" rx="2" fill="#0ea5e9"/>
+</svg>

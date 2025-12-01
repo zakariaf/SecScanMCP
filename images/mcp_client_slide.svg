@@ -1,0 +1,103 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e3a8a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="cardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:0.05" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="800" fill="url(#bgGradient)"/>
+  
+  <!-- Header -->
+  <rect x="40" y="40" width="1120" height="120" rx="15" fill="url(#cardGradient)" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Title -->
+  <text x="600" y="80" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="36" font-weight="bold">
+    MCP Client Analyzer
+  </text>
+  
+  <!-- Subtitle -->
+  <text x="600" y="115" text-anchor="middle" fill="#93c5fd" font-family="Arial, sans-serif" font-size="18">
+    Modular MCP Protocol Client • 111 lines main + services
+  </text>
+  
+  <!-- Main Content Card -->
+  <rect x="80" y="200" width="1040" height="520" rx="20" fill="url(#cardGradient)" stroke="#3b82f6" stroke-width="1"/>
+  
+  <!-- Purpose Section -->
+  <text x="120" y="250" fill="#60a5fa" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Purpose</text>
+  <text x="120" y="280" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="18">
+    Advanced MCP Protocol client implementation for secure communication
+  </text>
+  
+  <!-- Key Features -->
+  <text x="120" y="340" fill="#60a5fa" font-family="Arial, sans-serif" font-size="24" font-weight="bold">Key Features</text>
+  
+  <!-- Feature 1 -->
+  <circle cx="140" cy="375" r="4" fill="#10b981"/>
+  <text x="160" y="380" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+    <tspan font-weight="bold">JSON-RPC 2.0 Communication:</tspan> Full protocol implementation for MCP servers
+  </text>
+  
+  <!-- Feature 2 -->
+  <circle cx="140" cy="405" r="4" fill="#10b981"/>
+  <text x="160" y="410" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+    <tspan font-weight="bold">Multi-Transport Support:</tspan> STDIO, SSE (Server-Sent Events), WebSocket
+  </text>
+  
+  <!-- Feature 3 -->
+  <circle cx="140" cy="435" r="4" fill="#10b981"/>
+  <text x="160" y="440" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+    <tspan font-weight="bold">MCPClient Class:</tspan> Core protocol communication and session management
+  </text>
+  
+  <!-- Feature 4 -->
+  <circle cx="140" cy="465" r="4" fill="#10b981"/>
+  <text x="160" y="470" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+    <tspan font-weight="bold">MCPSecurityTester:</tspan> Specialized security testing capabilities
+  </text>
+  
+  <!-- Feature 5 -->
+  <circle cx="140" cy="495" r="4" fill="#10b981"/>
+  <text x="160" y="500" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="16">
+    <tspan font-weight="bold">Connection Management:</tspan> Authentication, error handling, lifecycle management
+  </text>
+  
+  <!-- Technology Icons -->
+  <g transform="translate(750, 380)">
+    <rect x="0" y="0" width="300" height="200" rx="10" fill="rgba(59, 130, 246, 0.1)" stroke="#3b82f6" stroke-width="1"/>
+    <text x="150" y="25" text-anchor="middle" fill="#60a5fa" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Technologies</text>
+    
+    <!-- JSON-RPC -->
+    <rect x="20" y="40" width="80" height="30" rx="5" fill="#6366f1"/>
+    <text x="60" y="58" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">JSON-RPC</text>
+    
+    <!-- WebSocket -->
+    <rect x="110" y="40" width="80" height="30" rx="5" fill="#8b5cf6"/>
+    <text x="150" y="58" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">WebSocket</text>
+    
+    <!-- SSE -->
+    <rect x="200" y="40" width="80" height="30" rx="5" fill="#ec4899"/>
+    <text x="240" y="58" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">SSE</text>
+    
+    <!-- STDIO -->
+    <rect x="20" y="80" width="80" height="30" rx="5" fill="#10b981"/>
+    <text x="60" y="98" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">STDIO</text>
+    
+    <!-- Security -->
+    <rect x="110" y="80" width="80" height="30" rx="5" fill="#f59e0b"/>
+    <text x="150" y="98" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Security</text>
+    
+    <!-- Testing -->
+    <rect x="200" y="80" width="80" height="30" rx="5" fill="#ef4444"/>
+    <text x="240" y="98" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="12">Testing</text>
+  </g>
+  
+  <!-- Bottom accent -->
+  <rect x="80" y="740" width="1040" height="4" rx="2" fill="#3b82f6"/>
+</svg>

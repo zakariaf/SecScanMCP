@@ -2,6 +2,8 @@
 
 The most comprehensive security scanner for Model Context Protocol (MCP) servers. Combines 12+ specialized analyzers, 117 YARA detection rules, ML-powered analysis, and real-time container monitoring to detect threats that other scanners miss.
 
+![MCP Security Scanner Architecture](images/scanner_architecture_overview.svg)
+
 ## Why This Scanner?
 
 MCP servers are uniquely dangerous because they **execute code based on AI instructions**. Traditional security scanners miss MCP-specific attacks like:
@@ -161,7 +163,7 @@ curl -X POST http://localhost:8000/scan \
 
 The scanner includes a beautiful dark-themed web UI at `http://localhost:8000/`:
 
-![MCP Security Scanner UI](docs/images/scanner-ui.png)
+![MCP Security Scanner UI](images/web_ui_dashboard.svg)
 
 ### Features
 

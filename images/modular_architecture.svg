@@ -1,0 +1,300 @@
+<svg viewBox="0 0 1400 1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e1b4b"/>
+    </linearGradient>
+    <linearGradient id="greenGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    <linearGradient id="purpleGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="blueGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="cyanGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06b6d4"/>
+      <stop offset="100%" style="stop-color:#0891b2"/>
+    </linearGradient>
+    <linearGradient id="orangeGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/>
+    </marker>
+  </defs>
+
+  <rect width="1400" height="1000" fill="url(#bgGrad4)"/>
+
+  <!-- Header -->
+  <rect x="50" y="30" width="1300" height="80" rx="15" fill="rgba(255,255,255,0.05)" stroke="url(#greenGrad4)" stroke-width="2"/>
+  <text x="700" y="65" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="32" font-weight="bold">Clean Modular Architecture</text>
+  <text x="700" y="90" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="14">Sandi Metz Best Practices | SOLID Principles | Services Layer Pattern</text>
+
+  <!-- Core Scanner Module -->
+  <g transform="translate(50, 140)">
+    <rect x="0" y="0" width="400" height="320" rx="15" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#greenGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#greenGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Scanner Module</text>
+
+    <text x="20" y="70" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">scanner/</text>
+
+    <rect x="20" y="85" width="170" height="35" rx="6" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1"/>
+    <text x="105" y="107" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="11" font-weight="bold">main_scanner.py</text>
+    <text x="195" y="107" fill="#64748b" font-family="Arial, sans-serif" font-size="9">68 lines</text>
+
+    <text x="20" y="140" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">services/</text>
+
+    <rect x="30" y="155" width="165" height="28" rx="5" fill="#059669"/>
+    <text x="112" y="173" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">repository_service.py</text>
+
+    <rect x="205" y="155" width="165" height="28" rx="5" fill="#047857"/>
+    <text x="287" y="173" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">analyzer_orchestrator.py</text>
+
+    <rect x="30" y="190" width="165" height="28" rx="5" fill="#065f46"/>
+    <text x="112" y="208" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">finding_service.py</text>
+
+    <rect x="205" y="190" width="165" height="28" rx="5" fill="#064e3b"/>
+    <text x="287" y="208" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">finding_aggregator.py</text>
+
+    <rect x="30" y="225" width="165" height="28" rx="5" fill="#022c22"/>
+    <text x="112" y="243" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">result_builder.py</text>
+
+    <text x="20" y="275" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">utils/</text>
+    <rect x="30" y="285" width="130" height="22" rx="4" fill="rgba(16,185,129,0.15)"/>
+    <text x="95" y="300" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="10">url_parser.py</text>
+  </g>
+
+  <!-- MCP Analyzer Module -->
+  <g transform="translate(500, 140)">
+    <rect x="0" y="0" width="400" height="320" rx="15" fill="rgba(139,92,246,0.08)" stroke="#8b5cf6" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#purpleGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#purpleGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">MCP Analyzer Module</text>
+
+    <text x="20" y="70" fill="#8b5cf6" font-family="Arial, sans-serif" font-size="12" font-weight="bold">analyzers/mcp/</text>
+
+    <text x="20" y="95" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">services/ (7 extracted services)</text>
+
+    <rect x="20" y="110" width="175" height="25" rx="5" fill="#7c3aed"/>
+    <text x="107" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">prompt_injection_service</text>
+
+    <rect x="205" y="110" width="175" height="25" rx="5" fill="#6d28d9"/>
+    <text x="292" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">tool_poisoning_service</text>
+
+    <rect x="20" y="140" width="175" height="25" rx="5" fill="#5b21b6"/>
+    <text x="107" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">rug_pull_service</text>
+
+    <rect x="205" y="140" width="175" height="25" rx="5" fill="#4c1d95"/>
+    <text x="292" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">cross_server_service</text>
+
+    <rect x="20" y="170" width="175" height="25" rx="5" fill="#3b0764"/>
+    <text x="107" y="187" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">output_poisoning_service</text>
+
+    <rect x="205" y="170" width="175" height="25" rx="5" fill="#581c87"/>
+    <text x="292" y="187" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">capability_abuse_service</text>
+
+    <rect x="20" y="200" width="175" height="25" rx="5" fill="#701a75"/>
+    <text x="107" y="217" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">command_injection_service</text>
+
+    <text x="20" y="250" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">testers/ (extracted)</text>
+    <rect x="20" y="265" width="360" height="22" rx="4" fill="rgba(139,92,246,0.15)"/>
+    <text x="200" y="280" text-anchor="middle" fill="#a78bfa" font-family="Arial, sans-serif" font-size="10">security_testing_service → testers module</text>
+
+    <text x="20" y="310" fill="#a78bfa" font-family="Arial, sans-serif" font-size="10">Refactored: 563 → 96 lines per service</text>
+  </g>
+
+  <!-- Intelligent Analyzer Module -->
+  <g transform="translate(950, 140)">
+    <rect x="0" y="0" width="400" height="320" rx="15" fill="rgba(6,182,212,0.08)" stroke="#06b6d4" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#cyanGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#cyanGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Intelligent Analyzer Module</text>
+
+    <text x="20" y="70" fill="#06b6d4" font-family="Arial, sans-serif" font-size="12" font-weight="bold">analyzers/intelligent/</text>
+
+    <text x="20" y="95" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">components/</text>
+
+    <rect x="20" y="110" width="175" height="25" rx="5" fill="#0891b2"/>
+    <text x="107" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">semantic_analyzer</text>
+
+    <rect x="205" y="110" width="175" height="25" rx="5" fill="#0e7490"/>
+    <text x="292" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">behavioral_analyzer</text>
+
+    <rect x="20" y="140" width="175" height="25" rx="5" fill="#155e75"/>
+    <text x="107" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">ecosystem_analyzer</text>
+
+    <rect x="205" y="140" width="175" height="25" rx="5" fill="#164e63"/>
+    <text x="292" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">anomaly_detector</text>
+
+    <text x="20" y="185" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">services/</text>
+
+    <rect x="20" y="200" width="175" height="25" rx="5" fill="#134e4a"/>
+    <text x="107" y="217" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">risk_aggregator</text>
+
+    <rect x="205" y="200" width="175" height="25" rx="5" fill="#115e59"/>
+    <text x="292" y="217" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">learning_system</text>
+
+    <text x="20" y="255" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">models/ + utils/</text>
+    <rect x="20" y="265" width="360" height="22" rx="4" fill="rgba(6,182,212,0.15)"/>
+    <text x="200" y="280" text-anchor="middle" fill="#22d3ee" font-family="Arial, sans-serif" font-size="10">Pydantic models, config management</text>
+
+    <text x="20" y="310" fill="#22d3ee" font-family="Arial, sans-serif" font-size="10">ML-Powered: Transformer models, async learning</text>
+  </g>
+
+  <!-- Dynamic/Traffic Analyzer Module -->
+  <g transform="translate(50, 490)">
+    <rect x="0" y="0" width="400" height="250" rx="15" fill="rgba(59,130,246,0.08)" stroke="#3b82f6" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#blueGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#blueGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Dynamic/Traffic Analyzer</text>
+
+    <text x="20" y="70" fill="#3b82f6" font-family="Arial, sans-serif" font-size="12" font-weight="bold">analyzers/dynamic/ + traffic/</text>
+
+    <text x="20" y="95" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">services/ (traffic: 513 → 92 lines)</text>
+
+    <rect x="20" y="110" width="175" height="25" rx="5" fill="#2563eb"/>
+    <text x="107" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">dns_analyzer_service</text>
+
+    <rect x="205" y="110" width="175" height="25" rx="5" fill="#1d4ed8"/>
+    <text x="292" y="127" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">http_analyzer_service</text>
+
+    <rect x="20" y="140" width="175" height="25" rx="5" fill="#1e40af"/>
+    <text x="107" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">anomaly_detector_service</text>
+
+    <rect x="205" y="140" width="175" height="25" rx="5" fill="#1e3a8a"/>
+    <text x="292" y="157" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="9">connection_tracker_service</text>
+
+    <text x="20" y="185" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">transports/ (from mcp_client)</text>
+    <rect x="20" y="195" width="360" height="22" rx="4" fill="rgba(59,130,246,0.15)"/>
+    <text x="200" y="210" text-anchor="middle" fill="#60a5fa" font-family="Arial, sans-serif" font-size="10">STDIO, SSE, WebSocket transports extracted</text>
+
+    <text x="20" y="240" fill="#60a5fa" font-family="Arial, sans-serif" font-size="10">Docker sandbox, real-time monitoring</text>
+  </g>
+
+  <!-- Static Analyzers Module -->
+  <g transform="translate(500, 490)">
+    <rect x="0" y="0" width="400" height="250" rx="15" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#orangeGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#orangeGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Static Analyzers</text>
+
+    <text x="20" y="70" fill="#f97316" font-family="Arial, sans-serif" font-size="12" font-weight="bold">analyzers/static/ + universal/</text>
+
+    <rect x="20" y="90" width="85" height="30" rx="5" fill="#ea580c"/>
+    <text x="62" y="109" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Bandit</text>
+
+    <rect x="110" y="90" width="85" height="30" rx="5" fill="#dc2626"/>
+    <text x="152" y="109" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">CodeQL</text>
+
+    <rect x="200" y="90" width="85" height="30" rx="5" fill="#c2410c"/>
+    <text x="242" y="109" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">OpenGrep</text>
+
+    <rect x="290" y="90" width="85" height="30" rx="5" fill="#9a3412"/>
+    <text x="332" y="109" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">TruffleHog</text>
+
+    <rect x="20" y="125" width="85" height="30" rx="5" fill="#7c2d12"/>
+    <text x="62" y="144" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Trivy</text>
+
+    <rect x="110" y="125" width="85" height="30" rx="5" fill="#451a03"/>
+    <text x="152" y="144" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Grype</text>
+
+    <rect x="200" y="125" width="85" height="30" rx="5" fill="#b91c1c"/>
+    <text x="242" y="144" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">YARA</text>
+
+    <rect x="290" y="125" width="85" height="30" rx="5" fill="#991b1b"/>
+    <text x="332" y="144" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">ClamAV</text>
+
+    <rect x="20" y="160" width="175" height="30" rx="5" fill="#7f1d1d"/>
+    <text x="107" y="179" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="10">Syft (SBOM)</text>
+
+    <text x="20" y="210" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11" font-weight="bold">YARA rules/ (117 detection rules)</text>
+    <text x="20" y="230" fill="#fb923c" font-family="Arial, sans-serif" font-size="10">9 categories: MCP, backdoor, SQL, XSS, secrets...</text>
+  </g>
+
+  <!-- Architecture Principles -->
+  <g transform="translate(950, 490)">
+    <rect x="0" y="0" width="400" height="250" rx="15" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="2"/>
+    <rect x="0" y="0" width="400" height="45" rx="15" fill="url(#greenGrad4)"/>
+    <rect x="0" y="30" width="400" height="15" fill="url(#greenGrad4)"/>
+    <text x="200" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="16" font-weight="bold">Architecture Principles</text>
+
+    <circle cx="35" cy="80" r="6" fill="#10b981"/>
+    <text x="55" y="85" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Classes: ≤100 lines</text>
+
+    <circle cx="35" cy="115" r="6" fill="#10b981"/>
+    <text x="55" y="120" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Methods: ≤10 lines</text>
+
+    <circle cx="35" cy="150" r="6" fill="#10b981"/>
+    <text x="55" y="155" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Single Responsibility</text>
+
+    <circle cx="35" cy="185" r="6" fill="#10b981"/>
+    <text x="55" y="190" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Service Layer Pattern</text>
+
+    <circle cx="35" cy="220" r="6" fill="#10b981"/>
+    <text x="55" y="225" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="13" font-weight="bold">Dependency Injection</text>
+
+    <rect x="250" y="70" width="130" height="80" rx="10" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1"/>
+    <text x="315" y="100" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">Sandi Metz</text>
+    <text x="315" y="120" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="10">Best Practices</text>
+    <text x="315" y="140" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="10">SOLID Principles</text>
+
+    <rect x="250" y="160" width="130" height="70" rx="10" fill="rgba(6,182,212,0.2)" stroke="#06b6d4" stroke-width="1"/>
+    <text x="315" y="190" text-anchor="middle" fill="#06b6d4" font-family="Arial, sans-serif" font-size="12" font-weight="bold">async/await</text>
+    <text x="315" y="210" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="10">asyncio.gather()</text>
+  </g>
+
+  <!-- Flow Arrows -->
+  <path d="M 250 460 L 250 490" stroke="#10b981" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M 700 460 L 700 490" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M 1150 460 L 1150 490" stroke="#06b6d4" stroke-width="2" stroke-dasharray="5,5"/>
+
+  <!-- Stats Footer -->
+  <g transform="translate(50, 770)">
+    <rect x="0" y="0" width="1300" height="200" rx="15" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+    <text x="650" y="35" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="18" font-weight="bold">Refactoring Results (Last 2 Days)</text>
+
+    <!-- Before/After Stats -->
+    <g transform="translate(50, 60)">
+      <rect x="0" y="0" width="280" height="120" rx="10" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="1"/>
+      <text x="140" y="25" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Before Refactoring</text>
+      <text x="140" y="55" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">mcp_client.py: 638 lines</text>
+      <text x="140" y="75" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">traffic_analyzer.py: 513 lines</text>
+      <text x="140" y="95" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">behavioral_analyzer: 563 lines</text>
+      <text x="140" y="115" text-anchor="middle" fill="#fca5a5" font-family="Arial, sans-serif" font-size="11">Monolithic files</text>
+    </g>
+
+    <g transform="translate(360, 60)">
+      <rect x="0" y="0" width="280" height="120" rx="10" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="1"/>
+      <text x="140" y="25" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="14" font-weight="bold">After Refactoring</text>
+      <text x="140" y="55" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">mcp_client: modular services</text>
+      <text x="140" y="75" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">traffic_analyzer: 92 lines + 4 services</text>
+      <text x="140" y="95" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">behavioral: 96 lines + services</text>
+      <text x="140" y="115" text-anchor="middle" fill="#6ee7b7" font-family="Arial, sans-serif" font-size="11">Clean architecture</text>
+    </g>
+
+    <g transform="translate(670, 60)">
+      <rect x="0" y="0" width="280" height="120" rx="10" fill="rgba(6,182,212,0.1)" stroke="#06b6d4" stroke-width="1"/>
+      <text x="140" y="25" text-anchor="middle" fill="#06b6d4" font-family="Arial, sans-serif" font-size="14" font-weight="bold">Extracted Services</text>
+      <text x="140" y="55" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">7 MCP analyzer services</text>
+      <text x="140" y="75" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">4 traffic analyzer services</text>
+      <text x="140" y="95" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">6 intelligent components</text>
+      <text x="140" y="115" text-anchor="middle" fill="#67e8f9" font-family="Arial, sans-serif" font-size="11">3 transport modules</text>
+    </g>
+
+    <g transform="translate(980, 60)">
+      <rect x="0" y="0" width="280" height="120" rx="10" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="140" y="25" text-anchor="middle" fill="#8b5cf6" font-family="Arial, sans-serif" font-size="14" font-weight="bold">New Features</text>
+      <text x="140" y="55" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">Web UI Dashboard</text>
+      <text x="140" y="75" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">Dual Scoring System</text>
+      <text x="140" y="95" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">YARA false positive fixes</text>
+      <text x="140" y="115" text-anchor="middle" fill="#c4b5fd" font-family="Arial, sans-serif" font-size="11">117 optimized rules</text>
+    </g>
+  </g>
+</svg>

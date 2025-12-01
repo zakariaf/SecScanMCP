@@ -1,0 +1,171 @@
+<svg viewBox="0 0 1200 900" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="50%" style="stop-color:#1c1917"/>
+      <stop offset="100%" style="stop-color:#0f172a"/>
+    </linearGradient>
+    <linearGradient id="redOrange" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="100%" style="stop-color:#f97316"/>
+    </linearGradient>
+    <linearGradient id="orangeYellow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#eab308"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#bgGrad5)"/>
+
+  <!-- Header -->
+  <rect x="50" y="30" width="1100" height="100" rx="15" fill="rgba(255,255,255,0.05)" stroke="url(#redOrange)" stroke-width="2"/>
+  <text x="600" y="70" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-size="34" font-weight="bold">YARA Detection Engine</text>
+  <text x="600" y="100" text-anchor="middle" fill="#fca5a5" font-family="Arial, sans-serif" font-size="16">117 Custom Rules | 9 Categories | Advanced Pattern Matching | False Positive Optimized</text>
+
+  <!-- Stats Row -->
+  <g transform="translate(50, 160)">
+    <rect x="0" y="0" width="260" height="100" rx="15" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="2"/>
+    <text x="130" y="35" text-anchor="middle" fill="#fca5a5" font-family="Arial, sans-serif" font-size="14">Total Rules</text>
+    <text x="130" y="75" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="42" font-weight="bold">117</text>
+
+    <rect x="280" y="0" width="260" height="100" rx="15" fill="rgba(249,115,22,0.1)" stroke="#f97316" stroke-width="2"/>
+    <text x="410" y="35" text-anchor="middle" fill="#fdba74" font-family="Arial, sans-serif" font-size="14">Categories</text>
+    <text x="410" y="75" text-anchor="middle" fill="#f97316" font-family="Arial, sans-serif" font-size="42" font-weight="bold">9</text>
+
+    <rect x="560" y="0" width="260" height="100" rx="15" fill="rgba(234,179,8,0.1)" stroke="#eab308" stroke-width="2"/>
+    <text x="690" y="35" text-anchor="middle" fill="#fde047" font-family="Arial, sans-serif" font-size="14">MCP-Specific</text>
+    <text x="690" y="75" text-anchor="middle" fill="#eab308" font-family="Arial, sans-serif" font-size="42" font-weight="bold">41</text>
+
+    <rect x="840" y="0" width="260" height="100" rx="15" fill="rgba(16,185,129,0.1)" stroke="#10b981" stroke-width="2"/>
+    <text x="970" y="35" text-anchor="middle" fill="#6ee7b7" font-family="Arial, sans-serif" font-size="14">False Positives Fixed</text>
+    <text x="970" y="75" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="42" font-weight="bold">125</text>
+  </g>
+
+  <!-- Rule Categories Grid -->
+  <g transform="translate(50, 290)">
+    <text x="0" y="0" fill="#ffffff" font-family="Arial, sans-serif" font-size="20" font-weight="bold">Rule Categories</text>
+
+    <!-- Row 1 -->
+    <g transform="translate(0, 25)">
+      <!-- MCP Threats -->
+      <rect x="0" y="0" width="350" height="120" rx="12" fill="rgba(139,92,246,0.1)" stroke="#8b5cf6" stroke-width="2"/>
+      <rect x="0" y="0" width="350" height="35" rx="12" fill="#8b5cf6"/>
+      <rect x="0" y="25" width="350" height="10" fill="#8b5cf6"/>
+      <text x="175" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">mcp_threats.yar</text>
+      <text x="20" y="60" fill="#a78bfa" font-family="Arial, sans-serif" font-size="24" font-weight="bold">15</text>
+      <text x="55" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="20" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Prompt injection, coercive patterns</text>
+      <text x="20" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Hidden instructions, jailbreak attempts</text>
+
+      <!-- MCP Vulnerabilities -->
+      <rect x="370" y="0" width="350" height="120" rx="12" fill="rgba(168,85,247,0.1)" stroke="#a855f7" stroke-width="2"/>
+      <rect x="370" y="0" width="350" height="35" rx="12" fill="#a855f7"/>
+      <rect x="370" y="25" width="350" height="10" fill="#a855f7"/>
+      <text x="545" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">mcp_vulnerabilities.yar</text>
+      <text x="390" y="60" fill="#c4b5fd" font-family="Arial, sans-serif" font-size="24" font-weight="bold">12</text>
+      <text x="425" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="390" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Schema abuse, permission escalation</text>
+      <text x="390" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Weak authentication patterns</text>
+
+      <!-- MCP Advanced -->
+      <rect x="740" y="0" width="350" height="120" rx="12" fill="rgba(192,132,252,0.1)" stroke="#c084fc" stroke-width="2"/>
+      <rect x="740" y="0" width="350" height="35" rx="12" fill="#c084fc"/>
+      <rect x="740" y="25" width="350" height="10" fill="#c084fc"/>
+      <text x="915" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">mcp_advanced_patterns.yar</text>
+      <text x="760" y="60" fill="#d8b4fe" font-family="Arial, sans-serif" font-size="24" font-weight="bold">14</text>
+      <text x="795" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="760" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Code execution, evasion techniques</text>
+      <text x="760" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Obfuscation, anti-analysis</text>
+    </g>
+
+    <!-- Row 2 -->
+    <g transform="translate(0, 160)">
+      <!-- Backdoor Detection -->
+      <rect x="0" y="0" width="350" height="120" rx="12" fill="rgba(239,68,68,0.1)" stroke="#ef4444" stroke-width="2"/>
+      <rect x="0" y="0" width="350" height="35" rx="12" fill="#ef4444"/>
+      <rect x="0" y="25" width="350" height="10" fill="#ef4444"/>
+      <text x="175" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">backdoor_detection.yar</text>
+      <text x="20" y="60" fill="#fca5a5" font-family="Arial, sans-serif" font-size="24" font-weight="bold">18</text>
+      <text x="55" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="20" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Backdoors, reverse shells, C2</text>
+      <text x="20" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Web shells, RATs, persistence</text>
+
+      <!-- SQL Injection -->
+      <rect x="370" y="0" width="350" height="120" rx="12" fill="rgba(249,115,22,0.1)" stroke="#f97316" stroke-width="2"/>
+      <rect x="370" y="0" width="350" height="35" rx="12" fill="#f97316"/>
+      <rect x="370" y="25" width="350" height="10" fill="#f97316"/>
+      <text x="545" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">sql_injection.yar</text>
+      <text x="390" y="60" fill="#fdba74" font-family="Arial, sans-serif" font-size="24" font-weight="bold">16</text>
+      <text x="425" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="390" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">SQL/NoSQL injection variants</text>
+      <text x="390" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Tautology, UNION, blind injection</text>
+
+      <!-- Script Injection -->
+      <rect x="740" y="0" width="350" height="120" rx="12" fill="rgba(234,179,8,0.1)" stroke="#eab308" stroke-width="2"/>
+      <rect x="740" y="0" width="350" height="35" rx="12" fill="#eab308"/>
+      <rect x="740" y="25" width="350" height="10" fill="#eab308"/>
+      <text x="915" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">script_injection.yar</text>
+      <text x="760" y="60" fill="#fde047" font-family="Arial, sans-serif" font-size="24" font-weight="bold">14</text>
+      <text x="795" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="760" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">XSS, template injection</text>
+      <text x="760" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">JavaScript, VBScript attacks</text>
+    </g>
+
+    <!-- Row 3 -->
+    <g transform="translate(0, 295)">
+      <!-- Credential Harvesting -->
+      <rect x="0" y="0" width="350" height="120" rx="12" fill="rgba(236,72,153,0.1)" stroke="#ec4899" stroke-width="2"/>
+      <rect x="0" y="0" width="350" height="35" rx="12" fill="#ec4899"/>
+      <rect x="0" y="25" width="350" height="10" fill="#ec4899"/>
+      <text x="175" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">credential_harvesting.yar</text>
+      <text x="20" y="60" fill="#f9a8d4" font-family="Arial, sans-serif" font-size="24" font-weight="bold">12</text>
+      <text x="55" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="20" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Hardcoded secrets, API keys</text>
+      <text x="20" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Credential exfiltration patterns</text>
+
+      <!-- Malware Detection -->
+      <rect x="370" y="0" width="350" height="120" rx="12" fill="rgba(220,38,38,0.1)" stroke="#dc2626" stroke-width="2"/>
+      <rect x="370" y="0" width="350" height="35" rx="12" fill="#dc2626"/>
+      <rect x="370" y="25" width="350" height="10" fill="#dc2626"/>
+      <text x="545" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">malware_detection.yar</text>
+      <text x="390" y="60" fill="#fca5a5" font-family="Arial, sans-serif" font-size="24" font-weight="bold">8</text>
+      <text x="418" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="390" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Known malware signatures</text>
+      <text x="390" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Trojans, viruses, worms</text>
+
+      <!-- Crypto Mining -->
+      <rect x="740" y="0" width="350" height="120" rx="12" fill="rgba(6,182,212,0.1)" stroke="#06b6d4" stroke-width="2"/>
+      <rect x="740" y="0" width="350" height="35" rx="12" fill="#06b6d4"/>
+      <rect x="740" y="25" width="350" height="10" fill="#06b6d4"/>
+      <text x="915" y="23" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">crypto_mining.yar</text>
+      <text x="760" y="60" fill="#67e8f9" font-family="Arial, sans-serif" font-size="24" font-weight="bold">8</text>
+      <text x="788" y="60" fill="#94a3b8" font-family="Arial, sans-serif" font-size="12">rules</text>
+      <text x="760" y="80" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Cryptominers, resource abuse</text>
+      <text x="760" y="100" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Mining pool connections</text>
+    </g>
+  </g>
+
+  <!-- False Positive Optimization Section -->
+  <g transform="translate(50, 750)">
+    <rect x="0" y="0" width="1100" height="120" rx="15" fill="rgba(16,185,129,0.08)" stroke="#10b981" stroke-width="2"/>
+    <text x="550" y="30" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="18" font-weight="bold">False Positive Optimization (Recent Updates)</text>
+
+    <g transform="translate(30, 50)">
+      <rect x="0" y="0" width="250" height="55" rx="8" fill="rgba(16,185,129,0.15)"/>
+      <text x="125" y="22" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">github-mcp-server</text>
+      <text x="125" y="42" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">127 → 2 findings</text>
+
+      <rect x="280" y="0" width="250" height="55" rx="8" fill="rgba(16,185,129,0.15)"/>
+      <text x="405" y="22" text-anchor="middle" fill="#10b981" font-family="Arial, sans-serif" font-size="12" font-weight="bold">github-kanban-mcp</text>
+      <text x="405" y="42" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">2 → 0 findings</text>
+
+      <rect x="560" y="0" width="250" height="55" rx="8" fill="rgba(239,68,68,0.15)"/>
+      <text x="685" y="22" text-anchor="middle" fill="#ef4444" font-family="Arial, sans-serif" font-size="12" font-weight="bold">damn-vulnerable-MCP</text>
+      <text x="685" y="42" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">138 findings (correct!)</text>
+
+      <rect x="840" y="0" width="230" height="55" rx="8" fill="rgba(6,182,212,0.15)"/>
+      <text x="955" y="22" text-anchor="middle" fill="#06b6d4" font-family="Arial, sans-serif" font-size="12" font-weight="bold">MCP Context Required</text>
+      <text x="955" y="42" text-anchor="middle" fill="#94a3b8" font-family="Arial, sans-serif" font-size="11">Rules require MCP context</text>
+    </g>
+  </g>
+</svg>
