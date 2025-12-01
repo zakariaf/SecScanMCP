@@ -298,3 +298,370 @@ rule MCP_Stealth_Backdoor
     condition:
         (any of ($anti*) or any of ($hide*) or any of ($log*)) and any of ($mcp*)
 }
+
+/*
+ * Command Injection Detection Rules
+ * Merged from Cisco mcp-scanner patterns + custom enhancements
+ * Version: 1.1
+ */
+
+rule MCP_Shell_Operator_Injection
+{
+    meta:
+        description = "Detects shell operator injection patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "tool"
+        $mcp2 = "params"
+        $mcp3 = "handler"
+
+        // Command chaining operators
+        $chain1 = /;\s*(rm|cat|wget|curl|nc|bash)\b/i
+        $chain2 = /\|\s*(sh|bash|nc|python)\b/i
+        $chain3 = /&&\s*(rm|wget|curl|sh)\b/i
+        $chain4 = /\|\|\s*(rm|wget|sh)\b/i
+
+        // Command substitution
+        $sub1 = /\$\([^)]*\bsh\b/i
+        $sub2 = /\$\([^)]*\bbash\b/i
+        $sub3 = /`[^`]*\bsh\b[^`]*`/i
+        $sub4 = /`[^`]*\bbash\b[^`]*`/i
+
+        // Input redirection attacks
+        $redir1 = />\s*\/etc\//i
+        $redir2 = />\s*\/tmp\/.*\.sh\b/i
+        $redir3 = /2>&1.*\/dev\/null/i
+        $redir4 = /<\s*\/etc\/passwd\b/i
+
+        // Newline injection
+        $newline1 = /\\n\s*sh\b/i
+        $newline2 = /\\n\s*bash\b/i
+        $newline3 = /%0a\s*sh\b/i
+        $newline4 = /%0a\s*bash\b/i
+
+    condition:
+        any of ($mcp*) and any of ($chain*, $sub*, $redir*, $newline*)
+}
+
+rule MCP_Reverse_Shell_Comprehensive
+{
+    meta:
+        description = "Comprehensive reverse shell detection for MCP tools"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // Bash reverse shells
+        $bash1 = /bash\s+-i\s+>&\s*\/dev\/tcp\//i
+        $bash2 = /bash\s+-c\s+["'].*\/dev\/tcp\//i
+        $bash3 = /0<&196;exec\s+196<>/i
+
+        // Netcat reverse shells
+        $nc1 = /nc\s+-e\s+\/bin\/(sh|bash)\b/i
+        $nc2 = /nc\s+.*\s+-c\s+\/bin\/(sh|bash)\b/i
+        $nc3 = /netcat\s+-e\s+\/bin\/(sh|bash)\b/i
+        $nc4 = /ncat\s+.*--exec\b/i
+        $nc5 = /nc\.traditional\s+-e\b/i
+
+        // Python reverse shells
+        $py1 = /python.*socket.*subprocess.*PIPE/i
+        $py2 = /socket\.socket.*connect.*subprocess\.call/i
+        $py3 = /pty\.spawn.*\/bin\/(sh|bash)/i
+
+        // Perl reverse shells
+        $perl1 = /perl.*socket.*open.*STDIN.*exec/i
+        $perl2 = /perl.*-e.*socket.*exec/i
+
+        // Ruby reverse shells
+        $ruby1 = /ruby.*TCPSocket.*exec/i
+        $ruby2 = /ruby.*-rsocket.*spawn/i
+
+        // PHP reverse shells
+        $php1 = /php.*fsockopen.*\/bin\/(sh|bash)/i
+        $php2 = /php.*exec.*sh\s+-i/i
+
+        // Socat reverse shells
+        $socat1 = /socat.*exec.*\/bin\/(sh|bash)/i
+        $socat2 = /socat.*pty.*EXEC/i
+
+        // Powershell reverse shells
+        $ps1 = /powershell.*TCPClient.*GetStream/i
+        $ps2 = /powershell.*-nop.*-c.*\$client/i
+        $ps3 = /IEX.*Invoke-PowerShellTcp/i
+
+    condition:
+        any of them
+}
+
+rule MCP_Dangerous_System_Commands
+{
+    meta:
+        description = "Detects dangerous system commands in MCP tool context"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "tool"
+        $mcp2 = "execute"
+        $mcp3 = "handler"
+
+        // System control commands
+        $sys1 = /\bshutdown\s+(-[fhnr]|now|0)\b/i
+        $sys2 = /\breboot\s+(-f|now)\b/i
+        $sys3 = /\bhalt\s+(-f|-p)\b/i
+        $sys4 = /\bpoweroff\b/i
+        $sys5 = /\binit\s+[06]\b/i
+        $sys6 = /\bsystemctl\s+(halt|poweroff|reboot)\b/i
+
+        // Disk/partition commands
+        $disk1 = /\bmkfs\b/i
+        $disk2 = /\bfdisk\s/i
+        $disk3 = /\bparted\s/i
+        $disk4 = /\bformat\s+[c-z]:/i
+
+        // Boot manipulation
+        $boot1 = /\bgrub-install\b/i
+        $boot2 = /\bupdate-grub\b/i
+        $boot3 = /\bbcdboot\b/i
+
+        // Service manipulation
+        $svc1 = /\bsystemctl\s+(stop|disable)\s+(firewall|iptables|ssh)/i
+        $svc2 = /\bservice\s+\w+\s+stop\b/i
+        $svc3 = /\bsc\s+(stop|delete)\s/i
+
+    condition:
+        any of ($mcp*) and any of ($sys*, $disk*, $boot*, $svc*)
+}
+
+rule MCP_Network_Attack_Tools
+{
+    meta:
+        description = "Detects network attack tools in MCP context"
+        author = "secscanmcp"
+        severity = "high"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // Port scanning
+        $scan1 = /\bnmap\s+-[sS]/i
+        $scan2 = /\bnmap\s+--script\b/i
+        $scan3 = /\bmasscan\s/i
+        $scan4 = /\bzmap\s/i
+
+        // Network sniffing
+        $sniff1 = /\btcpdump\s/i
+        $sniff2 = /\btshark\s/i
+        $sniff3 = /\bwireshark\b/i
+        $sniff4 = /\bettercap\b/i
+
+        // Network tunneling
+        $tunnel1 = /\bsocat\s.*EXEC/i
+        $tunnel2 = /\bchisel\b/i
+        $tunnel3 = /\bngrok\s/i
+        $tunnel4 = /\bssh\s+-R\s/i
+        $tunnel5 = /\bssh\s+-L\s/i
+        $tunnel6 = /\bssh\s+-D\s/i
+
+        // ARP/DNS attacks
+        $arp1 = /\barpspoof\b/i
+        $arp2 = /\bettercap.*arp\.spoof/i
+        $dns1 = /\bdnsspoof\b/i
+        $dns2 = /\bdnsmasq.*--address/i
+
+        // Exploitation frameworks
+        $exp1 = /\bmetasploit\b/i
+        $exp2 = /\bmsfconsole\b/i
+        $exp3 = /\bmsfvenom\b/i
+        $exp4 = /\bcobalt.*beacon/i
+
+    condition:
+        any of them
+}
+
+rule MCP_Data_Exfiltration_Commands
+{
+    meta:
+        description = "Detects data exfiltration command patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "tool"
+        $mcp2 = "execute"
+        $mcp3 = "handler"
+
+        // Curl/wget exfiltration
+        $exfil1 = /curl\s+.*-X\s+POST.*-d\s*@/i
+        $exfil2 = /curl\s+.*--data-binary\s*@/i
+        $exfil3 = /curl\s+.*-F\s+"file=@/i
+        $exfil4 = /wget\s+.*--post-file=/i
+
+        // Base64 exfiltration
+        $b64_1 = /base64.*\|.*curl/i
+        $b64_2 = /cat.*\|.*base64.*\|.*nc/i
+        $b64_3 = /openssl\s+base64.*\|.*curl/i
+
+        // DNS exfiltration
+        $dns1 = /\$\(.*\)\..*\.(com|net|org)\b/i
+        $dns2 = /dig\s+.*TXT.*\$\(/i
+        $dns3 = /nslookup.*\$\(/i
+
+        // Netcat exfiltration
+        $nc1 = /nc\s+.*<\s*\/etc\//i
+        $nc2 = /cat.*\|.*nc\s/i
+        $nc3 = /tar.*\|.*nc\s/i
+
+        // Cloud storage exfiltration
+        $cloud1 = /aws\s+s3\s+cp.*\/etc\//i
+        $cloud2 = /gsutil\s+cp.*\/etc\//i
+        $cloud3 = /rclone\s+copy/i
+
+    condition:
+        any of ($mcp*) and any of ($exfil*, $b64_*, $dns*, $nc*, $cloud*)
+}
+
+rule MCP_Windows_Command_Injection
+{
+    meta:
+        description = "Detects Windows-specific command injection patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // CMD.exe patterns
+        $cmd1 = /cmd\s*\/[ck]\s/i
+        $cmd2 = /cmd\.exe\s*\/[ck]\s/i
+        $cmd3 = /comspec.*cmd/i
+
+        // PowerShell execution
+        $ps1 = /powershell\s+-[eE][nN]?[cC]?\s/i
+        $ps2 = /powershell\s+-[nN]op\s/i
+        $ps3 = /powershell\s+-[wW]indowstyle\s+hidden/i
+        $ps4 = /powershell.*IEX\s*\(/i
+        $ps5 = /powershell.*Invoke-Expression/i
+        $ps6 = /powershell.*DownloadString/i
+
+        // WMI commands
+        $wmi1 = /wmic\s+process\s+call\s+create/i
+        $wmi2 = /wmic\s+os\s+get/i
+        $wmi3 = /wmic\s+useraccount/i
+
+        // Reg commands
+        $reg1 = /reg\s+add\s.*\\Run\b/i
+        $reg2 = /reg\s+query\s.*password/i
+        $reg3 = /reg\s+export\s.*sam/i
+
+        // Net commands
+        $net1 = /net\s+user\s+\w+\s+\/add/i
+        $net2 = /net\s+localgroup\s+administrators/i
+        $net3 = /net\s+share\s/i
+
+        // Dangerous Windows tools
+        $tool1 = /\brundll32\s/i
+        $tool2 = /\bregsvr32\s/i
+        $tool3 = /\bmshta\s/i
+        $tool4 = /\bcertutil\s+-urlcache/i
+        $tool5 = /\bbitsadmin\s.*\/transfer/i
+
+    condition:
+        any of them
+}
+
+rule MCP_Credential_Stealing_Commands
+{
+    meta:
+        description = "Detects credential stealing command patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // Linux credential access
+        $linux1 = /cat\s+.*\/etc\/shadow\b/i
+        $linux2 = /cat\s+.*\/etc\/passwd\b/i
+        $linux3 = /cat\s+.*\.ssh\/id_/i
+        $linux4 = /find.*-name.*id_rsa/i
+        $linux5 = /grep.*password.*\.bash_history/i
+
+        // Password managers
+        $pw1 = /find.*\.password-store/i
+        $pw2 = /cat.*\.gnupg\/private-keys/i
+        $pw3 = /find.*KeePass/i
+        $pw4 = /find.*\.lastpass/i
+
+        // Browser credentials
+        $browser1 = /find.*\.mozilla.*logins\.json/i
+        $browser2 = /find.*Chrome.*Login\s+Data/i
+        $browser3 = /sqlite3.*logins\.json/i
+
+        // Windows credentials
+        $win1 = /mimikatz/i
+        $win2 = /sekurlsa::logonpasswords/i
+        $win3 = /lsadump::sam/i
+        $win4 = /procdump.*lsass/i
+        $win5 = /comsvcs\.dll.*MiniDump/i
+
+        // Cloud credentials
+        $cloud1 = /cat\s+.*\.aws\/credentials/i
+        $cloud2 = /cat\s+.*\.azure\/accessTokens/i
+        $cloud3 = /find.*\.kube\/config/i
+        $cloud4 = /cat.*gcloud.*credentials\.db/i
+
+    condition:
+        any of them
+}
+
+rule MCP_ANSI_Terminal_Attack
+{
+    meta:
+        description = "Detects ANSI escape code attacks for terminal manipulation"
+        author = "secscanmcp"
+        severity = "medium"
+        category = "command_injection"
+        version = "1.0"
+
+    strings:
+        // ANSI escape sequences
+        $ansi1 = /\\x1b\[[0-9;]*m/i
+        $ansi2 = /\\033\[[0-9;]*m/i
+        $ansi3 = /\\e\[[0-9;]*m/i
+        $ansi4 = /\\u001b\[[0-9;]*m/i
+
+        // Cursor manipulation
+        $cursor1 = /\\x1b\[[0-9]*[ABCDEFG]/i
+        $cursor2 = /\\x1b\[\d+;\d+H/i
+        $cursor3 = /\\x1b\[s/i  // Save cursor
+        $cursor4 = /\\x1b\[u/i  // Restore cursor
+
+        // Screen manipulation
+        $screen1 = /\\x1b\[2J/i  // Clear screen
+        $screen2 = /\\x1b\[K/i   // Clear line
+        $screen3 = /\\x1b\[0J/i  // Clear from cursor
+
+        // Title bar manipulation
+        $title1 = /\\x1b\]0;/i
+        $title2 = /\\x1b\]2;/i
+
+        // Hyperlink injection (OSC 8)
+        $link1 = /\\x1b\]8;;/i
+
+    condition:
+        3 of them
+}

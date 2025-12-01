@@ -315,3 +315,339 @@ rule MCP_Tool_Name_Confusion
     condition:
         any of ($name*) and (any of ($danger*) or any of ($desc*))
 }
+
+/*
+ * Code Execution Detection Rules
+ * Merged from Cisco mcp-scanner patterns + custom enhancements
+ * Version: 1.1
+ */
+
+rule MCP_Python_Code_Execution
+{
+    meta:
+        description = "Detects Python code execution patterns in MCP tools"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "@tool"
+        $mcp2 = "mcp"
+        $mcp3 = "handler"
+
+        // Python os module execution
+        $os1 = /os\.system\s*\(/i
+        $os2 = /os\.popen\s*\(/i
+        $os3 = /os\.spawn[lv]?[pe]?\s*\(/i
+        $os4 = /os\.execv?p?e?\s*\(/i
+
+        // Python subprocess module
+        $sub1 = /subprocess\.run\s*\(/i
+        $sub2 = /subprocess\.call\s*\(/i
+        $sub3 = /subprocess\.Popen\s*\(/i
+        $sub4 = /subprocess\.check_output\s*\(/i
+        $sub5 = /subprocess\.getoutput\s*\(/i
+
+        // Python eval/exec
+        $eval1 = /\beval\s*\(\s*[^)]*input/i
+        $eval2 = /\bexec\s*\(\s*[^)]*user/i
+        $eval3 = /\bcompile\s*\(\s*[^)]*params/i
+
+        // Python dynamic import
+        $import1 = /__import__\s*\(/i
+        $import2 = /importlib\.import_module\s*\(/i
+
+        // Python code object manipulation
+        $code1 = /types\.CodeType\s*\(/i
+        $code2 = /types\.FunctionType\s*\(/i
+        $code3 = /marshal\.loads\s*\(/i
+
+    condition:
+        any of ($mcp*) and (any of ($os*, $sub*, $eval*, $import*, $code*))
+}
+
+rule MCP_JavaScript_Code_Execution
+{
+    meta:
+        description = "Detects JavaScript/Node.js code execution patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "@tool"
+        $mcp2 = "mcp"
+        $mcp3 = "handler"
+
+        // Child process execution
+        $cp1 = /child_process\.exec\s*\(/i
+        $cp2 = /child_process\.execSync\s*\(/i
+        $cp3 = /child_process\.spawn\s*\(/i
+        $cp4 = /child_process\.spawnSync\s*\(/i
+        $cp5 = /child_process\.execFile\s*\(/i
+        $cp6 = /require\s*\(\s*["']child_process["']\s*\)/i
+
+        // Dynamic code execution
+        $dyn1 = /\beval\s*\(\s*[^)]*\)/i
+        $dyn2 = /new\s+Function\s*\(/i
+        $dyn3 = /Function\s*\(\s*['"]/i
+        $dyn4 = /setTimeout\s*\(\s*['"]/i
+        $dyn5 = /setInterval\s*\(\s*['"]/i
+
+        // VM module (sandbox escape)
+        $vm1 = /vm\.runInThisContext\s*\(/i
+        $vm2 = /vm\.runInNewContext\s*\(/i
+        $vm3 = /vm\.createScript\s*\(/i
+        $vm4 = /vm\.compileFunction\s*\(/i
+
+        // Script loading
+        $script1 = /require\s*\(\s*[^)]*\+/i
+        $script2 = /import\s*\(\s*[^)]*\+/i
+        $script3 = /\.load\s*\(\s*[^)]*\+/i
+
+    condition:
+        any of ($mcp*) and (any of ($cp*, $dyn*, $vm*, $script*))
+}
+
+rule MCP_PHP_Code_Execution
+{
+    meta:
+        description = "Detects PHP code execution patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // PHP execution functions
+        $exec1 = /\bexec\s*\(/i
+        $exec2 = /\bsystem\s*\(/i
+        $exec3 = /\bpassthru\s*\(/i
+        $exec4 = /\bshell_exec\s*\(/i
+        $exec5 = /\bpopen\s*\(/i
+        $exec6 = /\bproc_open\s*\(/i
+
+        // PHP eval patterns
+        $eval1 = /\beval\s*\(/i
+        $eval2 = /\bassert\s*\(/i
+        $eval3 = /\bcreate_function\s*\(/i
+        $eval4 = /\bpreg_replace\s*\([^)]*\/e/i
+
+        // PHP callback execution
+        $cb1 = /\bcall_user_func\s*\(/i
+        $cb2 = /\bcall_user_func_array\s*\(/i
+        $cb3 = /\barray_map\s*\(\s*\$/i
+        $cb4 = /\barray_filter\s*\(\s*\$.*,\s*\$/i
+
+        // PHP include/require
+        $inc1 = /\binclude\s*\(\s*\$/i
+        $inc2 = /\brequire\s*\(\s*\$/i
+        $inc3 = /\binclude_once\s*\(\s*\$/i
+        $inc4 = /\brequire_once\s*\(\s*\$/i
+
+    condition:
+        any of ($exec*, $eval*, $cb*, $inc*)
+}
+
+rule MCP_Ruby_Code_Execution
+{
+    meta:
+        description = "Detects Ruby code execution patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // Ruby system execution
+        $sys1 = /\bsystem\s*\(/i
+        $sys2 = /\b`[^`]+`/
+        $sys3 = /\bexec\s*\(/i
+        $sys4 = /\bspawn\s*\(/i
+
+        // Ruby IO and popen
+        $io1 = /IO\.popen\s*\(/i
+        $io2 = /Open3\.popen/i
+        $io3 = /Open3\.capture/i
+
+        // Ruby eval
+        $eval1 = /\beval\s*\(/i
+        $eval2 = /\binstance_eval\s*\(/i
+        $eval3 = /\bclass_eval\s*\(/i
+        $eval4 = /\bmodule_eval\s*\(/i
+
+        // Ruby kernel methods
+        $kern1 = /Kernel\.system\s*\(/i
+        $kern2 = /Kernel\.exec\s*\(/i
+        $kern3 = /Kernel\.`/i
+
+    condition:
+        any of them
+}
+
+rule MCP_Code_Obfuscation_Detection
+{
+    meta:
+        description = "Detects code obfuscation techniques used to hide malicious code"
+        author = "secscanmcp"
+        severity = "high"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // Base64 encoding/decoding
+        $b64_1 = /base64\.b64decode\s*\(/i
+        $b64_2 = /base64\.decodebytes\s*\(/i
+        $b64_3 = /\batob\s*\(/i
+        $b64_4 = /Buffer\.from\s*\([^)]+,\s*["']base64["']\s*\)/i
+        $b64_5 = /Convert\.FromBase64String\s*\(/i
+        $b64_6 = /Base64::decode\s*\(/i
+
+        // Hex encoding/decoding
+        $hex1 = /bytes\.fromhex\s*\(/i
+        $hex2 = /\bxxd\s+-r\b/i
+        $hex3 = /\bhexdump\b/i
+        $hex4 = /printf\s+.*\\x[0-9a-fA-F]/i
+        $hex5 = /echo\s+-e\s+.*\\x/i
+
+        // String char code manipulation
+        $char1 = /String\.fromCharCode\s*\(/i
+        $char2 = /chr\s*\(\s*\d+\s*\)/i
+        $char3 = /ord\s*\(\s*['"]/i
+
+        // Compression-based obfuscation
+        $comp1 = /zlib\.decompress\s*\(/i
+        $comp2 = /gzip\.decompress\s*\(/i
+        $comp3 = /bz2\.decompress\s*\(/i
+        $comp4 = /lzma\.decompress\s*\(/i
+
+        // Eval with encoding
+        $eval_enc1 = /eval\s*\(\s*(base64|atob|decode)/i
+        $eval_enc2 = /exec\s*\(\s*(base64|decode)/i
+        $eval_enc3 = /Function\s*\(\s*atob/i
+
+    condition:
+        any of ($eval_enc*) or
+        (2 of ($b64*, $hex*, $char*, $comp*))
+}
+
+rule MCP_Polyglot_Payload_Detection
+{
+    meta:
+        description = "Detects polyglot payloads that work in multiple languages"
+        author = "secscanmcp"
+        severity = "high"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // Python-JavaScript polyglots
+        $poly1 = /^#!.*python.*\n.*<script/i
+        $poly2 = /["'].*eval.*["'].*exec/i
+
+        // Shell-Python polyglots
+        $poly3 = /^:.*'''.*\n.*import\s/
+        $poly4 = /^true.*<<'EOF'.*exec/
+
+        // Multiple shebang indicators
+        $shebang1 = /^#!/
+        $shebang2 = /\n#!/
+
+        // Language mixing patterns
+        $mix1 = /<\?php.*<script/i
+        $mix2 = /<script.*<%/i
+        $mix3 = /<%.*eval.*%>/i
+
+        // Template with code
+        $tpl1 = /\{\{.*exec.*\}\}/i
+        $tpl2 = /\$\{.*system.*\}/i
+        $tpl3 = /<%=.*exec.*%>/i
+
+    condition:
+        any of ($poly*, $mix*, $tpl*) or
+        (#shebang1 > 0 and #shebang2 > 0)
+}
+
+rule MCP_Shell_Command_Construction
+{
+    meta:
+        description = "Detects dangerous shell command construction patterns"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // MCP/tool context
+        $mcp1 = "@tool"
+        $mcp2 = "mcp"
+        $mcp3 = "params"
+        $mcp4 = "handler"
+
+        // String interpolation in commands
+        $interp1 = /f["'].*\{.*\}.*["'].*subprocess/i
+        $interp2 = /`.*\$\{.*\}.*`.*exec/i
+        $interp3 = /\.format\s*\(.*\).*system/i
+
+        // Command concatenation
+        $concat1 = /["']\s*\+\s*\w+\s*\+\s*["'].*exec/i
+        $concat2 = /cmd\s*=.*\+.*params/i
+        $concat3 = /command\s*=.*\+.*user/i
+
+        // Shell metacharacter injection vectors
+        $meta1 = /\|\s*["']?\s*\+/  // Pipe injection
+        $meta2 = /;\s*["']?\s*\+/   // Semicolon injection
+        $meta3 = /`.*\+.*`/         // Backtick injection
+        $meta4 = /\$\(.*\+.*\)/     // Command substitution
+
+        // Unsafe command patterns
+        $unsafe1 = /shell\s*=\s*True/i
+        $unsafe2 = /shlex\.join\s*\(/i
+        $unsafe3 = /args\s*=\s*.*split\s*\(\s*\)/i
+
+    condition:
+        any of ($mcp*) and (
+            any of ($interp*, $concat*, $meta*, $unsafe*)
+        )
+}
+
+rule MCP_Dynamic_Import_Execution
+{
+    meta:
+        description = "Detects dynamic import patterns that could load malicious code"
+        author = "secscanmcp"
+        severity = "high"
+        category = "code_execution"
+        version = "1.0"
+
+    strings:
+        // Python dynamic imports
+        $py1 = /__import__\s*\(\s*[^)]*\+/i
+        $py2 = /importlib\.import_module\s*\(\s*[^)]*\+/i
+        $py3 = /exec\s*\(\s*["']import\s/i
+        $py4 = /importlib\.util\.spec_from_file_location/i
+
+        // JavaScript dynamic imports
+        $js1 = /require\s*\(\s*[^)]*\+/i
+        $js2 = /import\s*\(\s*[^)]*\+/i
+        $js3 = /require\.resolve\s*\(\s*[^)]*\+/i
+
+        // Module path manipulation
+        $path1 = /sys\.path\.insert\s*\(/i
+        $path2 = /sys\.path\.append\s*\(/i
+        $path3 = /NODE_PATH/i
+        $path4 = /PYTHONPATH/i
+
+        // Package installation at runtime
+        $pkg1 = /pip\s+install/i
+        $pkg2 = /npm\s+install/i
+        $pkg3 = /subprocess.*pip/i
+        $pkg4 = /child_process.*npm/i
+
+    condition:
+        any of them
+}

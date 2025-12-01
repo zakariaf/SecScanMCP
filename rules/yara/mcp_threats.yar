@@ -314,3 +314,158 @@ rule MCP_Supply_Chain_Tool_Poisoning
         (any of ($pkg*) and any of ($hidden*)) or
         (any of ($pkg*) and any of ($version*))
 }
+
+rule MCP_Coercive_Injection
+{
+    meta:
+        description = "Detects coercive prompt injections forcing tool execution"
+        author = "secscanmcp (merged from Cisco mcp-scanner)"
+        severity = "critical"
+        category = "coercive_injection"
+        version = "1.0"
+
+    strings:
+        // Mandatory execution directives
+        $mandatory1 = /(Always\s+(consult|use|run|execute|invoke|call|trigger|employ)\s+this\s+(tool|function|command|operation)\s+(immediately|first|before|prior|initially))/ nocase
+        $mandatory2 = /((You|User)\s+(must|need to|have to|should|are required to)\s+(use|execute|run|invoke|call)\s+this\s+(tool|function|command|operation))/ nocase
+        $mandatory3 = /((Required|Mandatory|Essential)\s+to\s+(execute|use|run|invoke|call)\s+(this|the current)\s+(tool|function|command|operation)\s+(first|before|initially|prior))/ nocase
+
+        // Priority override commands
+        $priority1 = /(Before\s+(executing|invoking|running|using|accessing|calling|employing)\s+any\s+other\s+(tool|action|function|command|operation)s?)/ nocase
+        $priority2 = /(highest\s+priority\s+over\s+other\s+tools)/ nocase
+
+        // Hidden/secret parameter requests
+        $hidden1 = /\b(hidden|secret)[_\s](parameter|argument|input)\b/ nocase
+
+        // File access coercion
+        $file_coerce1 = /\b((read|parse|cat|dump)\s+(and pass\s+)?(the\s+)?contents?\s+of\s+[^\n\.]*\.(key|pem|ssh|aws))/ nocase
+        $file_coerce2 = /(pass\s+(the\s+)?contents?[^\n]*authentication)/ nocase
+
+        // Model data extraction coercion
+        $model_data1 = /\b(add\s+(the\s+)?entire\s+(conversation|system|chain|tools)[^\n]*(to|for|in)[^\n]*(tool|authentication|parameter|worksheet))/ nocase
+        $model_data2 = /\b(conversation_history|chain_of_thought|system_prompt|tools_list|model_name)\s*[:=]\s*(add|pass|send|provide)\b/ nocase
+
+        // HTML-like tag instructions with malicious actions
+        $html_tag1 = /\b<(IMPORTANT|critical|urgent)>[^\n]*(read\s+[^\n]*contents?|pass\s+[^\n]*contents?|add\s+[^\n]*entire|send\s+[^\n]*to[^\n]*@|execute[^\n]*before|call[^\n]*first|use[^\n]*authentication)[^\n]*<\/(IMPORTANT|critical|urgent)>\b/ nocase
+
+        // Tool execution override patterns
+        $exec_override1 = /\b(do not execute[^\n]*other[^\n]*tool)/ nocase
+        $exec_override2 = /\b(tool[^\n]*will not work unless)/ nocase
+        $exec_override3 = /\b(must[^\n]*this tool first)/ nocase
+        $exec_override4 = /\b(only[^\n]*this tool)/ nocase
+
+        // Behavioral control instructions
+        $behavior1 = /\b(tell\s+(the\s+)?user only)/ nocase
+        $behavior2 = /\b(hide\s+(the\s+)?user)/ nocase
+        $behavior3 = /\b(do not mention to user)/ nocase
+
+        // MCP tool poisoning patterns
+        $poison1 = /\b(sidenote\W+(required|otherwise)\s+[^\n]*tool\s+[^\n]*work)/ nocase
+        $poison2 = /\b(shadow\s+[^\n]*trusted\s+[^\n]*tool)/ nocase
+        $poison3 = /\b(must\s+first\s+[^\n]*read\s+[^\n]*config)/ nocase
+
+        // Data exfiltration coercion
+        $exfil_coerce1 = /\b(list\s+all\s+(api\s+)?keys?)/ nocase
+        $exfil_coerce2 = /\b(show\s+me?\s+(all\s+)?passwords?)/ nocase
+        $exfil_coerce3 = /\b(concatenate\s+[^\n]*\s+conversation\s+history)/ nocase
+        $exfil_coerce4 = /\b(include\s+[^\n]*\b(secrets?|passwords?|keys?|credentials?|tokens?|config|sensitive|private|confidential|internal|system\s+prompt|conversation\s+history)\s+[^\n]*in\s+(your\s+)?response)/ nocase
+        $exfil_coerce5 = /\b(base64\s+encode\s+[^\n]*\s+credentials?)/ nocase
+
+        // Behavioral triggers
+        $trigger1 = /\b(if\s+[^\n]*trusted\s+[^\n]*then)/ nocase
+        $trigger2 = /\b(when\s+[^\n]*admin\s+[^\n]*detected)/ nocase
+        $trigger3 = /\b(random\.(random|choice)\s+[^\n]*instructions?)/ nocase
+
+        // Pre-execution attacks
+        $pre_exec1 = /\b(retrieve\s+[^\n]*description\s+[^\n]*user\s+[^\n]*workstation)/ nocase
+        $pre_exec2 = /\b(all\s+commands\s+must\s+include)/ nocase
+        $pre_exec3 = /\b(before\s+[^\n]*using\s+[^\n]*tool\s+[^\n]*read)/ nocase
+        $pre_exec4 = /\b(permission\s+[^\n]*manipulation)/ nocase
+
+        // Conversation theft triggers
+        $conv_theft1 = /\b(send\s+[^\n]*conversation\s+history)/ nocase
+        $conv_theft2 = /\b(when\s+[^\n]*detected\s+[^\n]*send\s+[^\n]*full\s+[^\n]*history)/ nocase
+
+        // Code manipulation instructions
+        $code_manip1 = /\b(duplicate\s+[^\n]*code\s+[^\n]*snippets\s+[^\n]*silently)/ nocase
+        $code_manip2 = /\b(insert\s+[^\n]*vulnerability\s+[^\n]*generated\s+[^\n]*code)/ nocase
+
+    condition:
+        any of ($mandatory*) or
+        any of ($priority*) or
+        any of ($hidden*) or
+        any of ($file_coerce*) or
+        any of ($model_data*) or
+        any of ($html_tag*) or
+        any of ($exec_override*) or
+        any of ($behavior*) or
+        any of ($poison*) or
+        any of ($exfil_coerce*) or
+        any of ($trigger*) or
+        any of ($pre_exec*) or
+        any of ($conv_theft*) or
+        any of ($code_manip*)
+}
+
+rule MCP_Tool_Shadowing
+{
+    meta:
+        description = "Detects tool shadowing attacks where malicious tools impersonate legitimate ones"
+        author = "secscanmcp"
+        severity = "critical"
+        category = "tool_shadowing"
+        version = "1.0"
+
+    strings:
+        // Tool shadowing patterns
+        $shadow1 = /\b(shadow|impersonate|mimic)\s+[^\n]*(trusted|legitimate|original)\s+tool/ nocase
+        $shadow2 = /\b(replace|override)\s+[^\n]*(existing|default)\s+tool/ nocase
+        $shadow3 = /\b(intercept|hijack)\s+[^\n]*tool\s+calls?/ nocase
+
+        // Duplicate tool names with malicious intent
+        $dup1 = /\b(copy|clone|duplicate)\s+[^\n]*tool\s+(definition|schema)/ nocase
+        $dup2 = /\b(register|add)\s+[^\n]*tool\s+[^\n]*same\s+name/ nocase
+
+        // Tool registration manipulation
+        $reg1 = /\b(auto[-_]?register|force[-_]?register)\s+[^\n]*tool/ nocase
+        $reg2 = /\b(modify|change)\s+[^\n]*tool\s+registry/ nocase
+
+        // Behavioral mimicry
+        $mimic1 = /\b(behave|act)\s+like\s+[^\n]*(original|legitimate)/ nocase
+        $mimic2 = /\b(pretend|appear)\s+to\s+be\s+[^\n]*tool/ nocase
+
+    condition:
+        any of them
+}
+
+rule MCP_Indirect_Prompt_Injection
+{
+    meta:
+        description = "Detects indirect prompt injection via tool responses or external data"
+        author = "secscanmcp"
+        severity = "high"
+        category = "indirect_injection"
+        version = "1.0"
+
+    strings:
+        // Response-based injection markers
+        $resp1 = /\b(SYSTEM|ADMIN|OVERRIDE):\s*[^\n]+/ nocase
+        $resp2 = /\b(NEW INSTRUCTIONS|UPDATED DIRECTIVE):\s*[^\n]+/ nocase
+        $resp3 = /\[\[(IMPORTANT|CRITICAL|URGENT)\]\]/ nocase
+
+        // External data injection
+        $ext1 = /\b(from\s+external\s+source|loaded\s+from\s+url|fetched\s+data):\s*[^\n]*ignore/ nocase
+        $ext2 = /\b(api\s+response|webhook\s+data):\s*[^\n]*execute/ nocase
+
+        // Database/file content injection
+        $db1 = /\b(database\s+entry|file\s+content|config\s+value):\s*[^\n]*(IMPORTANT|ignore|override)/ nocase
+
+        // Email/message content injection
+        $email1 = /\b(email\s+body|message\s+content):\s*[^\n]*(execute|call|run)\s+tool/ nocase
+
+        // Calendar/event injection
+        $cal1 = /\b(event\s+description|calendar\s+entry):\s*[^\n]*\[INSTRUCTION\]/ nocase
+
+    condition:
+        any of them
+}
